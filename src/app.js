@@ -22,4 +22,17 @@ app.get('/', (req, res) => {
     res.send('Hello World!')
 })
 
+app.use((err, req, res, next) => {
+    // Log detailed error information for monitoring/debugging
+    console.error('Error occurred:', {
+        message: err.message,
+        statusCode: err.statusCode,
+    });
+    res.status(err.statusCode || 500).json({
+        success: err.success || false,
+        message: err.message,
+        errors: err.errors || []
+    });
+});
+
 export default app
