@@ -49,7 +49,15 @@ const login = asyncHandler(async (req, res) => {
     }));
 });
 
-export default {signup,login};
+const getUser = asyncHandler(async (req, res) => {
+    const userId = req.user.userId;
+
+    const user = await getCurrentUser(userId);  
+
+    return res.status(200).json(new ApiResponse(200,"User fetched successfully",user));
+});
+
+export {signup,login,getUser};
 
     
 

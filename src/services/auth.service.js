@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken"
 import {prisma} from "../db/index.js";
-import { ApiError } from "../utils/apiError.js";
+import ApiError from "../utils/apiError.js";
 import {env} from "../utils/env.js"
-
-const SALT_ROUNDS = 10;
+import { SALT_ROUNDS } from "../constants.js";
 
 const generateAccessToken = (user) => {
     const payload = {
@@ -16,7 +15,7 @@ const generateAccessToken = (user) => {
         payload,
         env.JWT_SECRET_KEY,
         {
-            expiresIn: "1d"
+            expiresIn: env.JWT_EXPIRES_IN || "1d"
         }    
     )
     return accessToken;
@@ -38,7 +37,7 @@ const signupService = async ({username,email,password}) => {
     })
 
     const role = approved ? approved.role : "USER";
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS || 10);
 
     const user = await prisma.user.create({
         data:{
@@ -80,3 +79,29 @@ const loginService = async ({email,password}) => {
     return {user,accessToken};
 
 }
+
+const getCurrentUser = async (userId) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+            id: true,
+            username: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
+        }
+    });
+
+    if(!user){
+        throw new ApiError(404,"User Not Found !");
+    }
+
+    if(!user.isActive){
+        throw new ApiError(403,"Your Account is Deactivated. Please Contact Support.");
+    }
+
+    return user;
+};
+
+export {signupService, loginService, getCurrentUser};
