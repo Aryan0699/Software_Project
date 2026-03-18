@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import {pinoHttp} from 'pino-http'
 import logger from './utils/logger.js'
 import { env } from './utils/env.js'
+import authRouter from './routes/auth.route.js'
 const app = express()
 
 app.use(pinoHttp(
@@ -37,6 +38,8 @@ app.get('/', (req, res) => {
         message: 'API is working'
     })
 })
+
+app.use("/api/v1/auth", authRouter);
 
 app.use((err, req, res, next) => {
     // Log detailed error information for monitoring/debugging
