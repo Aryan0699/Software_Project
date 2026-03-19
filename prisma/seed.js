@@ -1,14 +1,14 @@
 import { SALT_ROUNDS } from "../src/constants.js";
 import { PrismaClient } from "../src/generated/prisma/client.js";
-import bycrypt from "bcrypt";
+import bcrypt from "bcrypt";
 import { env } from "../src/utils/env.js";
 import logger from "../src/utils/logger.js";
 import {data} from "../data/approvedUsers.js";
 const prisma = new PrismaClient();
-logger.info(Object.keys(prisma));
 async function seed() {
     const adminPassword = env.ADMIN_PASSWORD;
-    const adminHashedPassword = await bycrypt.hash(adminPassword, SALT_ROUNDS || 10);
+    console.log("Admin Password: " + adminPassword);
+    const adminHashedPassword = await bcrypt.hash(adminPassword, SALT_ROUNDS || 10);
 
     for (const user of data)
     {

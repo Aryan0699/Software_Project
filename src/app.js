@@ -5,11 +5,12 @@ import {pinoHttp} from 'pino-http'
 import logger from './utils/logger.js'
 import { env } from './utils/env.js'
 import authRouter from './routes/auth.route.js'
+import testrouter from './routes/test.route.js'
 const app = express()
 
-app.use(pinoHttp(
-    {logger}
-)) // Add pino-http middleware for logging HTTP requests and responses
+// app.use(pinoHttp(
+//     {logger}
+// )) // Add pino-http middleware for logging HTTP requests and responses
 
 app.use(express.json({
     limit: '16kb' 
@@ -32,7 +33,7 @@ app.use(express.static('public')) // Serve static files from the 'public' direct
 app.use(cookieParser()) // Parse cookies from incoming requests
 
 app.get('/', (req, res) => {
-    req.log.info("Health Check");
+    logger.info("Health Check");
     res.status(200).json({
         success: true,
         message: 'API is working'
@@ -40,13 +41,11 @@ app.get('/', (req, res) => {
 })
 
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/test", testrouter);
 
 app.use((err, req, res, next) => {
     // Log detailed error information for monitoring/debugging
-    req.log.error('Error occurred:', {
-        message: err.message,
-        statusCode: err.statusCode,
-    });
+    logger.error(`Error occurred:${err.message}`);
     res.status(err.statusCode || 500).json({
         success: err.success || false,
         message: err.message || 'Internal Server Error',

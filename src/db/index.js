@@ -24,7 +24,7 @@ async function connectDB() {
         await prisma.$connect();
         logger.info("Connected to the database successfully.");
     } catch (error) {
-        logger.error("Failed to connect to the database:", error);
+        logger.error(`Failed to connect to the database: ${error}`);
         process.exit(1); // Exit the process with an error code
     }
     
