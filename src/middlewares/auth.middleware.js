@@ -5,14 +5,16 @@ import logger from "../utils/logger.js";
 
 const verifyJWTToken = (req,res,next) => {
     logger.info("Verifying JWT token for incoming request");
-    const authHeader = req.headers.authorization;
-
-    if(!authHeader || !authHeader.startsWith("Bearer ")){
-        logger.warn("Token verification failed: No token provided");
-        throw new   ApiError(401,"Unauthorized ! No token provided");
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+        token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies?.accessToken) {
+        token = req.cookies.accessToken;
     }
 
-    const token = authHeader.trim().split(" ")[1];
+    if (!token) {
+        return next(new ApiError(401, "Unauthorized: No token provided"));
+    }
 
     try {
         const payload = jwt.verify(token,env.JWT_SECRET_KEY);

@@ -47,7 +47,18 @@ const login = asyncHandler(async (req, res) => {
 
     const { user, accessToken } = await loginService({ email, password });
     logger.info(`Login successful for email: ${email} (User ID: ${user.id})`);
-    return res.status(200).json(new ApiResponse(200,"Login successful",{
+
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60, // 24 hours
+        path: "/",
+        sameSite: "strict"
+    };
+
+    return res.status(200)
+        .cookie("accessToken", accessToken, options)
+        .json(new ApiResponse(200,"Login successful",{
         accessToken,
         user:{
             id: user.id,

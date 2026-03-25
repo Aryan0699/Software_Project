@@ -8,6 +8,8 @@ import authRouter from './routes/auth.route.js'
 import testrouter from './routes/test.route.js'
 const app = express()
 
+app.use(cookieParser()) // gives access to req.cookies for parsing cookies from incoming requests
+
 // app.use(pinoHttp(
 //     {logger}
 // )) // Add pino-http middleware for logging HTTP requests and responses
