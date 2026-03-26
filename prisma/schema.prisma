@@ -8,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMS
 enum Role {
   USER
   ADMIN
@@ -15,21 +16,432 @@ enum Role {
   STAFF
 }
 
+
+enum SlotKind {
+  LECTURE
+  LAB
+  TUTORIAL
+  SPECIAL
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum BookingStatus {
+  PENDING_FACULTY
+  PENDING_STAFF
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum BookingActionType {
+  CREATED
+  FACULTY_APPROVED
+  FACULTY_REJECTED
+  STAFF_APPROVED
+  STAFF_REJECTED
+  CANCELLED
+}
+
+
+//USER SCHEMAS
+
 model User {
-  id  String  @id @default(cuid())
-  username String
-  email String @unique
-  hashedPassword String
-  role Role @default(USER)
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  hashedPassword  String
+  role            Role     @default(USER)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  studentProfile  StudentProfile?
+  facultyProfile  FacultyProfile?
+  staffProfile    StaffProfile?
+
+  taughtAssignments    CourseSlotAssignment[]     @relation("FacultyCourseAssignments")
+  enrollments          Enrollment[]               @relation("StudentEnrollments")
+  buildingAssignments  BuildingStaffAssignment[]  @relation("StaffBuildingAssignments")
+  bookingRequestsCreated BookingRequest[]           @relation("BookingRequester")  // which req created by this user
+  facultyReviewBookingRequests BookingRequest[]           @relation("BookingFacultyReviewer") // kaunsi req ye faculty handle kar raha hai
+  staffReviewBookingRequests BookingRequest[]           @relation("BookingStaffReviewer") // kaunsi req ye staff handle kar raha hai
+  bookingActionsPerformed BookingActionHistory[]     @relation("BookingActionPerformer")  // those booking in which he or she is approved it
 }
 
 model ApprovedUser {
-  id String @id @default(cuid())
-  email String @unique
-  role Role @default(USER)
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      Role
   createdAt DateTime @default(now())
+}
+
+model StudentProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  rollNumber    String?   @unique
+  batchYear     Int?
+  departmentId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([departmentId])
+}
+
+model FacultyProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  designation   String?
+  departmentId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([departmentId])
+}
+
+model StaffProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  designation   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+// ACADEMIC STRUCTURE SCHEMAS - DEPARTMENT BUILDINGS ROOMS
+model Department {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses         Course[]
+  studentProfiles StudentProfile[] //a virtual reverse relation (for easy querying)
+  facultyProfiles FacultyProfile[]
+}
+
+model Building {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String   @unique
+  location    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms       Room[]
+  staffLinks  BuildingStaffAssignment[]
+}
+
+model BuildingStaffAssignment {
+  buildingId   String
+  staffUserId  String
+  createdAt    DateTime @default(now())
+
+  building     Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  staffUser    User     @relation("StaffBuildingAssignments", fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@id([buildingId, staffUserId])
+  @@index([staffUserId])
+}
+
+//Since it is not fixed might change so not made an enum .
+model RoomType {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms       Room[]
+}
+
+model Room {
+  id            String   @id @default(cuid())
+  buildingId    String
+  roomTypeId    String?
+  roomNumber    String
+  fullCode      String   @unique
+  displayName   String?
+  capacity      Int?
+  isActive      Boolean  @default(true)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  building      Building @relation(fields: [buildingId], references: [id], onDelete: Restrict)
+  roomType      RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
+
+  features      RoomFeatureAssignment[]
+  roomAllocations CourseRoomAllocation[]
+  slotOccupancies RoomSlotOccupancy[]
+  bookingRequests BookingRequest[]
+
+  @@unique([buildingId, roomNumber])
+  @@index([buildingId])
+  @@index([roomTypeId])
+  @@index([capacity])
+  @@index([isActive])
+}
+//Since can change so not made an enum .
+model RoomFeature {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roomAssignments RoomFeatureAssignment[]
+}
+
+model RoomFeatureAssignment {
+  roomId      String
+  featureId   String
+  value       String?
+
+  room        Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  feature     RoomFeature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, featureId])
+  @@index([featureId])
+}
+
+
+// SLOT SCHEMAS
+
+model SlotSystem {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  description   String?
+  applicableFor String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  slots         Slot[]
+  aliases       SlotAlias[]
+}
+
+
+model Slot {
+  id            String   @id @default(cuid())
+  slotSystemId  String
+  code          String
+  slotKind      SlotKind @default(LECTURE)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  aliases       SlotAlias[]
+
+  slotSystem    SlotSystem @relation(fields: [slotSystemId], references: [id], onDelete: Cascade)
+  occurrences   SlotOccurrence[]
+  courseAssignments CourseSlotAssignment[]
+  slotOccupancies RoomSlotOccupancy[]
+  @@unique([slotSystemId, code])
+  @@index([slotSystemId])
+} 
+
+model SlotOccurrence {
+  id           String    @id @default(cuid())
+  slotId       String
+  dayOfWeek    DayOfWeek
+  startMinute  Int
+  endMinute    Int
+  createdAt    DateTime  @default(now())
+
+  slot         Slot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@index([slotId])
+  @@index([dayOfWeek])
+  @@index([dayOfWeek, startMinute, endMinute])
+}
+
+model SlotAlias {
+  id              String   @id @default(cuid())
+  rawCode         String   
+  effectiveSlotId String
+  slotSystemId    String
+  note            String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  effectiveSlot   Slot     @relation(fields: [effectiveSlotId], references: [id], onDelete: Cascade)
+  slotSystem      SlotSystem @relation(fields: [slotSystemId], references: [id], onDelete: Cascade)
+  @@index([effectiveSlotId])
+  @@unique([slotSystemId, rawCode])
+}
+
+//COURSE SCHEMAS
+
+model Course {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  courseType       String?
+  ltp         String?
+  credits     Decimal? @db.Decimal(4, 1)
+  departmentId String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  department  Department?            @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  assignments CourseSlotAssignment[]
+
+  @@index([departmentId])
+  @@index([isActive])
+}
+
+model CourseSlotAssignment {
+  id               String   @id @default(cuid())
+  courseId         String
+  slotId           String
+  facultyUserId    String?
+  rawSlotCode      String?
+  variantLabel     String?
+  registeredCount  Int?
+  sourceType       String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  slot             Slot     @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  faculty          User?    @relation("FacultyCourseAssignments", fields: [facultyUserId], references: [id], onDelete: SetNull)
+
+  roomAllocations  CourseRoomAllocation[]
+  enrollments      Enrollment[]
+
+  @@index([courseId])
+  @@index([slotId])
+  @@index([facultyUserId])
+  @@index([rawSlotCode])
+  @@index([isActive])
+}
+
+model CourseRoomAllocation {
+  id                     String   @id @default(cuid())
+  courseSlotAssignmentId String
+  roomId                 String
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  courseSlotAssignment   CourseSlotAssignment @relation(fields: [courseSlotAssignmentId], references: [id], onDelete: Cascade)
+  room                   Room                 @relation(fields: [roomId], references: [id], onDelete: Restrict)
+
+  @@unique([courseSlotAssignmentId, roomId])
+  @@index([roomId])
+  @@index([isActive])
+}
+
+model RoomSlotOccupancy {
+  id          String   @id @default(cuid())
+  roomId      String
+  slotId      String
+  sourceType  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  slot        Slot     @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, slotId])
+  @@index([slotId])
+  @@index([isActive])
+}
+
+model Enrollment {
+  studentId               String
+  courseSlotAssignmentId  String
+  createdAt               DateTime @default(now())
+
+  student                 User                 @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  courseSlotAssignment    CourseSlotAssignment @relation(fields: [courseSlotAssignmentId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, courseSlotAssignmentId])
+  @@index([courseSlotAssignmentId])
+}
+
+
+//BOOKING REQUEST
+model BookingRequest {
+  id         String   @id @default(cuid())
+  requesterUserId String
+  roomId      String
+  bookingDate DateTime
+  startMinute Int
+  endMinute   Int
+  title       String
+  purpose String?
+  minCapacityRequired Int?
+
+  status      BookingStatus
+  rejectionReason String?
+
+  facultyReviewerUserId String?
+  staffReviewerUserId String?
+
+  facultyDecisionAt DateTime?
+  staffDecisionAt DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester   User @relation("BookingRequester",fields: [requesterUserId], references: [id], onDelete: Cascade)
+  room        Room @relation(fields: [roomId], references: [id], onDelete: Restrict) // agar room yaha pe used hai to usko delete nahi kar sakte
+  facultyReviewer User? @relation("BookingFacultyReviewer", fields: [facultyReviewerUserId], references: [id], onDelete: SetNull)
+  staffReviewer User? @relation("BookingStaffReviewer", fields: [staffReviewerUserId], references: [id], onDelete: SetNull)
+
+
+  actionHistory BookingActionHistory[]
+
+  @@index([roomId, bookingDate])
+  @@index([requesterUserId])
+  @@index([status])
+  @@index([bookingDate, startMinute, endMinute])
+  @@index([facultyReviewerUserId])
+  @@index([staffReviewerUserId])
+
+}
+
+model BookingActionHistory {
+  id              String   @id @default(cuid())
+  bookingRequestId String
+  actionType      BookingActionType
+  performedByUserId String?
+
+  note            String?
+  createdAt       DateTime @default(now())
+  bookingRequest  BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Cascade)
+  performedByUser User?           @relation("BookingActionPerformer",fields: [performedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([bookingRequestId])
+  @@index([performedByUserId])
+  @@index([actionType])
+  @@index([createdAt])
 }
 
