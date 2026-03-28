@@ -21,5 +21,6 @@ export const env ={
     JWT_SECRET_KEY:process.env.JWT_SECRET_KEY,
     CORS_ORIGIN:process.env.CORS_ORIGIN,
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
-    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL
 }
