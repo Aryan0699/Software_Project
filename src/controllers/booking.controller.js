@@ -7,10 +7,13 @@ import {
     staffRejectBookingRequest as staffRejectBookingRequestService,
     cancelBookingRequest as cancelBookingRequestService,
     getBookingRequestById as getBookingRequestByIdService,
-    getFacultyPendingRequests as getFacultyPendingRequestsService
+    getFacultyPendingRequests as getFacultyPendingRequestsService,
+    getStaffPendingRequests as getStaffPendingRequestsService,
+    facultyApproveBookingRequest as facultyApproveBookingRequestService,
+    facultyRejectBookingRequest as facultyRejectBookingRequestService
 } from "../services/booking.service.js";
 
-import { isRoomAvailable,findAvailableRooms } from "../services/availabilty.service.js";
+import { isRoomAvailable, findAvailableRooms, suggestAlternativeRooms, getBuildingRoomMap } from "../services/availabilty.service.js";
 import logger from "../utils/logger.js";
 
 
@@ -23,7 +26,7 @@ export const checkRoomAvailability = asyncHandler(async (req, res) => {
     startMinute: Number(startMinute),
     endMinute: Number(endMinute),
   });
-  logger.info(`Room available for room ID ${roomId} on ${bookingDate} from minute ${startMinute} to ${endMinute}: ${result}`);
+  logger.info(`Room available for room ID ${roomId} on ${bookingDate} from minute ${startMinute} to ${endMinute}: ${result.available}`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Availability checked successfully", result));
@@ -41,7 +44,7 @@ export const getAvailableRooms = asyncHandler(async (req, res) => {
     roomTypeId: roomTypeId || undefined,
     minCapacity: minCapacity ? Number(minCapacity) : undefined,
   });
-  logger.info(`Found ${rooms.length} available rooms on ${bookingDate} from minute ${startMinute} to ${endMinute} with filters - buildingId: ${buildingId}, roomTypeId: ${roomTypeId}, minCapacity: ${minCapacity}`);
+  logger.info(`Found ${rooms.length} available rooms`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Available rooms fetched successfully", rooms));
@@ -59,7 +62,7 @@ export const createBookingRequest = asyncHandler(async (req, res) => {
     facultyReviewerUserId,
   } = req.body;
 
-  logger.info(`Creating booking request for user ID: ${req.user.userId} in room ID: ${roomId} on date: ${bookingDate} from minute ${startMinute} to ${endMinute} with title: ${title}`);
+  logger.info(`Creating booking request for user ID: ${req.user.userId} in room ID: ${roomId}`);
   const booking = await createBookingRequestService({
     requesterUserId: req.user.userId,
     requesterRole: req.user.role,
@@ -73,7 +76,7 @@ export const createBookingRequest = asyncHandler(async (req, res) => {
       minCapacityRequired !== undefined ? Number(minCapacityRequired) : undefined,
     facultyReviewerUserId,
   });
-  logger.info(`Booking request created with ID: ${booking.id} for user ID: ${req.user.userId}`);
+  logger.info(`Booking request created with ID: ${booking.id}`);
   return res
     .status(201)
     .json(new ApiResponse(201, "Booking request created successfully", booking));
@@ -93,7 +96,6 @@ export const getBookingRequestById = asyncHandler(async (req, res) => {
   logger.info(`Fetching booking request with ID: ${bookingId}`);
 
   const booking = await getBookingRequestByIdService(bookingId);
-  logger.info(`Found booking request with ID: ${bookingId}`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Booking request fetched successfully", booking));
@@ -101,7 +103,7 @@ export const getBookingRequestById = asyncHandler(async (req, res) => {
 
 export const getFacultyPendingRequests = asyncHandler(async (req, res) => {
   const bookings = await getFacultyPendingRequestsService(req.user.userId);
-  logger.info(`Found ${bookings.length} faculty pending requests for user ID: ${req.user.userId}`);
+  logger.info(`Found ${bookings.length} faculty pending requests`);
 
   return res
     .status(200)
@@ -110,7 +112,7 @@ export const getFacultyPendingRequests = asyncHandler(async (req, res) => {
 
 export const getStaffPendingRequests = asyncHandler(async (req, res) => {
   const bookings = await getStaffPendingRequestsService(req.user.userId);
-  logger.info(`Found ${bookings.length} staff pending requests for user ID: ${req.user.userId}`);
+  logger.info(`Found ${bookings.length} staff pending requests`);
 
   return res
     .status(200)
@@ -119,12 +121,11 @@ export const getStaffPendingRequests = asyncHandler(async (req, res) => {
 
 export const facultyApproveBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
-    logger.info(`Faculty user ID: ${req.user.userId} approving booking request ID: ${bookingId}`);
+  logger.info(`Faculty user ${req.user.userId} approving booking ${bookingId}`);
   const booking = await facultyApproveBookingRequestService({
     bookingRequestId: bookingId,
     facultyUserId: req.user.userId,
   });
-  logger.info(`Booking request ID: ${bookingId} approved by faculty user ID: ${req.user.userId}`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Booking request approved by faculty", booking));
@@ -133,13 +134,12 @@ export const facultyApproveBookingRequest = asyncHandler(async (req, res) => {
 export const facultyRejectBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   const { rejectionReason } = req.body;
-    logger.info(`Faculty user ID: ${req.user.userId} rejecting booking request ID: ${bookingId} with reason: ${rejectionReason}`);
+  logger.info(`Faculty user ${req.user.userId} rejecting booking ${bookingId}`);
   const booking = await facultyRejectBookingRequestService({
     bookingRequestId: bookingId,
     facultyUserId: req.user.userId,
     rejectionReason,
   });
-  logger.info(`Booking request ID: ${bookingId} rejected by faculty user ID: ${req.user.userId}`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Booking request rejected by faculty", booking));
@@ -147,12 +147,11 @@ export const facultyRejectBookingRequest = asyncHandler(async (req, res) => {
 
 export const staffApproveBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
-    logger.info(`Staff user ID: ${req.user.userId} approving booking request ID: ${bookingId}`);
+  logger.info(`Staff user ${req.user.userId} approving booking ${bookingId}`);
   const booking = await staffApproveBookingRequestService({
     bookingRequestId: bookingId,
     staffUserId: req.user.userId,
   });
-    logger.info(`Booking request ID: ${bookingId} approved by staff user ID: ${req.user.userId}`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Booking request approved by staff", booking));
@@ -161,13 +160,12 @@ export const staffApproveBookingRequest = asyncHandler(async (req, res) => {
 export const staffRejectBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   const { rejectionReason } = req.body;
-    logger.info(`Staff user ID: ${req.user.userId} rejecting booking request ID: ${bookingId} with reason: ${rejectionReason}`);
+  logger.info(`Staff user ${req.user.userId} rejecting booking ${bookingId}`);
   const booking = await staffRejectBookingRequestService({
     bookingRequestId: bookingId,
     staffUserId: req.user.userId,
     rejectionReason,
   });
-    logger.info(`Booking request ID: ${bookingId} rejected by staff user ID: ${req.user.userId}`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Booking request rejected by staff", booking));
@@ -175,13 +173,53 @@ export const staffRejectBookingRequest = asyncHandler(async (req, res) => {
 
 export const cancelBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
-  logger.info(`User ID: ${req.user.userId} cancelling booking request ID: ${bookingId}`);
+  logger.info(`User ${req.user.userId} cancelling booking ${bookingId}`);
   const booking = await cancelBookingRequestService({
     bookingRequestId: bookingId,
     requesterUserId: req.user.userId,
   });
-    logger.info(`Booking request ID: ${bookingId} cancelled by user ID: ${req.user.userId}`);
   return res
     .status(200)
     .json(new ApiResponse(200, "Booking request cancelled successfully", booking));
+});
+
+// ==================== ROOM SUGGESTIONS ====================
+
+export const suggestRooms = asyncHandler(async (req, res) => {
+  const { roomId, bookingDate, startMinute, endMinute, minCapacity, roomTypeId, buildingId } = req.query;
+  logger.info(`Suggesting alternative rooms for room ${roomId}`);
+
+  const suggestions = await suggestAlternativeRooms({
+    roomId: roomId || undefined,
+    bookingDate,
+    startMinute: Number(startMinute),
+    endMinute: Number(endMinute),
+    buildingId: buildingId || undefined,
+    minCapacity: minCapacity ? Number(minCapacity) : undefined,
+    roomTypeId: roomTypeId || undefined,
+    limit: 15,
+  });
+
+  logger.info(`Found ${suggestions.length} alternative rooms`);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Alternative rooms fetched successfully", suggestions));
+});
+
+// ==================== BUILDING ROOM MAP ====================
+
+export const buildingRoomMap = asyncHandler(async (req, res) => {
+  const { buildingId, bookingDate, startMinute, endMinute } = req.query;
+  logger.info(`Fetching building room map for building ${buildingId}`);
+
+  const roomMap = await getBuildingRoomMap({
+    buildingId,
+    bookingDate,
+    startMinute: Number(startMinute),
+    endMinute: Number(endMinute),
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Building room map fetched successfully", roomMap));
 });

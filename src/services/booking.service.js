@@ -2,7 +2,7 @@ import {prisma} from "../db/index.js";
 import ApiError from "../utils/apiError.js";
 import {parseBookingDate,validateMinuteRange,getDayOfWeek} from "../utils/dateTime.js";
 import logger from "../utils/logger.js";
-import {findAvailableRooms,isRoomAvailable} from "./availabilty.service.js";
+import {findAvailableRooms,isRoomAvailable, suggestAlternativeRooms} from "./availabilty.service.js";
 import { logAction } from "./bookingActionHistory.service.js";
 
 
@@ -28,7 +28,7 @@ const properBookingFormat = (booking) => {
     }
 }
 
-const ensureRoomIsAvailable = async ({ roomId, bookingDate, startMinute, endMinute }) => {
+const ensureRoomIsAvailable = async ({ roomId, bookingDate, startMinute, endMinute, includeSuggestions = false }) => {
   const availability = await isRoomAvailable({
     roomId,
     bookingDate,
@@ -37,9 +37,29 @@ const ensureRoomIsAvailable = async ({ roomId, bookingDate, startMinute, endMinu
   });
 
   if (!availability.available) {
-    throw new ApiError(409, "Room is not available for the requested time", [
+    let suggestions = [];
+    if (includeSuggestions) {
+      try {
+        suggestions = await suggestAlternativeRooms({
+          roomId,
+          bookingDate,
+          startMinute,
+          endMinute,
+          limit: 15,
+        });
+      } catch (err) {
+        logger.warn(`Failed to fetch suggestions: ${err.message}`);
+      }
+    }
+
+    const error = new ApiError(409, "Room is not available for the requested time", [
       availability.reason,
     ]);
+    error.data = {
+      conflict: availability,
+      suggestedAlternatives: suggestions,
+    };
+    throw error;
   }
 }
 const resolveStaffReviewerForRoom = async (roomId,tx) => {
@@ -92,7 +112,7 @@ const resolveStaffReviewerForRoom = async (roomId,tx) => {
 const createBookingRequest = async ({ requesterUserId,requesterRole, roomId, bookingDate, startMinute, endMinute, title, purpose="", minCapacityRequired=0,facultyReviewerUserId}) => {
     logger.info(`Creating booking request for user ID: ${requesterUserId} for room ID: ${roomId} on date: ${bookingDate} from minute ${startMinute} to ${endMinute}`);
     
-    await ensureRoomIsAvailable({ roomId, bookingDate, startMinute, endMinute });
+    await ensureRoomIsAvailable({ roomId, bookingDate, startMinute, endMinute, includeSuggestions: true });
 
     //validation 
     if(!title || title.trim() === "")
