@@ -7,7 +7,10 @@ import {
     staffRejectBookingRequest as staffRejectBookingRequestService,
     cancelBookingRequest as cancelBookingRequestService,
     getBookingRequestById as getBookingRequestByIdService,
-    getFacultyPendingRequests as getFacultyPendingRequestsService
+    getFacultyPendingRequests as getFacultyPendingRequestsService,
+    getStaffPendingRequests as getStaffPendingRequestsService,
+    facultyApproveBookingRequest as facultyApproveBookingRequestService,
+    facultyRejectBookingRequest as facultyRejectBookingRequestService
 } from "../services/booking.service.js";
 
 import { isRoomAvailable,findAvailableRooms } from "../services/availabilty.service.js";

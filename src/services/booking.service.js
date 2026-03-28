@@ -174,9 +174,11 @@ const createBookingRequest = async ({ requesterUserId,requesterRole, roomId, boo
             select:{
                 staffUserId:true,
                 staffUser:{
-                    id: true,
-                    role: true,
-                    isActive: true
+                    select: {
+                        id: true,
+                        role: true,
+                        isActive: true
+                    }
             }
         }
         })
@@ -367,6 +369,9 @@ const facultyApproveBookingRequest = async ({ bookingRequestId, facultyUserId })
         roomId: true,
         status: true,
         facultyReviewerUserId: true,
+        bookingDate: true,
+        startMinute: true,
+        endMinute: true,
       },
     });
 
@@ -388,7 +393,7 @@ const facultyApproveBookingRequest = async ({ bookingRequestId, facultyUserId })
       endMinute: booking.endMinute,
     });
     const updated = await prisma.$transaction(async (tx) => {
-      const { staffReviewerUserId } = await resolveStaffReviewerForRoom(tx, booking.roomId);
+      const { staffReviewerUserId } = await resolveStaffReviewerForRoom(booking.roomId, tx);
 
       const result = await tx.bookingRequest.update({
         where: { id: bookingRequestId },
@@ -411,7 +416,7 @@ const facultyApproveBookingRequest = async ({ bookingRequestId, facultyUserId })
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const facultyRejectBookingRequest = async ({
@@ -456,7 +461,7 @@ const facultyRejectBookingRequest = async ({
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const staffApproveBookingRequest = async ({ bookingRequestId, staffUserId }) => {
@@ -504,7 +509,7 @@ const staffApproveBookingRequest = async ({ bookingRequestId, staffUserId }) => 
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const staffRejectBookingRequest = async ({
@@ -549,7 +554,7 @@ const staffRejectBookingRequest = async ({
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const cancelBookingRequest = async ({ bookingRequestId, requesterUserId }) => {
@@ -592,7 +597,7 @@ const cancelBookingRequest = async ({ bookingRequestId, requesterUserId }) => {
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 const getAvailableRoomsForBookingRequest = async ({ bookingDate, startMinute, endMinute, minCapacityRequired }) => {    
     const date = parseBookingDate(bookingDate);
