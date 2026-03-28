@@ -1,4 +1,4 @@
-import prisma from "../db/index.js";
+import {prisma} from "../db/index.js";
 import ApiError from "../utils/apiError.js";
 import {parseBookingDate,validateMinuteRange,getDayOfWeek} from "../utils/dateTime.js";
 import logger from "../utils/logger.js";

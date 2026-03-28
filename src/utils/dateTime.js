@@ -1,5 +1,5 @@
-import ApiError from "./apiError";
-import logger from "./logger";
+import ApiError from "./apiError.js";
+import logger from "./logger.js";
 
 // Expected date format: "YYYY-MM-DD"
 export function parseBookingDate(dateStr) {

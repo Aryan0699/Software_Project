@@ -1,12 +1,13 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/apiResponse.js";
-import {createBookingRequest,
-    getMyBookingRequests,
-    staffApproveBookingRequest,
-    staffRejectBookingRequest,
-    cancelBookingRequest,
-    getBookingRequestById,
-    getFacultyPendingRequests
+import {
+    createBookingRequest as createBookingRequestService,
+    getMyBookingRequests as getMyBookingRequestsService,
+    staffApproveBookingRequest as staffApproveBookingRequestService,
+    staffRejectBookingRequest as staffRejectBookingRequestService,
+    cancelBookingRequest as cancelBookingRequestService,
+    getBookingRequestById as getBookingRequestByIdService,
+    getFacultyPendingRequests as getFacultyPendingRequestsService
 } from "../services/booking.service.js";
 
 import { isRoomAvailable,findAvailableRooms } from "../services/availabilty.service.js";
@@ -59,7 +60,7 @@ export const createBookingRequest = asyncHandler(async (req, res) => {
   } = req.body;
 
   logger.info(`Creating booking request for user ID: ${req.user.userId} in room ID: ${roomId} on date: ${bookingDate} from minute ${startMinute} to ${endMinute} with title: ${title}`);
-  const booking = await createBookingRequest({
+  const booking = await createBookingRequestService({
     requesterUserId: req.user.userId,
     requesterRole: req.user.role,
     roomId,
@@ -80,7 +81,7 @@ export const createBookingRequest = asyncHandler(async (req, res) => {
 
 export const getMyBookingRequests = asyncHandler(async (req, res) => {
   logger.info(`Fetching booking requests for user ID: ${req.user.userId}`);
-  const bookings = await getMyBookingRequests(req.user.userId);
+  const bookings = await getMyBookingRequestsService(req.user.userId);
   logger.info(`Found ${bookings.length} booking requests for user ID: ${req.user.userId}`);
   return res
     .status(200)
@@ -91,7 +92,7 @@ export const getBookingRequestById = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   logger.info(`Fetching booking request with ID: ${bookingId}`);
 
-  const booking = await bookingService.getBookingRequestById(bookingId);
+  const booking = await getBookingRequestByIdService(bookingId);
   logger.info(`Found booking request with ID: ${bookingId}`);
   return res
     .status(200)
@@ -99,7 +100,7 @@ export const getBookingRequestById = asyncHandler(async (req, res) => {
 });
 
 export const getFacultyPendingRequests = asyncHandler(async (req, res) => {
-  const bookings = await bookingService.getFacultyPendingRequests(req.user.userId);
+  const bookings = await getFacultyPendingRequestsService(req.user.userId);
   logger.info(`Found ${bookings.length} faculty pending requests for user ID: ${req.user.userId}`);
 
   return res
@@ -108,7 +109,7 @@ export const getFacultyPendingRequests = asyncHandler(async (req, res) => {
 });
 
 export const getStaffPendingRequests = asyncHandler(async (req, res) => {
-  const bookings = await bookingService.getStaffPendingRequests(req.user.userId);
+  const bookings = await getStaffPendingRequestsService(req.user.userId);
   logger.info(`Found ${bookings.length} staff pending requests for user ID: ${req.user.userId}`);
 
   return res
@@ -119,7 +120,7 @@ export const getStaffPendingRequests = asyncHandler(async (req, res) => {
 export const facultyApproveBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
     logger.info(`Faculty user ID: ${req.user.userId} approving booking request ID: ${bookingId}`);
-  const booking = await bookingService.facultyApproveBookingRequest({
+  const booking = await facultyApproveBookingRequestService({
     bookingRequestId: bookingId,
     facultyUserId: req.user.userId,
   });
@@ -133,7 +134,7 @@ export const facultyRejectBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   const { rejectionReason } = req.body;
     logger.info(`Faculty user ID: ${req.user.userId} rejecting booking request ID: ${bookingId} with reason: ${rejectionReason}`);
-  const booking = await bookingService.facultyRejectBookingRequest({
+  const booking = await facultyRejectBookingRequestService({
     bookingRequestId: bookingId,
     facultyUserId: req.user.userId,
     rejectionReason,
@@ -147,7 +148,7 @@ export const facultyRejectBookingRequest = asyncHandler(async (req, res) => {
 export const staffApproveBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
     logger.info(`Staff user ID: ${req.user.userId} approving booking request ID: ${bookingId}`);
-  const booking = await bookingService.staffApproveBookingRequest({
+  const booking = await staffApproveBookingRequestService({
     bookingRequestId: bookingId,
     staffUserId: req.user.userId,
   });
@@ -161,7 +162,7 @@ export const staffRejectBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   const { rejectionReason } = req.body;
     logger.info(`Staff user ID: ${req.user.userId} rejecting booking request ID: ${bookingId} with reason: ${rejectionReason}`);
-  const booking = await bookingService.staffRejectBookingRequest({
+  const booking = await staffRejectBookingRequestService({
     bookingRequestId: bookingId,
     staffUserId: req.user.userId,
     rejectionReason,
@@ -175,7 +176,7 @@ export const staffRejectBookingRequest = asyncHandler(async (req, res) => {
 export const cancelBookingRequest = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   logger.info(`User ID: ${req.user.userId} cancelling booking request ID: ${bookingId}`);
-  const booking = await bookingService.cancelBookingRequest({
+  const booking = await cancelBookingRequestService({
     bookingRequestId: bookingId,
     requesterUserId: req.user.userId,
   });
