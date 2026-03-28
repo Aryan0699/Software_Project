@@ -6,6 +6,7 @@ import logger from './utils/logger.js'
 import { env } from './utils/env.js'
 import authRouter from './routes/auth.route.js'
 import testrouter from './routes/test.route.js'
+import boookingRouter from './routes/booking.routes.js'
 const app = express()
 
 app.use(cookieParser()) // gives access to req.cookies for parsing cookies from incoming requests
@@ -44,6 +45,7 @@ app.get('/', (req, res) => {
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/test", testrouter);
+app.use("/api/v1/bookings", boookingRouter);
 
 app.use((err, req, res, next) => {
     // Log detailed error information for monitoring/debugging
