@@ -51,9 +51,9 @@ const login = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60, // 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
         path: "/",
-        sameSite: "strict"
+        sameSite: "lax"  // "lax" allows cookies on top-level navigations; "strict" blocks cross-origin entirely
     };
 
     return res.status(200)

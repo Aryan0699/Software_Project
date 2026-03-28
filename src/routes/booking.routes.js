@@ -72,21 +72,8 @@ bookingRouter.post(
 
 bookingRouter.get("/my-requests", verifyJWTToken, getMyBookingRequests);
 
-bookingRouter.get(
-  "/:bookingId",
-  verifyJWTToken,
-  validate(bookingIdParamSchema, "params"),
-  getBookingRequestById
-);
-
-bookingRouter.patch(
-  "/:bookingId/cancel",
-  verifyJWTToken,
-  validate(bookingIdParamSchema, "params"),
-  cancelBookingRequest
-);
-
 // ==================== FACULTY REVIEW ====================
+// IMPORTANT: These MUST be above /:bookingId to avoid "faculty" being captured as a bookingId
 
 bookingRouter.get(
   "/faculty/pending",
@@ -113,6 +100,7 @@ bookingRouter.patch(
 );
 
 // ==================== STAFF REVIEW ====================
+// IMPORTANT: These MUST be above /:bookingId to avoid "staff" being captured as a bookingId
 
 bookingRouter.get(
   "/staff/pending",
@@ -136,6 +124,23 @@ bookingRouter.patch(
   validate(bookingIdParamSchema, "params"),
   validate(rejectBookingSchema),
   staffRejectBookingRequest
+);
+
+// ==================== DYNAMIC BOOKING ID ROUTES ====================
+// These MUST be LAST because /:bookingId is a catch-all pattern
+
+bookingRouter.get(
+  "/:bookingId",
+  verifyJWTToken,
+  validate(bookingIdParamSchema, "params"),
+  getBookingRequestById
+);
+
+bookingRouter.patch(
+  "/:bookingId/cancel",
+  verifyJWTToken,
+  validate(bookingIdParamSchema, "params"),
+  cancelBookingRequest
 );
 
 export default bookingRouter;
