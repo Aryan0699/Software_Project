@@ -1,5 +1,9 @@
 export const approvedUsers = [
   {
+    "email":"admin@iitj.ac.in",
+    "role":"ADMIN"
+  },
+  {
     "email": "romibanerjee@iitj.ac.in",
     "role": "FACULTY"
   },

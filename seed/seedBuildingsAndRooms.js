@@ -1,5 +1,6 @@
 import { buildingRooms } from "../data/buildingRoomMapping.js";
 import { normalizeCode } from "./normalizers.js";
+import buildingCodeNameMapping from "../data/buildingCodeNameMapping.js";
 
 export async function seedBuildingsAndRooms(prisma) {
   const buildingMap = new Map();
@@ -11,12 +12,12 @@ export async function seedBuildingsAndRooms(prisma) {
     const building = await prisma.building.upsert({
       where: { code: buildingCode },
       update: {
-        name: buildingCode,
+        name: buildingCodeNameMapping[buildingCode] || buildingCode,
         isActive: true,
       },
       create: {
         code: buildingCode,
-        name: buildingCode,
+        name: buildingCodeNameMapping[buildingCode] || buildingCode,
       },
     });
 

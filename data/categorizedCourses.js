@@ -131,7 +131,7 @@ export const categorised_courses = {
             "Instructor": "Pradip Sasmal",
             "label": "English",
             "Student Registered*": "",
-            "Classroom": "LHB 308"
+            "Classroom": "LHC 308"
         },
         {
             "code": "CSL1010",
