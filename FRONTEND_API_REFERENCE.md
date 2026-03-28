@@ -7,7 +7,7 @@
 > **⚠️ CORS & Cookie Setup (CRITICAL):**
 > - The backend uses `CORS_ORIGIN` env var. Set it to your frontend URL (e.g., `http://localhost:5173`).
 > - All fetch/axios calls must include `credentials: 'include'` for cookies to work cross-origin.
-> - The `accessToken` cookie is `httpOnly` (not accessible via JS). Use `Authorization: Bearer` header instead if you prefer storing the token in memory/localStorage.
+> - The `accessToken` cookie is `httpOnly` (not accessible via JS). Use `Authorization: Bearer` header instead if you prefer storing the token in memory/localStorage (Avoid using local storage).
 > - Example axios setup:
 > ```javascript
 > const api = axios.create({
