@@ -24,9 +24,9 @@ const generateAccessToken = (user) => {
     return accessToken;
 }
 
-const signupService = async ({username,email,password}) => {
+const signupService = async ({name,email,password}) => {
     email = email.toLowerCase().trim();
-    username = username.toLowerCase().trim();
+    name = name.trim();
     logger.info("Signup service called for email: " + email);
     const existingUser = await prisma.user.findUnique({
         where: { email }
@@ -45,7 +45,7 @@ const signupService = async ({username,email,password}) => {
 
     const user = await prisma.user.create({
         data:{
-            username,
+            name,
             email,
             hashedPassword,
             role
@@ -95,7 +95,7 @@ const getCurrentUser = async (userId) => {
         where: { id: userId },
         select: {
             id: true,
-            username: true,
+            name: true,
             email: true,
             role: true,
             createdAt: true,

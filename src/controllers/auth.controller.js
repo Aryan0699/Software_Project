@@ -6,19 +6,19 @@ import {getCurrentUser}  from "../services/auth.service.js";
 import logger from "../utils/logger.js";
 
 const signup = asyncHandler(async (req, res) => {
-    const { username, email, password } = req.body;
+    const { name, email, password } = req.body;
     logger.info(`Signup attempt for email: ${email}`);
     // Input validation - Check if all required fields are present and valid
-    const fields = { username, email, password };
+    const fields = { name, email, password };
 
     for (let field in fields) {
         if (!fields[field] || typeof fields[field] !== "string" || fields[field].trim() === "") {
             logger.warn(`Signup failed: Missing or invalid field - ${field}`);
             throw new ApiError(400, `${field} is required`);
-        }     
+        }
     }
 
-    const user = await signupService({ username, email, password });
+    const user = await signupService({ name, email, password });
     
     logger.info(`User registered successfully: ${user.email} (ID: ${user.id})`);
 

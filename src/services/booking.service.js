@@ -3,7 +3,7 @@ import ApiError from "../utils/apiError.js";
 import {parseBookingDate,validateMinuteRange,getDayOfWeek} from "../utils/dateTime.js";
 import logger from "../utils/logger.js";
 import {findAvailableRooms,isRoomAvailable} from "./availabilty.service.js";
-import logger from "../utils/logger.js";
+import { logAction } from "./bookingActionHistory.service.js";
 
 
 const properBookingFormat = (booking) => {
@@ -215,13 +215,12 @@ const createBookingRequest = async ({ requesterUserId,requesterRole, roomId, boo
                     staffReviewerUserId: staffReviewerIdToStore
                 }
             })
-            await tx.bookingActionHistory.create({
-                data: {
-                    bookingId: booking.id,
-                    action: "CREATED",
-                    userId: requesterUserId,
-                    note:"Booking request created"
-                }
+            await logAction({
+                bookingRequestId: booking.id,
+                actionType: "CREATED",
+                performedByUserId: requesterUserId,
+                note: "Booking request created",
+                tx
             });
             return booking;
         }
@@ -401,13 +400,12 @@ const facultyApproveBookingRequest = async ({ bookingRequestId, facultyUserId })
         },
       });
 
-      await tx.bookingActionHistory.create({
-        data: {
-          bookingRequestId,
-          actionType: "FACULTY_APPROVED",
-          performedByUserId: facultyUserId,
-          note: "Approved by faculty and forwarded to staff",
-        },
+      await logAction({
+        bookingRequestId,
+        actionType: "FACULTY_APPROVED",
+        performedByUserId: facultyUserId,
+        note: "Approved by faculty and forwarded to staff",
+        tx
       });
 
       return result;
@@ -447,13 +445,12 @@ const facultyRejectBookingRequest = async ({
         },
       });
 
-      await tx.bookingActionHistory.create({
-        data: {
-          bookingRequestId,
-          actionType: "FACULTY_REJECTED",
-          performedByUserId: facultyUserId,
-          note: rejectionReason ? String(rejectionReason).trim() : "Rejected by faculty",
-        },
+      await logAction({
+        bookingRequestId,
+        actionType: "FACULTY_REJECTED",
+        performedByUserId: facultyUserId,
+        note: rejectionReason ? String(rejectionReason).trim() : "Rejected by faculty",
+        tx
       });
 
       return result;
@@ -496,13 +493,12 @@ const staffApproveBookingRequest = async ({ bookingRequestId, staffUserId }) => 
         },
       });
 
-      await tx.bookingActionHistory.create({
-        data: {
-          bookingRequestId,
-          actionType: "STAFF_APPROVED",
-          performedByUserId: staffUserId,
-          note: "Approved by staff",
-        },
+      await logAction({
+        bookingRequestId,
+        actionType: "STAFF_APPROVED",
+        performedByUserId: staffUserId,
+        note: "Approved by staff",
+        tx
       });
 
       return result;
@@ -542,13 +538,12 @@ const staffRejectBookingRequest = async ({
         },
       });
 
-      await tx.bookingActionHistory.create({
-        data: {
-          bookingRequestId,
-          actionType: "STAFF_REJECTED",
-          performedByUserId: staffUserId,
-          note: rejectionReason ? String(rejectionReason).trim() : "Rejected by staff",
-        },
+      await logAction({
+        bookingRequestId,
+        actionType: "STAFF_REJECTED",
+        performedByUserId: staffUserId,
+        note: rejectionReason ? String(rejectionReason).trim() : "Rejected by staff",
+        tx
       });
 
       return result;
@@ -586,13 +581,12 @@ const cancelBookingRequest = async ({ bookingRequestId, requesterUserId }) => {
         },
       });
 
-      await tx.bookingActionHistory.create({
-        data: {
-          bookingRequestId,
-          actionType: "CANCELLED",
-          performedByUserId: requesterUserId,
-          note: "Cancelled by requester",
-        },
+      await logAction({
+        bookingRequestId,
+        actionType: "CANCELLED",
+        performedByUserId: requesterUserId,
+        note: "Cancelled by requester",
+        tx
       });
 
       return result;
@@ -620,5 +614,10 @@ export {
     staffApproveBookingRequest,
     staffRejectBookingRequest,
     cancelBookingRequest,
-    getAvailableRoomsForBookingRequest
+    getAvailableRoomsForBookingRequest,
+    getBookingRequestById,
+    getFacultyPendingRequests,
+    getStaffPendingRequests,
+    facultyApproveBookingRequest,
+    facultyRejectBookingRequest
 }
