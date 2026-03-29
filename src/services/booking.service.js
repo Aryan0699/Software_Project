@@ -2,7 +2,7 @@ import {prisma} from "../db/index.js";
 import ApiError from "../utils/apiError.js";
 import {parseBookingDate,validateMinuteRange,getDayOfWeek} from "../utils/dateTime.js";
 import logger from "../utils/logger.js";
-import {findAvailableRooms,isRoomAvailable, suggestAlternativeRooms} from "./availabilty.service.js";
+import {findAvailableRooms,isRoomAvailable, suggestAlternativeRooms} from "./availability.service.js";
 import { logAction } from "./bookingActionHistory.service.js";
 
 
@@ -194,11 +194,13 @@ const createBookingRequest = async ({ requesterUserId,requesterRole, roomId, boo
             select:{
                 staffUserId:true,
                 staffUser:{
-                    id: true,
-                    role: true,
-                    isActive: true
+                    select: {
+                        id: true,
+                        role: true,
+                        isActive: true
+                    }
+                }
             }
-        }
         })
 
         if(!buildingStaff || !buildingStaff.staffUser || !buildingStaff.staffUser.isActive)
@@ -408,7 +410,7 @@ const facultyApproveBookingRequest = async ({ bookingRequestId, facultyUserId })
       endMinute: booking.endMinute,
     });
     const updated = await prisma.$transaction(async (tx) => {
-      const { staffReviewerUserId } = await resolveStaffReviewerForRoom(tx, booking.roomId);
+      const { staffReviewerUserId } = await resolveStaffReviewerForRoom(booking.roomId, tx);
 
       const result = await tx.bookingRequest.update({
         where: { id: bookingRequestId },
@@ -431,7 +433,7 @@ const facultyApproveBookingRequest = async ({ bookingRequestId, facultyUserId })
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const facultyRejectBookingRequest = async ({
@@ -476,7 +478,7 @@ const facultyRejectBookingRequest = async ({
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const staffApproveBookingRequest = async ({ bookingRequestId, staffUserId }) => {
@@ -524,7 +526,7 @@ const staffApproveBookingRequest = async ({ bookingRequestId, staffUserId }) => 
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const staffRejectBookingRequest = async ({
@@ -569,7 +571,7 @@ const staffRejectBookingRequest = async ({
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 
 const cancelBookingRequest = async ({ bookingRequestId, requesterUserId }) => {
@@ -612,7 +614,7 @@ const cancelBookingRequest = async ({ bookingRequestId, requesterUserId }) => {
       return result;
     });
 
-    return toSafeBooking(updated);
+    return properBookingFormat(updated);
   }
 const getAvailableRoomsForBookingRequest = async ({ bookingDate, startMinute, endMinute, minCapacityRequired }) => {    
     const date = parseBookingDate(bookingDate);

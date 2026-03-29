@@ -14,6 +14,7 @@ import {
   cancelBookingRequest,
   suggestRooms,
   buildingRoomMap,
+  buildingRoomStatus,
 } from "../controllers/booking.controller.js";
 import verifyJWTToken from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/rbac.middleware.js";
@@ -25,6 +26,7 @@ import {
   getAvailableRoomsSchema,
   suggestRoomsSchema,
   buildingRoomMapSchema,
+  buildingRoomStatusSchema,
 } from "../validators/booking.validator.js";
 import { bookingIdParamSchema } from "../validators/common.validator.js";
 
@@ -58,6 +60,13 @@ bookingRouter.get(
   verifyJWTToken,
   validate(buildingRoomMapSchema, "query"),
   buildingRoomMap
+);
+
+bookingRouter.get(
+  "/building-room-status",
+  verifyJWTToken,
+  validate(buildingRoomStatusSchema, "query"),
+  buildingRoomStatus
 );
 
 // ==================== REQUESTER OPERATIONS ====================

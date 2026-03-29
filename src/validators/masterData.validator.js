@@ -34,11 +34,11 @@ export const updateRoomSchema = z.object({
     isActive: z.boolean().optional(),
 });
 
-export const getRoomsQuerySchema = z.object({
+export const getRoomsQuerySchema = paginationSchema.extend({
     buildingId: cuidSchema.optional(),
     roomTypeId: cuidSchema.optional(),
     isActive: z.coerce.boolean().optional(),
-}).merge(paginationSchema);
+})
 
 // RoomType Validators (aligned with Prisma: code + name, no description)
 export const createRoomTypeSchema = z.object({
@@ -111,10 +111,10 @@ export const updateSlotSchema = z.object({
     isActive: z.boolean().optional(),
 });
 
-export const getSlotsQuerySchema = z.object({
+export const getSlotsQuerySchema = paginationSchema.extend({
     slotSystemId: cuidSchema.optional(),
     isActive: z.coerce.boolean().optional(),
-}).merge(paginationSchema);
+})
 
 // SlotAlias Validators
 export const createSlotAliasSchema = z.object({
@@ -124,16 +124,44 @@ export const createSlotAliasSchema = z.object({
     note: z.string().max(200).trim().optional(),
 });
 
-export const getSlotAliasesQuerySchema = z.object({
+export const getSlotAliasesQuerySchema =paginationSchema.extend({
     slotSystemId: cuidSchema.optional(),
     effectiveSlotId: cuidSchema.optional(),
-}).merge(paginationSchema);
+})
 
 // Filter schemas for listings
-export const getBuildingsQuerySchema = z.object({
+export const getBuildingsQuerySchema = paginationSchema.extend({
     isActive: z.coerce.boolean().optional(),
-}).merge(paginationSchema);
+})
 
-export const getDepartmentsQuerySchema = z.object({
+
+export const getDepartmentsQuerySchema = paginationSchema.extend({
     isActive: z.coerce.boolean().optional(),
-}).merge(paginationSchema);
+});
+
+// Course Validators
+export const createCourseSchema = z.object({
+    code: z.string().min(1).max(20).trim().toUpperCase(),
+    name: z.string().min(1).max(150).trim(),
+    departmentId: cuidSchema.optional(),
+    ltp: z.string().max(20).trim().optional(),
+    credits: z.coerce.number().positive().optional(),
+});
+
+export const updateCourseSchema = z.object({
+    code: z.string().min(1).max(20).trim().toUpperCase().optional(),
+    name: z.string().min(1).max(150).trim().optional(),
+    departmentId: cuidSchema.optional().nullable(),
+    ltp: z.string().max(20).trim().optional().nullable(),
+    credits: z.coerce.number().positive().optional().nullable(),
+    isActive: z.boolean().optional(),
+});
+
+export const getCoursesQuerySchema = paginationSchema.extend({
+    departmentId: cuidSchema.optional(),
+    isActive: z.coerce.boolean().optional(),
+});
+
+export const allocateRoomToCourseSchema = z.object({
+    roomId: cuidSchema,
+});

@@ -74,9 +74,7 @@ const loginService = async ({email,password}) => {
         logger.warn(`Login failed for email: ${email} - Account is deactivated`);
         throw new ApiError(403,"Your Account is Deactivated. Please Contact Support.");
     }
-    logger.info("User password is: " + user.hashedPassword);
-    const currenthashpassword = await bcrypt.hash(password, SALT_ROUNDS || 10);
-    logger.info("Current hash password is: " + currenthashpassword);
+
     const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
 
     if(!passwordMatch){

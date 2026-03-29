@@ -261,3 +261,71 @@ export const getSystemStats = async () => {
         bookings: { total: totalBookings, pending: pendingBookings, byStatus: bookingsByStatus.reduce((acc, i) => { acc[i.status] = i._count.status; return acc; }, {}) }
     };
 };
+
+// ==================== APPROVED USERS CRUD ====================
+
+export const createApprovedUser = async ({ email, role }) => {
+    logger.info(`Creating approved user: ${email} with role ${role}`);
+
+    const emailNormalized = email.toLowerCase().trim();
+    const existing = await prisma.approvedUser.findUnique({
+        where: { email: emailNormalized },
+    });
+    if (existing) {
+        throw new ApiError(409, `Approved user with email "${emailNormalized}" already exists with role ${existing.role}`);
+    }
+
+    return prisma.approvedUser.create({
+        data: { email: emailNormalized, role },
+    });
+};
+
+export const listApprovedUsers = async ({ role, page = 1, limit = 20 }) => {
+    const where = {};
+    if (role) where.role = role;
+
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+        prisma.approvedUser.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { email: "asc" },
+        }),
+        prisma.approvedUser.count({ where }),
+    ]);
+
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+};
+
+export const updateApprovedUser = async (id, { role }) => {
+    const existing = await prisma.approvedUser.findUnique({ where: { id } });
+    if (!existing) throw new ApiError(404, "Approved user not found");
+
+    const updated = await prisma.approvedUser.update({
+        where: { id },
+        data: { role },
+    });
+
+    // Also update the already-registered user's role if they exist
+    const registeredUser = await prisma.user.findUnique({
+        where: { email: existing.email },
+    });
+    if (registeredUser && registeredUser.role !== role) {
+        await prisma.user.update({
+            where: { id: registeredUser.id },
+            data: { role },
+        });
+        logger.info(`Also updated registered user ${registeredUser.email} role to ${role}`);
+    }
+
+    return updated;
+};
+
+export const deleteApprovedUser = async (id) => {
+    const existing = await prisma.approvedUser.findUnique({ where: { id } });
+    if (!existing) throw new ApiError(404, "Approved user not found");
+
+    await prisma.approvedUser.delete({ where: { id } });
+    return { message: "Approved user removed" };
+};

@@ -49,6 +49,7 @@ export const listBuildings = async ({ isActive, page = 1, limit = 20 }) => {
     if (isActive !== undefined) where.isActive = isActive;
 
     const skip = (page - 1) * limit;
+    // Parellel execution using tx is a optimised version of this
     const [data, total] = await Promise.all([
         prisma.building.findMany({
             where,
@@ -607,4 +608,161 @@ export const deleteSlotAlias = async (id) => {
 
     await prisma.slotAlias.delete({ where: { id } });
     return { message: "Slot alias deleted" };
+};
+
+// ==================== COURSES ====================
+
+export const createCourse = async ({ code, name, departmentId, ltp, credits }) => {
+    logger.info(`Creating course: ${code} - ${name}`);
+
+    const existing = await prisma.course.findFirst({
+        where: { OR: [{ code }] },
+    });
+    if (existing) throw new ApiError(409, `Course with code "${code}" already exists`);
+
+    if (departmentId) {
+        const dept = await prisma.department.findUnique({ where: { id: departmentId } });
+        if (!dept) throw new ApiError(404, "Department not found");
+    }
+
+    return prisma.course.create({
+        data: { code, name, departmentId, ltp, credits: credits ? parseFloat(credits) : null },
+        include: {
+            department: { select: { id: true, code: true, name: true } },
+        },
+    });
+};
+
+export const getCourseById = async (id) => {
+    const course = await prisma.course.findUnique({
+        where: { id },
+        include: {
+            department: { select: { id: true, code: true, name: true } },
+            assignments: {
+                include: {
+                    faculty: { select: { id: true, name: true, email: true } },
+                    slot: { select: { id: true, code: true, slotKind: true } },
+                },
+            },
+            roomAllocations: {
+                include: {
+                    room: {
+                        select: {
+                            id: true, fullCode: true, displayName: true,
+                            building: { select: { id: true, code: true, name: true } },
+                        },
+                    },
+                },
+            },
+        },
+    });
+    if (!course) throw new ApiError(404, "Course not found");
+    return course;
+};
+
+export const listCourses = async ({ departmentId, isActive, page = 1, limit = 20 }) => {
+    const where = {};
+    if (departmentId) where.departmentId = departmentId;
+    if (isActive !== undefined) where.isActive = isActive;
+
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+        prisma.course.findMany({
+            where,
+            skip,
+            take: limit,
+            include: {
+                department: { select: { id: true, code: true, name: true } },
+                _count: { select: { assignments: true } },
+            },
+            orderBy: { code: "asc" },
+        }),
+        prisma.course.count({ where }),
+    ]);
+
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+};
+
+export const updateCourse = async (id, data) => {
+    const course = await prisma.course.findUnique({ where: { id } });
+    if (!course) throw new ApiError(404, "Course not found");
+
+    if (data.code) {
+        const dup = await prisma.course.findFirst({
+            where: { code: data.code, id: { not: id } },
+        });
+        if (dup) throw new ApiError(409, "Course with that code already exists");
+    }
+
+    if (data.departmentId) {
+        const dept = await prisma.department.findUnique({ where: { id: data.departmentId } });
+        if (!dept) throw new ApiError(404, "Department not found");
+    }
+
+    if (data.credits !== undefined) {
+        data.credits = data.credits ? parseFloat(data.credits) : null;
+    }
+
+    return prisma.course.update({
+        where: { id },
+        data,
+        include: {
+            department: { select: { id: true, code: true, name: true } },
+        },
+    });
+};
+
+export const softDeleteCourse = async (id) => {
+    const course = await prisma.course.findUnique({ where: { id } });
+    if (!course) throw new ApiError(404, "Course not found");
+    return prisma.course.update({ where: { id }, data: { isActive: false } });
+};
+
+export const hardDeleteCourse = async (id) => {
+    const course = await prisma.course.findUnique({ where: { id } });
+    if (!course) throw new ApiError(404, "Course not found");
+
+    const assignmentCount = await prisma.courseAssignment.count({ where: { courseId: id } });
+    if (assignmentCount > 0) {
+        throw new ApiError(409, `Cannot delete: ${assignmentCount} assignments reference this course. Use soft delete.`);
+    }
+
+    await prisma.course.delete({ where: { id } });
+    return { message: "Course permanently deleted" };
+};
+
+// ==================== COURSE ROOM ALLOCATIONS ====================
+
+export const allocateRoomToCourse = async ({ courseId, roomId }) => {
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new ApiError(404, "Course not found");
+
+    const room = await prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) throw new ApiError(404, "Room not found");
+    if (!room.isActive) throw new ApiError(400, "Cannot allocate inactive room");
+
+    const existing = await prisma.courseRoomAllocation.findFirst({
+        where: { courseId, roomId },
+    });
+    if (existing) throw new ApiError(409, "Room already allocated to this course");
+
+    return prisma.courseRoomAllocation.create({
+        data: { courseId, roomId },
+        include: {
+            room: {
+                select: {
+                    id: true, fullCode: true, displayName: true,
+                    building: { select: { id: true, code: true, name: true } },
+                },
+            },
+        },
+    });
+};
+
+export const removeRoomFromCourse = async (allocationId) => {
+    const allocation = await prisma.courseRoomAllocation.findUnique({ where: { id: allocationId } });
+    if (!allocation) throw new ApiError(404, "Allocation not found");
+
+    await prisma.courseRoomAllocation.delete({ where: { id: allocationId } });
+    return { message: "Room allocation removed" };
 };

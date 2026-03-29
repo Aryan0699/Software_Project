@@ -15,19 +15,33 @@ export const updateAssignmentSchema = z.object({
 });
 
 // Booking History Query Validators
-export const bookingHistoryQuerySchema = z.object({
+export const bookingHistoryQuerySchema = paginationSchema.extend({
     bookingRequestId: cuidSchema.optional(),
     performedByUserId: cuidSchema.optional(),
     actionType: z.enum(["CREATED", "FACULTY_APPROVED", "FACULTY_REJECTED", "STAFF_APPROVED", "STAFF_REJECTED", "CANCELLED"]).optional(),
     fromDate: dateStringSchema.optional(),
     toDate: dateStringSchema.optional(),
-}).merge(paginationSchema);
+})
 
-export const allBookingsQuerySchema = z.object({
+export const allBookingsQuerySchema = paginationSchema.extend({
     status: z.enum(["PENDING_FACULTY", "PENDING_STAFF", "APPROVED", "REJECTED", "CANCELLED"]).optional(),
     fromDate: dateStringSchema.optional(),
     toDate: dateStringSchema.optional(),
     requesterId: cuidSchema.optional(),
     roomId: cuidSchema.optional(),
     buildingId: cuidSchema.optional(),
-}).merge(paginationSchema);
+})
+
+// Approved User Validators
+export const createApprovedUserSchema = z.object({
+    email: z.email().trim().toLowerCase(),
+    role: z.enum(["FACULTY", "STAFF", "ADMIN"]),
+});
+
+export const updateApprovedUserSchema = z.object({
+    role: z.enum(["FACULTY", "STAFF", "ADMIN"]),
+});
+
+export const listApprovedUsersQuerySchema = paginationSchema.extend({
+    role: z.enum(["FACULTY", "STAFF", "ADMIN"]).optional(),
+});

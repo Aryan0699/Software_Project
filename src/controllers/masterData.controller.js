@@ -17,7 +17,7 @@ export const getBuilding = asyncHandler(async (req, res) => {
 });
 
 export const listBuildings = asyncHandler(async (req, res) => {
-    const result = await masterDataService.listBuildings(req.query);
+    const result = await masterDataService.listBuildings(req.validated.query);
     return res.status(200).json(new ApiResponse(200, "Buildings fetched successfully", result));
 });
 
@@ -50,7 +50,7 @@ export const getRoom = asyncHandler(async (req, res) => {
 });
 
 export const listRooms = asyncHandler(async (req, res) => {
-    const result = await masterDataService.listRooms(req.query);
+    const result = await masterDataService.listRooms(req.validated.query);
     return res.status(200).json(new ApiResponse(200, "Rooms fetched successfully", result));
 });
 
@@ -77,7 +77,7 @@ export const createRoomType = asyncHandler(async (req, res) => {
 });
 
 export const listRoomTypes = asyncHandler(async (req, res) => {
-    const result = await masterDataService.listRoomTypes(req.query);
+    const result = await masterDataService.listRoomTypes(req.validated.query);
     return res.status(200).json(new ApiResponse(200, "Room types fetched successfully", result));
 });
 
@@ -104,7 +104,7 @@ export const createRoomFeature = asyncHandler(async (req, res) => {
 });
 
 export const listRoomFeatures = asyncHandler(async (req, res) => {
-    const result = await masterDataService.listRoomFeatures(req.query);
+    const result = await masterDataService.listRoomFeatures(req.validated.query);
     return res.status(200).json(new ApiResponse(200, "Room features fetched successfully", result));
 });
 
@@ -143,7 +143,7 @@ export const createDepartment = asyncHandler(async (req, res) => {
 });
 
 export const listDepartments = asyncHandler(async (req, res) => {
-    const result = await masterDataService.listDepartments(req.query);
+    const result = await masterDataService.listDepartments(req.validated.query);
     return res.status(200).json(new ApiResponse(200, "Departments fetched successfully", result));
 });
 
@@ -175,7 +175,7 @@ export const getSlotSystem = asyncHandler(async (req, res) => {
 });
 
 export const listSlotSystems = asyncHandler(async (req, res) => {
-    const result = await masterDataService.listSlotSystems(req.query);
+    const result = await masterDataService.listSlotSystems(req.validated.query);
     return res.status(200).json(new ApiResponse(200, "Slot systems fetched successfully", result));
 });
 
@@ -202,11 +202,57 @@ export const createSlotAlias = asyncHandler(async (req, res) => {
 });
 
 export const listSlotAliases = asyncHandler(async (req, res) => {
-    const result = await masterDataService.listSlotAliases(req.query);
+    const result = await masterDataService.listSlotAliases(req.validated.query);
     return res.status(200).json(new ApiResponse(200, "Slot aliases fetched successfully", result));
 });
 
 export const deleteSlotAlias = asyncHandler(async (req, res) => {
     const result = await masterDataService.deleteSlotAlias(req.params.id);
+    return res.status(200).json(new ApiResponse(200, result.message));
+});
+
+// ==================== COURSES ====================
+
+export const createCourse = asyncHandler(async (req, res) => {
+    const course = await masterDataService.createCourse(req.body);
+    logger.info(`Course created: ${course.code}`);
+    return res.status(201).json(new ApiResponse(201, "Course created successfully", course));
+});
+
+export const getCourse = asyncHandler(async (req, res) => {
+    const course = await masterDataService.getCourseById(req.params.id);
+    return res.status(200).json(new ApiResponse(200, "Course fetched successfully", course));
+});
+
+export const listCourses = asyncHandler(async (req, res) => {
+    const result = await masterDataService.listCourses(req.validated.query);
+    return res.status(200).json(new ApiResponse(200, "Courses fetched successfully", result));
+});
+
+export const updateCourse = asyncHandler(async (req, res) => {
+    const course = await masterDataService.updateCourse(req.params.id, req.body);
+    return res.status(200).json(new ApiResponse(200, "Course updated successfully", course));
+});
+
+export const softDeleteCourse = asyncHandler(async (req, res) => {
+    const course = await masterDataService.softDeleteCourse(req.params.id);
+    return res.status(200).json(new ApiResponse(200, "Course deactivated", course));
+});
+
+export const hardDeleteCourse = asyncHandler(async (req, res) => {
+    const result = await masterDataService.hardDeleteCourse(req.params.id);
+    return res.status(200).json(new ApiResponse(200, result.message));
+});
+
+// Course Room Allocations
+export const allocateRoomToCourse = asyncHandler(async (req, res) => {
+    const { courseId } = req.params;
+    const allocation = await masterDataService.allocateRoomToCourse({ courseId, ...req.body });
+    return res.status(201).json(new ApiResponse(201, "Room allocated to course", allocation));
+});
+
+export const removeRoomFromCourse = asyncHandler(async (req, res) => {
+    const { allocationId } = req.params;
+    const result = await masterDataService.removeRoomFromCourse(allocationId);
     return res.status(200).json(new ApiResponse(200, result.message));
 });

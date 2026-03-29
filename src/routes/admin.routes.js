@@ -15,6 +15,10 @@ import {
     getBookingHistory,
     getAllBookings,
     getStats,
+    createApprovedUser,
+    listApprovedUsers,
+    updateApprovedUser,
+    deleteApprovedUser,
 } from "../controllers/admin.controller.js";
 
 // Master data controllers
@@ -27,6 +31,8 @@ import {
     createDepartment, listDepartments, updateDepartment, softDeleteDepartment, hardDeleteDepartment,
     createSlotSystem, getSlotSystem, listSlotSystems, updateSlotSystem, softDeleteSlotSystem, hardDeleteSlotSystem,
     createSlotAlias, listSlotAliases, deleteSlotAlias,
+    createCourse, getCourse, listCourses, updateCourse, softDeleteCourse, hardDeleteCourse,
+    allocateRoomToCourse, removeRoomFromCourse,
 } from "../controllers/masterData.controller.js";
 
 // Admin validators
@@ -35,6 +41,9 @@ import {
     updateAssignmentSchema,
     bookingHistoryQuerySchema,
     allBookingsQuerySchema,
+    createApprovedUserSchema,
+    updateApprovedUserSchema as updateApprovedUserValidatorSchema,
+    listApprovedUsersQuerySchema,
 } from "../validators/admin.validator.js";
 
 // Master data validators
@@ -46,6 +55,7 @@ import {
     createDepartmentSchema, updateDepartmentSchema, getDepartmentsQuerySchema,
     createSlotSystemSchema, updateSlotSystemSchema,
     createSlotAliasSchema, getSlotAliasesQuerySchema,
+    createCourseSchema, updateCourseSchema, getCoursesQuerySchema, allocateRoomToCourseSchema,
 } from "../validators/masterData.validator.js";
 
 const adminRouter = Router();
@@ -350,6 +360,84 @@ adminRouter.delete(
     "/master/slot-aliases/:id",
     validate(idParamSchema, "params"),
     deleteSlotAlias
+);
+
+// ==================== APPROVED USERS ====================
+
+adminRouter.post(
+    "/approved-users",
+    validate(createApprovedUserSchema),
+    createApprovedUser
+);
+
+adminRouter.get(
+    "/approved-users",
+    validate(listApprovedUsersQuerySchema, "query"),
+    listApprovedUsers
+);
+
+adminRouter.patch(
+    "/approved-users/:id",
+    validate(idParamSchema, "params"),
+    validate(updateApprovedUserValidatorSchema),
+    updateApprovedUser
+);
+
+adminRouter.delete(
+    "/approved-users/:id",
+    validate(idParamSchema, "params"),
+    deleteApprovedUser
+);
+
+// ==================== MASTER DATA: COURSES ====================
+
+adminRouter.post(
+    "/master/courses",
+    validate(createCourseSchema),
+    createCourse
+);
+
+adminRouter.get(
+    "/master/courses",
+    validate(getCoursesQuerySchema, "query"),
+    listCourses
+);
+
+adminRouter.get(
+    "/master/courses/:id",
+    validate(idParamSchema, "params"),
+    getCourse
+);
+
+adminRouter.patch(
+    "/master/courses/:id",
+    validate(idParamSchema, "params"),
+    validate(updateCourseSchema),
+    updateCourse
+);
+
+adminRouter.patch(
+    "/master/courses/:id/deactivate",
+    validate(idParamSchema, "params"),
+    softDeleteCourse
+);
+
+adminRouter.delete(
+    "/master/courses/:id",
+    validate(idParamSchema, "params"),
+    hardDeleteCourse
+);
+
+// Course Room Allocations
+adminRouter.post(
+    "/master/courses/:courseId/rooms",
+    validate(allocateRoomToCourseSchema),
+    allocateRoomToCourse
+);
+
+adminRouter.delete(
+    "/master/courses/room-allocations/:allocationId",
+    removeRoomFromCourse
 );
 
 export default adminRouter;

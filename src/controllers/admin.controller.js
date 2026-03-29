@@ -11,6 +11,10 @@ import {
     getBookingActionHistory,
     getAllBookingRequests,
     getSystemStats,
+    createApprovedUser as createApprovedUserService,
+    listApprovedUsers as listApprovedUsersService,
+    updateApprovedUser as updateApprovedUserService,
+    deleteApprovedUser as deleteApprovedUserService,
 } from "../services/admin.service.js";
 
 // ==================== STAFF-BUILDING ASSIGNMENTS ====================
@@ -55,7 +59,7 @@ export const updateAssignment = asyncHandler(async (req, res) => {
 });
 
 export const getAssignments = asyncHandler(async (req, res) => {
-    const { buildingId, staffUserId, page, limit } = req.query;
+    const { buildingId, staffUserId, page, limit } = req.validated.query;
     logger.info("Admin fetching staff-building assignments");
 
     const result = await getStaffBuildingAssignments({
@@ -97,7 +101,7 @@ export const getStaffForBuilding = asyncHandler(async (req, res) => {
 export const getBookingHistory = asyncHandler(async (req, res) => {
     logger.info("Admin fetching booking action history");
 
-    const result = await getBookingActionHistory(req.query);
+    const result = await getBookingActionHistory(req.validated.query);
 
     return res.status(200).json(
         new ApiResponse(200, "Booking action history fetched successfully", result)
@@ -107,7 +111,7 @@ export const getBookingHistory = asyncHandler(async (req, res) => {
 export const getAllBookings = asyncHandler(async (req, res) => {
     logger.info("Admin fetching all booking requests");
 
-    const result = await getAllBookingRequests(req.query);
+    const result = await getAllBookingRequests(req.validated.query);
 
     return res.status(200).json(
         new ApiResponse(200, "All booking requests fetched successfully", result)
@@ -121,5 +125,56 @@ export const getStats = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, "System statistics fetched successfully", stats)
+    );
+});
+
+// ==================== APPROVED USERS CRUD ====================
+
+export const createApprovedUser = asyncHandler(async (req, res) => {
+    const { email, role } = req.body;
+    logger.info(`Admin creating approved user: ${email} with role ${role}`);
+
+    const approvedUser = await createApprovedUserService({ email, role });
+
+    return res.status(201).json(
+        new ApiResponse(201, "Approved user created successfully", approvedUser)
+    );
+});
+
+export const listApprovedUsers = asyncHandler(async (req, res) => {
+    const { role, page, limit } = req.validated.query;
+    logger.info("Admin listing approved users");
+
+    const result = await listApprovedUsersService({
+        role,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, "Approved users fetched successfully", result)
+    );
+});
+
+export const updateApprovedUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { role } = req.body;
+    logger.info(`Admin updating approved user ${id} to role ${role}`);
+
+    const updated = await updateApprovedUserService(id, { role });
+
+    return res.status(200).json(
+        new ApiResponse(200, "Approved user updated successfully", updated)
+    );
+});
+
+export const deleteApprovedUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    logger.info(`Admin deleting approved user ${id}`);
+
+    const result = await deleteApprovedUserService(id);
+
+    return res.status(200).json(
+        new ApiResponse(200, result.message)
     );
 });

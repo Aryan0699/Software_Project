@@ -63,3 +63,8 @@ export const buildingRoomMapSchema = z.object({
     message: "Start minute must be less than end minute",
     path: ["endMinute"],
 });
+
+export const buildingRoomStatusSchema = z.object({
+    buildingId: cuidSchema.optional(),
+    date: dateStringSchema.optional(),
+});

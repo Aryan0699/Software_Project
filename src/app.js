@@ -3,11 +3,12 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import logger from './utils/logger.js'
 import { env } from './utils/env.js'
-import authRouter from './routes/auth.route.js'
-import testrouter from './routes/test.route.js'
+import authRouter from './routes/auth.routes.js'
+import testrouter from './routes/test.routes.js'
 import bookingRouter from './routes/booking.routes.js'
 import adminRouter from './routes/admin.routes.js'
 import profileRouter from './routes/profile.routes.js'
+import infoRouter from './routes/info.routes.js'
 
 const app = express()
 
@@ -45,6 +46,7 @@ app.use("/api/v1/test", testrouter);
 app.use("/api/v1/bookings", bookingRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/profile", profileRouter);
+app.use("/api/v1/info", infoRouter);
 
 // Global error handler
 app.use((err, req, res, next) => {

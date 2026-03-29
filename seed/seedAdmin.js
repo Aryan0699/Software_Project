@@ -1,8 +1,7 @@
-import { PrismaClient } from "../src/generated/prisma/client.js";
+import { prisma } from "../src/db/index.js";
 import logger from "../src/utils/logger.js";
 import { env } from "../src/utils/env.js";
 import bcrypt from "bcrypt";
-const prisma = new PrismaClient()
 
 const seedAdmin  =  async () => {
     logger.info("Starting admin seed...");  

@@ -13,7 +13,7 @@ import {
     facultyRejectBookingRequest as facultyRejectBookingRequestService
 } from "../services/booking.service.js";
 
-import { isRoomAvailable, findAvailableRooms, suggestAlternativeRooms, getBuildingRoomMap } from "../services/availabilty.service.js";
+import { isRoomAvailable, findAvailableRooms, suggestAlternativeRooms, getBuildingRoomMap, getBuildingRoomStatus } from "../services/availability.service.js";
 import logger from "../utils/logger.js";
 
 
@@ -34,7 +34,7 @@ export const checkRoomAvailability = asyncHandler(async (req, res) => {
 
 export const getAvailableRooms = asyncHandler(async (req, res) => {
   const { bookingDate, startMinute, endMinute, buildingId, roomTypeId, minCapacity } =
-    req.query;
+    req.validated.query;
   logger.info("Getting available rooms with filters");
   const rooms = await findAvailableRooms({
     bookingDate,
@@ -186,7 +186,7 @@ export const cancelBookingRequest = asyncHandler(async (req, res) => {
 // ==================== ROOM SUGGESTIONS ====================
 
 export const suggestRooms = asyncHandler(async (req, res) => {
-  const { roomId, bookingDate, startMinute, endMinute, minCapacity, roomTypeId, buildingId } = req.query;
+  const { roomId, bookingDate, startMinute, endMinute, minCapacity, roomTypeId, buildingId } = req.validated.query;
   logger.info(`Suggesting alternative rooms for room ${roomId}`);
 
   const suggestions = await suggestAlternativeRooms({
@@ -209,7 +209,7 @@ export const suggestRooms = asyncHandler(async (req, res) => {
 // ==================== BUILDING ROOM MAP ====================
 
 export const buildingRoomMap = asyncHandler(async (req, res) => {
-  const { buildingId, bookingDate, startMinute, endMinute } = req.query;
+  const { buildingId, bookingDate, startMinute, endMinute } = req.validated.query;
   logger.info(`Fetching building room map for building ${buildingId}`);
 
   const roomMap = await getBuildingRoomMap({
@@ -222,4 +222,20 @@ export const buildingRoomMap = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, "Building room map fetched successfully", roomMap));
+});
+
+// ==================== BUILDING ROOM STATUS (FULL-DAY) ====================
+
+export const buildingRoomStatus = asyncHandler(async (req, res) => {
+  const { buildingId, date } = req.validated.query;
+  logger.info(`Fetching building room status for building ${buildingId || 'default (LHC)'}`);
+
+  const status = await getBuildingRoomStatus({
+    buildingId: buildingId || undefined,
+    date: date || undefined,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Building room status fetched successfully", status));
 });

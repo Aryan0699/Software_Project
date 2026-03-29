@@ -13,10 +13,18 @@ import {
 } from "./normalizers.js";
 import { getBaseSlotCode } from "./slotHelpers.js";
 
-async function buildFacultyLookup() {
+/**
+ * Build a faculty name→email lookup map as a fallback.
+ * Warns about duplicate names.
+ */
+function buildFacultyNameLookup() {
   const map = new Map();
   for (const item of faculty) {
     const nameKey = normalizeCode(item.name).toLowerCase();
+    if (map.has(nameKey)) {
+      logger.warn(`Duplicate faculty name: "${item.name}" → existing: ${map.get(nameKey)}, skipping: ${item.email}`);
+      continue; // keep first match
+    }
     map.set(nameKey, normalizeEmail(item.email));
   }
   return map;
@@ -26,7 +34,7 @@ export async function seedCoursesAssignmentsAllocationsAndOccupancies(
   prisma,
   { departmentMap, roomMap, slotSystemIdByKey, slotIdBySystemAndCode }
 ) {
-  const facultyByName = await buildFacultyLookup();
+  const facultyNameFallback = buildFacultyNameLookup();
   const courseMap = new Map();
   const assignmentMap = new Map();
   const occupancyKeys = new Set();
@@ -78,8 +86,18 @@ export async function seedCoursesAssignmentsAllocationsAndOccupancies(
       courseMap.set(courseCode, course.id);
 
       let facultyUserId = null;
-      const facultyNameKey = normalizeCode(row.Instructor || "").toLowerCase();
-      const facultyEmail = facultyByName.get(facultyNameKey);
+
+      // Prefer instructorEmail (direct mapping), fallback to name-based lookup
+      let facultyEmail = null;
+      if (row.instructorEmail) {
+        facultyEmail = normalizeEmail(row.instructorEmail);
+      } else if (row.Instructor) {
+        const facultyNameKey = normalizeCode(row.Instructor).toLowerCase();
+        facultyEmail = facultyNameFallback.get(facultyNameKey) || null;
+        if (!facultyEmail) {
+          logger.warn(`No email found for instructor "${row.Instructor}" in course ${courseCode}`);
+        }
+      }
 
       if (facultyEmail) {
         const facultyUser = await prisma.user.findUnique({

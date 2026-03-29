@@ -410,5 +410,169 @@ const getBuildingRoomMap = async ({ buildingId, bookingDate, startMinute, endMin
     };
 }
 
+/**
+ * Building room status — full-day view of all rooms in a building.
+ * Returns each room's schedule: timetable slots + approved bookings for the day.
+ * If no buildingId is given, defaults to "LHC".
+ */
+const getBuildingRoomStatus = async ({ buildingId, date }) => {
+    const bookingDate = date || new Date().toISOString().slice(0, 10);
+    const parsedDate = parseBookingDate(bookingDate);
+    const dayOfWeek = getDayOfWeek(parsedDate);
 
-export {isRoomAvailable, findAvailableRooms, suggestAlternativeRooms, getBuildingRoomMap};
+    // If no buildingId, resolve LHC as default
+    let resolvedBuildingId = buildingId;
+    if (!resolvedBuildingId) {
+        const lhc = await prisma.building.findFirst({
+            where: { code: "LHC", isActive: true },
+            select: { id: true },
+        });
+        if (!lhc) throw new ApiError(404, "Default building (LHC) not found");
+        resolvedBuildingId = lhc.id;
+    }
+
+    const building = await prisma.building.findUnique({
+        where: { id: resolvedBuildingId },
+        select: { id: true, code: true, name: true, location: true, isActive: true },
+    });
+
+    if (!building || !building.isActive) {
+        throw new ApiError(404, "Building not found or is inactive");
+    }
+
+    logger.info(`Fetching full-day room status for building ${building.code} on ${bookingDate} (${dayOfWeek})`);
+
+    const rooms = await prisma.room.findMany({
+        where: { buildingId: resolvedBuildingId, isActive: true },
+        select: {
+            id: true,
+            roomNumber: true,
+            fullCode: true,
+            displayName: true,
+            capacity: true,
+            roomType: {
+                select: { id: true, code: true, name: true },
+            },
+        },
+        orderBy: { roomNumber: "asc" },
+    });
+
+    if (rooms.length === 0) {
+        return { building, date: bookingDate, dayOfWeek, rooms: [] };
+    }
+
+    const roomIds = rooms.map(r => r.id);
+
+    // Get all timetable occupancies for these rooms on this day
+    const timetableOccupancies = await prisma.roomSlotOccupancy.findMany({
+        where: {
+            roomId: { in: roomIds },
+            isActive: true,
+            slot: {
+                occurrences: {
+                    some: { dayOfWeek },
+                },
+            },
+        },
+        select: {
+            roomId: true,
+            slot: {
+                select: {
+                    code: true,
+                    occurrences: {
+                        where: { dayOfWeek },
+                        select: { startMinute: true, endMinute: true },
+                    },
+                },
+            },
+            course: {
+                select: {
+                    code: true,
+                    name: true,
+                    assignments: {
+                        select: {
+                            faculty: { select: { name: true } },
+                        },
+                        take: 1,
+                    },
+                },
+            },
+        },
+    });
+
+    // Get all approved bookings for these rooms on this date
+    const approvedBookings = await prisma.bookingRequest.findMany({
+        where: {
+            roomId: { in: roomIds },
+            bookingDate: parsedDate,
+            status: "APPROVED",
+        },
+        select: {
+            roomId: true,
+            title: true,
+            startMinute: true,
+            endMinute: true,
+            requester: { select: { name: true } },
+        },
+        orderBy: { startMinute: "asc" },
+    });
+
+    // Build schedule per room
+    const timetableMap = new Map();
+    for (const occ of timetableOccupancies) {
+        if (!timetableMap.has(occ.roomId)) timetableMap.set(occ.roomId, []);
+        const instructor = occ.course?.assignments?.[0]?.faculty?.name || null;
+        for (const timeBlock of occ.slot.occurrences) {
+            timetableMap.get(occ.roomId).push({
+                sourceType: "TIMETABLE",
+                slotCode: occ.slot.code,
+                startMinute: timeBlock.startMinute,
+                endMinute: timeBlock.endMinute,
+                course: occ.course ? { code: occ.course.code, name: occ.course.name, instructor } : null,
+            });
+        }
+    }
+
+    const bookingMap = new Map();
+    for (const bk of approvedBookings) {
+        if (!bookingMap.has(bk.roomId)) bookingMap.set(bk.roomId, []);
+        bookingMap.get(bk.roomId).push({
+            sourceType: "BOOKING",
+            startMinute: bk.startMinute,
+            endMinute: bk.endMinute,
+            title: bk.title,
+            requester: bk.requester.name,
+        });
+    }
+
+    const roomsWithSchedule = rooms.map(room => {
+        const timetableEntries = timetableMap.get(room.id) || [];
+        const bookingEntries = bookingMap.get(room.id) || [];
+
+        // Merge and sort by startMinute
+        const schedule = [...timetableEntries, ...bookingEntries]
+            .sort((a, b) => a.startMinute - b.startMinute);
+
+        return {
+            ...room,
+            schedule,
+            occupiedSlots: timetableEntries.length,
+            approvedBookings: bookingEntries.length,
+        };
+    });
+
+    return {
+        building,
+        date: bookingDate,
+        dayOfWeek,
+        summary: {
+            totalRooms: roomsWithSchedule.length,
+            roomsWithSchedule: roomsWithSchedule.filter(r => r.schedule.length > 0).length,
+            freeRooms: roomsWithSchedule.filter(r => r.schedule.length === 0).length,
+        },
+        rooms: roomsWithSchedule,
+    };
+};
+
+
+export {isRoomAvailable, findAvailableRooms, suggestAlternativeRooms, getBuildingRoomMap, getBuildingRoomStatus};

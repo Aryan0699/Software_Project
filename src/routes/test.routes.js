@@ -1,6 +1,6 @@
 import { Router } from "express";
 import  verifyJWTToken  from "../middlewares/auth.middleware.js";
-import authorizeRoles  from "../middlewares/rbac.middleware.js";
+import { authorizeRoles } from "../middlewares/rbac.middleware.js";
 
 const router = Router();
 

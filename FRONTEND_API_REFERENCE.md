@@ -664,15 +664,17 @@ function timeToMinute(time) {
 | **Login/Signup** | `POST /auth/signup`, `POST /auth/login` | Public |
 | **Dashboard** | `GET /auth/getCurrentUser`, `GET /profile/me` | All |
 | **Profile Setup** | `PATCH /profile/student|faculty|staff` | Role-specific |
-| **Book a Room** | `GET /bookings/available-rooms`, `POST /bookings/`, `GET /bookings/building-room-map` | USER, FACULTY |
+| **Book a Room** | `GET /bookings/available-rooms`, `POST /bookings/`, `GET /info/*` | USER, FACULTY |
 | **My Bookings** | `GET /bookings/my-requests`, `PATCH /bookings/:id/cancel` | All |
 | **Faculty Review** | `GET /bookings/faculty/pending`, `PATCH .../approve`, `PATCH .../reject` | FACULTY |
 | **Staff Review** | `GET /bookings/staff/pending`, `PATCH .../approve`, `PATCH .../reject` | STAFF |
-| **Building Room Map** | `GET /bookings/building-room-map` | All |
+| **Building Room View** | `GET /bookings/building-room-map`, `GET /bookings/building-room-status`, `GET /info/buildings` | All |
 | **Admin Dashboard** | `GET /admin/stats` | ADMIN |
-| **Admin: Staff Assignments** | `POST/GET/PATCH/DELETE /admin/staff-assignments/...` | ADMIN |
+| **Admin: Staff Assign** | `POST/GET/PATCH/DELETE /admin/staff-assignments/...`, `GET /info/staff`, `GET /info/buildings` | ADMIN |
 | **Admin: All Bookings** | `GET /admin/bookings`, `GET /admin/booking-history` | ADMIN |
 | **Admin: Master Data** | All `/admin/master/*` routes | ADMIN |
+| **Admin: Courses** | All `/admin/master/courses*` routes, `GET /info/departments` | ADMIN |
+| **Admin: Users** | All `/admin/approved-users` routes | ADMIN |
 
 ---
 
@@ -687,3 +689,227 @@ function timeToMinute(time) {
 | BookingStatus | Enum | `"PENDING_FACULTY"`, `"PENDING_STAFF"`, `"APPROVED"`, `"REJECTED"`, `"CANCELLED"` |
 | Day | Enum | `"MONDAY"`, `"TUESDAY"`, ... `"SUNDAY"` |
 | SlotKind | Enum | `"LECTURE"`, `"LAB"`, `"TUTORIAL"`, `"SPECIAL"` |
+
+---
+
+## 10. Info / Dropdown Routes
+
+> **Purpose:** Provide lightweight data for frontend dropdowns and selection UIs. All return active records only.
+
+> **Auth:** JWT required. All endpoints accessible by any authenticated user except `/info/staff` (ADMIN only).
+
+### `GET /info/buildings`
+Returns all active buildings.
+```json
+{ "data": [{ "id": "cuid", "code": "LHC", "name": "Lecture Hall Complex", "location": "..." }] }
+```
+
+### `GET /info/departments`
+Returns all active departments.
+```json
+{ "data": [{ "id": "cuid", "code": "CSE", "name": "Computer Science & Engineering" }] }
+```
+
+### `GET /info/room-types`
+Returns all active room types.
+```json
+{ "data": [{ "id": "cuid", "code": "LH", "name": "Lecture Hall" }] }
+```
+
+### `GET /info/room-features`
+Returns all active room features.
+```json
+{ "data": [{ "id": "cuid", "code": "PROJECTOR", "name": "Projector" }] }
+```
+
+### `GET /info/rooms?buildingId=<optional>`
+Returns active rooms, optionally filtered by building.
+```json
+{
+  "data": [{
+    "id": "cuid", "roomNumber": "101", "fullCode": "LHC 101",
+    "displayName": null, "capacity": 120,
+    "building": { "id": "cuid", "code": "LHC", "name": "Lecture Hall Complex" },
+    "roomType": { "id": "cuid", "code": "LH", "name": "Lecture Hall" }
+  }]
+}
+```
+
+### `GET /info/faculty`
+Returns all active faculty users — for student booking dropdown.
+```json
+{
+  "data": [{
+    "id": "cuid", "name": "Dr. Anil Kumar", "email": "anil@iitj.ac.in",
+    "facultyProfile": {
+      "designation": "Associate Professor",
+      "department": { "id": "cuid", "code": "CSE", "name": "Computer Science & Engineering" }
+    }
+  }]
+}
+```
+
+### `GET /info/staff` *(ADMIN only)*
+Returns all active staff users — for admin staff-building assignment dropdown.
+```json
+{
+  "data": [{
+    "id": "cuid", "name": "Staff User", "email": "staff@iitj.ac.in",
+    "staffProfile": { "designation": "Lab In-charge" }
+  }]
+}
+```
+
+### `GET /info/courses?departmentId=<optional>`
+Returns active courses, optionally filtered by department.
+```json
+{
+  "data": [{
+    "id": "cuid", "code": "CSL3060", "name": "Machine Learning", "credits": 4,
+    "department": { "id": "cuid", "code": "CSE", "name": "Computer Science & Engineering" }
+  }]
+}
+```
+
+### `GET /info/slot-systems`
+Returns all active slot systems.
+```json
+{ "data": [{ "id": "cuid", "code": "FIRSTYEAR", "name": "First Year Slot System", "description": "..." }] }
+```
+
+---
+
+## 11. Admin: Approved Users
+
+> **Purpose:** Manage which emails can register with elevated roles. When a user signs up, the system checks the approved users list to assign their role.
+
+> **Auth:** JWT + ADMIN role required.
+
+### `POST /admin/approved-users`
+Create a new approved user entry.
+```json
+// Request
+{ "email": "faculty@iitj.ac.in", "role": "FACULTY" }
+// Response
+{ "id": "cuid", "email": "faculty@iitj.ac.in", "role": "FACULTY" }
+```
+
+### `GET /admin/approved-users?role=<optional>&page=1&limit=20`
+List approved users with optional role filter.
+
+### `PATCH /admin/approved-users/:id`
+Update approved user's role. **Also updates the already-registered user's role** if they exist.
+```json
+{ "role": "STAFF" }
+```
+
+### `DELETE /admin/approved-users/:id`
+Remove an approved user entry (does not delete the registered user).
+
+---
+
+## 12. Admin: Course CRUD
+
+> **Auth:** JWT + ADMIN role required.
+
+### `POST /admin/master/courses`
+```json
+{ "code": "CSL3060", "name": "Machine Learning", "departmentId": "cuid", "ltp": "3-0-2", "credits": 4 }
+```
+
+### `GET /admin/master/courses?departmentId=<optional>&isActive=<optional>&page=1&limit=20`
+List courses with filters.
+
+### `GET /admin/master/courses/:id`
+Get course with assignments and room allocations.
+
+### `PATCH /admin/master/courses/:id`
+Update course metadata.
+
+### `PATCH /admin/master/courses/:id/deactivate`
+Soft delete (deactivate) a course.
+
+### `DELETE /admin/master/courses/:id`
+Hard delete — only if no assignments reference it.
+
+### `POST /admin/master/courses/:courseId/rooms`
+Allocate a room to a course.
+```json
+{ "roomId": "cuid" }
+```
+
+### `DELETE /admin/master/courses/room-allocations/:allocationId`
+Remove a room allocation from a course.
+
+---
+
+## 13. Building Room Status (Full-Day View)
+
+> **Purpose:** Show the complete daily schedule for all rooms in a building — timetable classes + approved bookings.
+
+> **Auth:** JWT required (any role).
+
+### `GET /bookings/building-room-status?buildingId=<optional>&date=<optional>`
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `buildingId` | CUID | LHC building | Building to view |
+| `date` | YYYY-MM-DD | Today | Date to view |
+
+**Response:**
+```json
+{
+  "building": { "id": "cuid", "code": "LHC", "name": "Lecture Hall Complex" },
+  "date": "2026-04-01",
+  "dayOfWeek": "WEDNESDAY",
+  "summary": { "totalRooms": 12, "roomsWithSchedule": 8, "freeRooms": 4 },
+  "rooms": [
+    {
+      "id": "cuid",
+      "roomNumber": "101",
+      "fullCode": "LHC 101",
+      "capacity": 120,
+      "roomType": { "code": "LH", "name": "Lecture Hall" },
+      "schedule": [
+        {
+          "sourceType": "TIMETABLE",
+          "slotCode": "A",
+          "startMinute": 480,
+          "endMinute": 540,
+          "course": { "code": "MEL2020", "name": "Thermodynamics", "instructor": "B. Ravindra" }
+        },
+        {
+          "sourceType": "BOOKING",
+          "startMinute": 600,
+          "endMinute": 660,
+          "title": "Study Group Session",
+          "requester": "John Doe"
+        }
+      ],
+      "occupiedSlots": 3,
+      "approvedBookings": 1
+    }
+  ]
+}
+```
+
+> **Frontend Usage:** Use this to build a room-status dashboard:
+> 1. Load `/info/buildings` to populate the building dropdown (default: first item or LHC)
+> 2. Call this endpoint with selected `buildingId` and `date`
+> 3. Render a grid/table showing each room and its schedule blocks
+
+---
+
+## Frontend Implementation Notes
+
+### Dropdown Data Flow
+1. On app init, fetch `/info/buildings` and `/info/departments` to cache dropdown data
+2. For booking form: fetch `/info/rooms?buildingId=X` and `/info/faculty`
+3. For admin views: also fetch `/info/staff` and `/info/courses`
+4. **Always send `id` (CUID) in API calls**, display `name` in UI
+
+### Time Helper
+```javascript
+const minutesToTime = (m) => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+const timeToMinutes = (t) => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+```

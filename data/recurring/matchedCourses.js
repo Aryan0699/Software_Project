@@ -10,7 +10,8 @@ export const courses = {
             "Instructor": "Samanwita Pal",
             "label": "English",
             "Student Registered*": "278",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "samanwita@iitj.ac.in"
         },
         {
             "code": "MEL1010",
@@ -22,7 +23,8 @@ export const courses = {
             "Instructor": "B. Ravindra",
             "label": "English",
             "Student Registered*": "",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "ravib@iitj.ac.in"
         },
         {
             "code": "PHL1010",
@@ -34,7 +36,8 @@ export const courses = {
             "Instructor": "Sunil Kumar Khijwania",
             "label": "English",
             "Student Registered*": "",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "skhijwania@iitj.ac.in"
         },
         {
             "code": "MAL1020",
@@ -46,7 +49,8 @@ export const courses = {
             "Instructor": "Abhishek Sarkar",
             "label": "English",
             "Student Registered*": "",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "abhisheks@iitj.ac.in"
         },
         {
             "code": "CYL1010",
@@ -58,7 +62,8 @@ export const courses = {
             "Instructor": "Samanwita Pal",
             "label": "Non-English",
             "Student Registered*": "",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "samanwita@iitj.ac.in"
         },
         {
             "code": "PHL1010",
@@ -70,7 +75,8 @@ export const courses = {
             "Instructor": "Sunil K Khijwania",
             "label": "Non-English",
             "Student Registered*": "",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": null
         },
         {
             "code": "MAL1010",
@@ -82,7 +88,8 @@ export const courses = {
             "Instructor": "Abhishek Sarkar",
             "label": "Non-English",
             "Student Registered*": "",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "abhisheks@iitj.ac.in"
         },
         {
             "code": "MEL1010",
@@ -94,7 +101,8 @@ export const courses = {
             "Instructor": "B. Ravindra",
             "label": "Non-English",
             "Student Registered*": "",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "ravib@iitj.ac.in"
         },
         {
             "code": "BBL1020",
@@ -106,7 +114,8 @@ export const courses = {
             "Instructor": "Surajit Ghosh",
             "label": "English",
             "Student Registered*": "287",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "sghosh@iitj.ac.in"
         },
         {
             "code": "EEL1010",
@@ -118,7 +127,8 @@ export const courses = {
             "Instructor": "Rajlaxmi Chouhan",
             "label": "English",
             "Student Registered*": "290",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "rajlaxmichouhan@iitj.ac.in"
         },
         {
             "code": "MAL1020",
@@ -130,7 +140,8 @@ export const courses = {
             "Instructor": "Pradip Sasmal",
             "label": "English",
             "Student Registered*": "",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": null
         },
         {
             "code": "CSL1010",
@@ -142,7 +153,8 @@ export const courses = {
             "Instructor": "Suchetana Chakraborty",
             "label": "English",
             "Student Registered*": "",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "suchetana@iitj.ac.in"
         },
         {
             "code": "CSL1010",
@@ -154,7 +166,8 @@ export const courses = {
             "Instructor": "Suchetana Chakraborty",
             "Student Registered*": "",
             "label": "Non-English",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "suchetana@iitj.ac.in"
         },
         {
             "code": "EEL1010",
@@ -166,7 +179,8 @@ export const courses = {
             "label": "Non-English",
             "Instructor": "Rajlaxmi Chouhan",
             "Student Registered*": "",
-            "Classroom": "LHC 306"
+            "Classroom": "LHC 306",
+            "instructorEmail": "rajlaxmichouhan@iitj.ac.in"
         },
         {
             "code": "MAL1010",
@@ -178,7 +192,8 @@ export const courses = {
             "label": "Non-English",
             "Instructor": "Pradip Sasmal",
             "Student Registered*": "",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": null
         },
         {
             "code": "BBL1020",
@@ -190,7 +205,8 @@ export const courses = {
             "Instructor": "Surajit Ghosh",
             "label": "Non-English",
             "Student Registered*": "",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "sghosh@iitj.ac.in"
         }
     ],
     "secondyearonward": [
@@ -203,7 +219,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Patnayakuni Ravi Prakash",
             "Student Registered*": "36",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "rp@iitj.ac.in"
         },
         {
             "code": "CYL2040",
@@ -214,7 +231,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Ramesh Kashinath Metre",
             "Student Registered*": "15",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "rkmetre@iitj.ac.in"
         },
         {
             "code": "CYL3070",
@@ -225,7 +243,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Milan Kumar Hazra",
             "Student Registered*": "12",
-            "Classroom": "CY 108"
+            "Classroom": "CY 108",
+            "instructorEmail": "milanhazra@iitj.ac.in"
         },
         {
             "code": "EEL3060",
@@ -236,7 +255,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Ravi Yadav",
             "Student Registered*": "91",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "raviyee@iitj.ac.in"
         },
         {
             "code": "MSL73170",
@@ -247,7 +267,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Monika Tanwar",
             "Student Registered*": "86",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "monikatanwar@iitj.ac.in"
         },
         {
             "code": "MEL2020",
@@ -258,7 +279,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Ashish Pathak",
             "Student Registered*": "241",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "apathak@iitj.ac.in"
         },
         {
             "code": "MEL2030",
@@ -269,7 +291,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Rajit Ranjan",
             "Student Registered*": "62",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "rajitranjan@iitj.ac.in"
         },
         {
             "code": "MSL74290",
@@ -280,7 +303,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Anuj Pal Kapoor",
             "Student Registered*": "61",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "anujkapoor@iitj.ac.in"
         },
         {
             "code": "MEL3080",
@@ -291,7 +315,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Suril Vijaykumar Shah",
             "Student Registered*": "58",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "surilshah@iitj.ac.in"
         },
         {
             "code": "BBL4060",
@@ -302,7 +327,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Siddharth Srivastava",
             "Student Registered*": "72",
-            "Classroom": "LHC-2 102"
+            "Classroom": "LHC-2 102",
+            "instructorEmail": "siddharth.vastav@iitj.ac.in"
         },
         {
             "code": "MEL2010",
@@ -313,7 +339,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Sanhita Das",
             "Student Registered*": "44",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "sanhitadas@iitj.ac.in"
         },
         {
             "code": "CHL3070",
@@ -324,7 +351,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Praveenkumar Sappidi",
             "Student Registered*": "34",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "praveenks@iitj.ac.in"
         },
         {
             "code": "CHL2020",
@@ -335,7 +363,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Manoj Kumar Jena",
             "Student Registered*": "37",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "manojkumarjena@iitj.ac.in"
         },
         {
             "code": "MTL3080",
@@ -346,7 +375,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Ravi K. R.",
             "Student Registered*": "33",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "ravikr@iitj.ac.in"
         },
         {
             "code": "PHL2120",
@@ -357,7 +387,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Sagar Kumar Verma",
             "Student Registered*": "16",
-            "Classroom": "PH 105"
+            "Classroom": "PH 105",
+            "instructorEmail": "sagarkv@iitj.ac.in"
         },
         {
             "code": "MSL71580",
@@ -368,7 +399,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Jangam Bhushan Praveen",
             "Student Registered*": "22",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "bhushanj@iitj.ac.in"
         },
         {
             "code": "LAL6120",
@@ -379,7 +411,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Prasenjeet Tribhuvan",
             "Student Registered*": "17",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "prasenjeet@iitj.ac.in"
         },
         {
             "code": "MSL7100",
@@ -390,7 +423,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Manu Kanchan",
             "Student Registered*": "13",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "manuk@iitj.ac.in"
         },
         {
             "code": "MAL2130",
@@ -401,7 +435,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Tuhina Mukherjee",
             "Student Registered*": "22",
-            "Classroom": "LHC 307"
+            "Classroom": "LHC 307",
+            "instructorEmail": "tuhina@iitj.ac.in"
         },
         {
             "code": "CYL2080",
@@ -412,7 +447,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Ramesh Kashinath Metre",
             "Student Registered*": "10",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "rkmetre@iitj.ac.in"
         },
         {
             "code": "CYL3040",
@@ -423,7 +459,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Rahul Gera",
             "Student Registered*": "12",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "rahulgera@iitj.ac.in"
         },
         {
             "code": "CSL2050",
@@ -434,7 +471,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Avinash Sharma",
             "Student Registered*": "284",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "avinashsharma@iitj.ac.in"
         },
         {
             "code": "MEL3090",
@@ -445,7 +483,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Kaushalkumar Ashokbhai Desai",
             "Student Registered*": "61",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "kadesai@iitj.ac.in"
         },
         {
             "code": "CSL2020",
@@ -456,7 +495,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Debasis Das",
             "Student Registered*": "269",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "debasis@iitj.ac.in"
         },
         {
             "code": "CSL4020",
@@ -467,7 +507,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Pratik Mazumder",
             "Student Registered*": "176",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "pratikm@iitj.ac.in"
         },
         {
             "code": "MSL73130",
@@ -478,7 +519,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Anuj Pal Kapoor",
             "Student Registered*": "112",
-            "Classroom": "LHC-2 102"
+            "Classroom": "LHC-2 102",
+            "instructorEmail": "anujkapoor@iitj.ac.in"
         },
         {
             "code": "MTL3070",
@@ -489,7 +531,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Sumeet Rajesh Khanna",
             "Student Registered*": "34",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "sumeetk@iitj.ac.in"
         },
         {
             "code": "CHL4020",
@@ -500,7 +543,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Varanasi Santhosh Kumar",
             "Student Registered*": "40",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "skvaranasi@iitj.ac.in"
         },
         {
             "code": "PHL3050",
@@ -511,7 +555,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "V. Narayanan",
             "Student Registered*": "17",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "vnara@iitj.ac.in"
         },
         {
             "code": "MSL7110",
@@ -522,7 +567,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Devi Prasad Dash",
             "Student Registered*": "60",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "dpdash@iitj.ac.in"
         },
         {
             "code": "MAL1060",
@@ -533,7 +579,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Gaurav Bhatnagar",
             "Student Registered*": "46",
-            "Classroom": "LHC 304"
+            "Classroom": "LHC 304",
+            "instructorEmail": "goravb@iitj.ac.in"
         },
         {
             "code": "PHL2210",
@@ -544,7 +591,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Satyajit Sahu",
             "Student Registered*": "17",
-            "Classroom": "PH 105"
+            "Classroom": "PH 105",
+            "instructorEmail": "satyajit@iitj.ac.in"
         },
         {
             "code": "EEL7390",
@@ -555,7 +603,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Arani Ali Khan",
             "Student Registered*": "6",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "aakhan@iitj.ac.in"
         },
         {
             "code": "CSL3080",
@@ -566,7 +615,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Awathare Nitin Niranjan",
             "Student Registered*": "136",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "nitina@iitj.ac.in"
         },
         {
             "code": "EEL3070",
@@ -577,7 +627,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Amit Bhardwaj",
             "Student Registered*": "89",
-            "Classroom": "LHC-2 102"
+            "Classroom": "LHC-2 102",
+            "instructorEmail": "amitb@iitj.ac.in"
         },
         {
             "code": "LAL4050",
@@ -588,7 +639,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Sreedevi D.",
             "Student Registered*": "87",
-            "Classroom": "LHC-2 103"
+            "Classroom": "LHC-2 103",
+            "instructorEmail": "sreedevid@iitj.ac.in"
         },
         {
             "code": "LAL4380",
@@ -599,7 +651,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Rachel Philip",
             "Student Registered*": "86",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "rachel@iitj.ac.in"
         },
         {
             "code": "MSL73140",
@@ -610,7 +663,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Jangam Bhushan Praveen",
             "Student Registered*": "83",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "bhushanj@iitj.ac.in"
         },
         {
             "code": "EEL2030",
@@ -621,7 +675,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Rajendra Nagar",
             "Student Registered*": "81",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "rn@iitj.ac.in"
         },
         {
             "code": "LAL4040",
@@ -632,7 +687,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Kirti Sankhala",
             "Student Registered*": "75",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "kirtisankhala@iitj.ac.in"
         },
         {
             "code": "CSL4050",
@@ -643,7 +699,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Hardik Jain",
             "Student Registered*": "74",
-            "Classroom": "LHC 207"
+            "Classroom": "LHC 207",
+            "instructorEmail": "hardik.jain@iitj.ac.in"
         },
         {
             "code": "LAL4350",
@@ -654,7 +711,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "George K. J.",
             "Student Registered*": "62",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "kjg@iitj.ac.in"
         },
         {
             "code": "MEL3060",
@@ -665,7 +723,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Hirshikesh",
             "Student Registered*": "58",
-            "Classroom": "LHC 305"
+            "Classroom": "LHC 305",
+            "instructorEmail": "hirshikesh@iitj.ac.in"
         },
         {
             "code": "MSL7570",
@@ -676,7 +735,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "S. Srivatsa Srinivas",
             "Student Registered*": "49",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "srivatsa@iitj.ac.in"
         },
         {
             "code": "BBL3020",
@@ -687,7 +747,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Indranil Banerjee",
             "Student Registered*": "43",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "indranil@iitj.ac.in"
         },
         {
             "code": "CIL3070",
@@ -698,7 +759,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Saran Aadhar",
             "Student Registered*": "36",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "saran.aadhar@iitj.ac.in"
         },
         {
             "code": "CHL4010",
@@ -709,7 +771,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Angan Sengupta",
             "Student Registered*": "35",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "angan@iitj.ac.in"
         },
         {
             "code": "MTL3060",
@@ -720,7 +783,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Jaiveer Singh",
             "Student Registered*": "33",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "jaiveer@iitj.ac.in"
         },
         {
             "code": "DSL7200",
@@ -731,7 +795,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Pranjal Protim Borah",
             "Student Registered*": "28",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "pranjalborah@iitj.ac.in"
         },
         {
             "code": "PHL3060",
@@ -742,7 +807,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Jitendra Kumar",
             "Student Registered*": "17",
-            "Classroom": "PH 105"
+            "Classroom": "PH 105",
+            "instructorEmail": "jkumar@iitj.ac.in"
         },
         {
             "code": "CYL2050",
@@ -753,7 +819,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Milan Kumar Hazra",
             "Student Registered*": "14",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "milanhazra@iitj.ac.in"
         },
         {
             "code": "PHL2130",
@@ -764,7 +831,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Sunita",
             "Student Registered*": "14",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "sunita@iitj.ac.in"
         },
         {
             "code": "CYL3080",
@@ -775,7 +843,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Sandip Murarka",
             "Student Registered*": "12",
-            "Classroom": "CY 108"
+            "Classroom": "CY 108",
+            "instructorEmail": "sandipmurarka@iitj.ac.in"
         },
         {
             "code": "LAL7860",
@@ -786,7 +855,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Sherin Sabu",
             "Student Registered*": "7",
-            "Classroom": "SOLA"
+            "Classroom": "SOLA",
+            "instructorEmail": "sherinsabu@iitj.ac.in"
         },
         {
             "code": "EEL71660",
@@ -797,7 +867,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Vineeth V.",
             "Student Registered*": "3",
-            "Classroom": "EE 115"
+            "Classroom": "EE 115",
+            "instructorEmail": "vineeth@iitj.ac.in"
         },
         {
             "code": "CYL7010",
@@ -808,7 +879,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Samanwita Pal",
             "Student Registered*": "13",
-            "Classroom": "BB 102"
+            "Classroom": "BB 102",
+            "instructorEmail": "samanwita@iitj.ac.in"
         },
         {
             "code": "PHL2021",
@@ -819,7 +891,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Durgamadhab Mishra",
             "Student Registered*": "214",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "durgamadhab@iitj.ac.in"
         },
         {
             "code": "MTL2013",
@@ -830,7 +903,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Sumeet Rajesh Khanna",
             "Student Registered*": "133",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "sumeetk@iitj.ac.in"
         },
         {
             "code": "MTL2016",
@@ -841,7 +915,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Srijan Sengupta",
             "Student Registered*": "119",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "srijansengupta@iitj.ac.in"
         },
         {
             "code": "MTL2012",
@@ -852,7 +927,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Appala Naidu Gandi",
             "Student Registered*": "179",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "appalanaidu@iitj.ac.in"
         },
         {
             "code": "CYL2021",
@@ -863,7 +939,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Ananya Debnath",
             "Student Registered*": "43",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "ananya@iitj.ac.in"
         },
         {
             "code": "CHL2023",
@@ -874,7 +951,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Manoj Kumar Jena",
             "Student Registered*": "146",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "manojkumarjena@iitj.ac.in"
         },
         {
             "code": "LAL1060",
@@ -885,7 +963,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Anupama Mohan",
             "Student Registered*": "46",
-            "Classroom": "LHC 304"
+            "Classroom": "LHC 304",
+            "instructorEmail": "amohan@iitj.ac.in"
         },
         {
             "code": "MAL2150",
@@ -896,7 +975,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Dilpreet Kaur",
             "Student Registered*": "20",
-            "Classroom": "LHC 306"
+            "Classroom": "LHC 306",
+            "instructorEmail": "dilpreetkaur@iitj.ac.in"
         },
         {
             "code": "CYL2090",
@@ -907,7 +987,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Milan Kumar Hazra",
             "Student Registered*": "10",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "milanhazra@iitj.ac.in"
         },
         {
             "code": "EEL3090",
@@ -918,7 +999,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Binod Kumar",
             "Student Registered*": "205",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "binod@iitj.ac.in"
         },
         {
             "code": "CSL2060",
@@ -929,7 +1011,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Romi Banerjee",
             "Student Registered*": "125",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "romibanerjee@iitj.ac.in"
         },
         {
             "code": "MEL2040",
@@ -940,7 +1023,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Gagan Vikram Kewalramani",
             "Student Registered*": "63",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "gagank@iitj.ac.in"
         },
         {
             "code": "LAL4680",
@@ -951,7 +1035,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Dinesh Mohan Joshi",
             "Student Registered*": "87",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "dineshjoshi@iitj.ac.in"
         },
         {
             "code": "LAL4110",
@@ -962,7 +1047,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Gurujegan M.",
             "Student Registered*": "86",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "gurujeganm@iitj.ac.in"
         },
         {
             "code": "CSL2110",
@@ -973,7 +1059,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Angshuman Paul",
             "Student Registered*": "84",
-            "Classroom": "LHC-2 102"
+            "Classroom": "LHC-2 102",
+            "instructorEmail": "apaul@iitj.ac.in"
         },
         {
             "code": "MSL73190",
@@ -984,7 +1071,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Manu Kanchan",
             "Student Registered*": "84",
-            "Classroom": "LHC-2 103"
+            "Classroom": "LHC-2 103",
+            "instructorEmail": "manuk@iitj.ac.in"
         },
         {
             "code": "EEL2040",
@@ -995,7 +1083,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Nitin Bhatia",
             "Student Registered*": "82",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "nitin@iitj.ac.in"
         },
         {
             "code": "MAL3010",
@@ -1006,7 +1095,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Subhash Bhagat",
             "Student Registered*": "61",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "sbhagat@iitj.ac.in"
         },
         {
             "code": "MEL3070",
@@ -1017,7 +1107,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Arun Kumar R",
             "Student Registered*": "57",
-            "Classroom": "LHC 207"
+            "Classroom": "LHC 207",
+            "instructorEmail": "arunkr@iitj.ac.in"
         },
         {
             "code": "LAL4650",
@@ -1028,7 +1119,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Suman Dhaka",
             "Student Registered*": "55",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "dhakas@iitj.ac.in"
         },
         {
             "code": "MAL2040",
@@ -1039,7 +1131,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Brahadeesh Sankarnarayanan",
             "Student Registered*": "49",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "brahadeesh@iitj.ac.in"
         },
         {
             "code": "LAL4030",
@@ -1050,7 +1143,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Chandana N",
             "Student Registered*": "41",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "chandana@iitj.ac.in"
         },
         {
             "code": "CHL4030",
@@ -1061,7 +1155,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Sumit Kamal",
             "Student Registered*": "37",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "sumitkamal@iitj.ac.in"
         },
         {
             "code": "CHL2030",
@@ -1072,7 +1167,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Vikky Anand",
             "Student Registered*": "36",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "vikky@iitj.ac.in"
         },
         {
             "code": "CIL3080",
@@ -1083,7 +1179,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Amit Kumar Rathi",
             "Student Registered*": "36",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "akrathi@iitj.ac.in"
         },
         {
             "code": "MTL2040",
@@ -1094,7 +1191,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Saurabh Sanjay Nene",
             "Student Registered*": "35",
-            "Classroom": "PH 104"
+            "Classroom": "PH 104",
+            "instructorEmail": "ssnene@iitj.ac.in"
         },
         {
             "code": "BBL2200",
@@ -1105,7 +1203,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Sushmita Jha",
             "Student Registered*": "34",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "sushmitajha@iitj.ac.in"
         },
         {
             "code": "MTL3050",
@@ -1116,7 +1215,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Amitava Banerjee",
             "Student Registered*": "34",
-            "Classroom": "EE 108"
+            "Classroom": "EE 108",
+            "instructorEmail": "amitava@iitj.ac.in"
         },
         {
             "code": "EEL3100",
@@ -1127,7 +1227,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Dipanjan Roy",
             "Student Registered*": "27",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "droy@iitj.ac.in"
         },
         {
             "code": "EEL7200",
@@ -1138,7 +1239,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Pradyumna Kumar Bishoyi",
             "Student Registered*": "27",
-            "Classroom": "EE 114"
+            "Classroom": "EE 114",
+            "instructorEmail": "pradyumna@iitj.ac.in"
         },
         {
             "code": "LAL4370",
@@ -1149,7 +1251,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Sidharth Ranjan",
             "Student Registered*": "22",
-            "Classroom": "EE 115"
+            "Classroom": "EE 115",
+            "instructorEmail": "sranjan@iitj.ac.in"
         },
         {
             "code": "MSL7550",
@@ -1160,7 +1263,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Magesh Nagarajan",
             "Student Registered*": "20",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "magesh@iitj.ac.in"
         },
         {
             "code": "PHL3070",
@@ -1171,7 +1275,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Satyajit Sahu",
             "Student Registered*": "17",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "satyajit@iitj.ac.in"
         },
         {
             "code": "DSL7540",
@@ -1182,7 +1287,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Gaurav Vinodrao Vaidya",
             "Student Registered*": "16",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "gauravvaidya@iitj.ac.in"
         },
         {
             "code": "PHL2110",
@@ -1193,7 +1299,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Ambesh Dixit",
             "Student Registered*": "16",
-            "Classroom": "ME 109"
+            "Classroom": "ME 109",
+            "instructorEmail": "ambesh@iitj.ac.in"
         },
         {
             "code": "CYL7020",
@@ -1204,7 +1311,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Ananya Debnath",
             "Student Registered*": "12",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "ananya@iitj.ac.in"
         },
         {
             "code": "MSL72670",
@@ -1215,7 +1323,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Jangam Bhushan Praveen",
             "Student Registered*": "10",
-            "Classroom": "ME 114"
+            "Classroom": "ME 114",
+            "instructorEmail": "bhushanj@iitj.ac.in"
         },
         {
             "code": "EEL2020",
@@ -1226,7 +1335,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Jai Narayan Tripathi",
             "Student Registered*": "222",
-            "Classroom": "LHC 110"
+            "Classroom": "LHC 110",
+            "instructorEmail": "jai@iitj.ac.in"
         },
         {
             "code": "EEL2010",
@@ -1237,7 +1347,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Manish Narwaria",
             "Student Registered*": "191",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "narwaria@iitj.ac.in"
         },
         {
             "code": "EEL3080",
@@ -1248,7 +1359,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Viswanathan Ramachandran",
             "Student Registered*": "93",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "vramachandran@iitj.ac.in"
         },
         {
             "code": "MSL73180",
@@ -1259,7 +1371,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Aman Pathak",
             "Student Registered*": "93",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "amanpathak@iitj.ac.in"
         },
         {
             "code": "CSL2090",
@@ -1270,7 +1383,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Sidharth Sharma",
             "Student Registered*": "84",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "sidharth@iitj.ac.in"
         },
         {
             "code": "CSL7140",
@@ -1281,7 +1395,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Vimal Raj Sharma",
             "Student Registered*": "40",
-            "Classroom": "LHC 304"
+            "Classroom": "LHC 304",
+            "instructorEmail": "vimalraj@iitj.ac.in"
         },
         {
             "code": "CHL4330",
@@ -1292,7 +1407,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Tara Chand Kumawat",
             "Student Registered*": "73",
-            "Classroom": "LHC 204"
+            "Classroom": "LHC 204",
+            "instructorEmail": "tckumawat@iitj.ac.in"
         },
         {
             "code": "EEL4320",
@@ -1303,7 +1419,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Akshay",
             "Student Registered*": "71",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "akshaymoudgil@iitj.ac.in"
         },
         {
             "code": "CSL7370",
@@ -1314,7 +1431,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Yashaswi Verma",
             "Student Registered*": "60",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "yashaswi@iitj.ac.in"
         },
         {
             "code": "MEL7150",
@@ -1325,7 +1443,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Kothadia Hardikkumar Bhupendra",
             "Student Registered*": "54",
-            "Classroom": "LHC 207"
+            "Classroom": "LHC 207",
+            "instructorEmail": "hardikkothadia@iitj.ac.in"
         },
         {
             "code": "EEL2060",
@@ -1336,7 +1455,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Arpit Arvind Khandelwal",
             "Student Registered*": "50",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "arpitkhandelwal@iitj.ac.in"
         },
         {
             "code": "BBL3010",
@@ -1347,7 +1467,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Shankar Manoharan",
             "Student Registered*": "43",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "shankarmanoharan@iitj.ac.in"
         },
         {
             "code": "CIL3060",
@@ -1358,7 +1479,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Patnayakuni Ravi Prakash",
             "Student Registered*": "37",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "rp@iitj.ac.in"
         },
         {
             "code": "BBL2100",
@@ -1369,7 +1491,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Dinesh Kumar Ahirwar",
             "Student Registered*": "34",
-            "Classroom": "BB 102"
+            "Classroom": "BB 102",
+            "instructorEmail": "dineshahirwar@iitj.ac.in"
         },
         {
             "code": "MTL3090",
@@ -1380,7 +1503,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Ravi Prakash Srivastava",
             "Student Registered*": "33",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "ravip@iitj.ac.in"
         },
         {
             "code": "BBL7390",
@@ -1391,7 +1515,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Sudipta Bhattacharyya",
             "Student Registered*": "30",
-            "Classroom": "BB 104"
+            "Classroom": "BB 104",
+            "instructorEmail": "sudipta@iitj.ac.in"
         },
         {
             "code": "MSL71070",
@@ -1402,7 +1527,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Deepak Kumar Saxena",
             "Student Registered*": "28",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "saxenad@iitj.ac.in"
         },
         {
             "code": "MSL72100",
@@ -1413,7 +1539,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Magesh Nagarajan",
             "Student Registered*": "28",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "magesh@iitj.ac.in"
         },
         {
             "code": "DSL7230",
@@ -1424,7 +1551,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Pankaj Sheshrao Chavan",
             "Student Registered*": "20",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "pankajchavan@iitj.ac.in"
         },
         {
             "code": "MEL4060",
@@ -1435,7 +1563,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Barun Pratiher",
             "Student Registered*": "17",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "barun@iitj.ac.in"
         },
         {
             "code": "DSL7560",
@@ -1446,7 +1575,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Gaurav Vinodrao Vaidya",
             "Student Registered*": "16",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "gauravvaidya@iitj.ac.in"
         },
         {
             "code": "CYL3050",
@@ -1457,7 +1587,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Subrata Chakraborty",
             "Student Registered*": "12",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "subrata@iitj.ac.in"
         },
         {
             "code": "CSL7480",
@@ -1468,7 +1599,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Bimal Mandal",
             "Student Registered*": "10",
-            "Classroom": "CSE 101"
+            "Classroom": "CSE 101",
+            "instructorEmail": "bimalmandal@iitj.ac.in"
         },
         {
             "code": "PHL4050",
@@ -1479,7 +1611,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Reetanjali Moharana",
             "Student Registered*": "9",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "reetanjali@iitj.ac.in"
         },
         {
             "code": "PHL3080",
@@ -1490,7 +1623,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Ram Prakash",
             "Student Registered*": "17",
-            "Classroom": "PH 104"
+            "Classroom": "PH 104",
+            "instructorEmail": "ramprakash@iitj.ac.in"
         },
         {
             "code": "MAL2140",
@@ -1501,7 +1635,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Sukhendu Ghosh",
             "Student Registered*": "20",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "sukhendu.math@iitj.ac.in"
         },
         {
             "code": "CSL6010",
@@ -1512,7 +1647,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Mohit Kumar Jangid",
             "Student Registered*": "124",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "mjangid@iitj.ac.in"
         },
         {
             "code": "CYL6070",
@@ -1523,7 +1659,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Suresh Sarkar",
             "Student Registered*": "38",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "sarkar@iitj.ac.in"
         },
         {
             "code": "MAP5010",
@@ -1534,7 +1671,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Shaily Verma",
             "Student Registered*": "38",
-            "Classroom": "EE 108"
+            "Classroom": "EE 108",
+            "instructorEmail": "shailyverma@iitj.ac.in"
         },
         {
             "code": "MSL71530",
@@ -1545,7 +1683,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Monika Tanwar",
             "Student Registered*": "38",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "monikatanwar@iitj.ac.in"
         },
         {
             "code": "PHL6060",
@@ -1556,7 +1695,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Sunita",
             "Student Registered*": "35",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "sunita@iitj.ac.in"
         },
         {
             "code": "LAL6090",
@@ -1567,7 +1707,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Gopakumar K. U.",
             "Student Registered*": "32",
-            "Classroom": "PH 104"
+            "Classroom": "PH 104",
+            "instructorEmail": "gopakumar@iitj.ac.in"
         },
         {
             "code": "MSL72050",
@@ -1578,7 +1719,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Deepak Kumar Saxena",
             "Student Registered*": "32",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "saxenad@iitj.ac.in"
         },
         {
             "code": "CHL7730",
@@ -1589,7 +1731,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Pradip Kumar Tewari",
             "Student Registered*": "22",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "pradiptewari@iitj.ac.in"
         },
         {
             "code": "MSL7070",
@@ -1600,7 +1743,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Devi Prasad Dash",
             "Student Registered*": "22",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "dpdash@iitj.ac.in"
         },
         {
             "code": "MAL7500",
@@ -1611,7 +1755,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Md Abu Talhamainuddin Ansary",
             "Student Registered*": "16",
-            "Classroom": "EE 114"
+            "Classroom": "EE 114",
+            "instructorEmail": "mdabutalha@iitj.ac.in"
         },
         {
             "code": "AIL7130",
@@ -1622,7 +1767,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Vignesh Muralidharan",
             "Student Registered*": "15",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "vigneshmdharan@iitj.ac.in"
         },
         {
             "code": "BBL7580",
@@ -1633,7 +1779,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Pankaj Yadav",
             "Student Registered*": "15",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "pyadav@iitj.ac.in"
         },
         {
             "code": "MEL7100",
@@ -1644,7 +1791,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Rahul Chhibber",
             "Student Registered*": "15",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "rahul_chhibber@iitj.ac.in"
         },
         {
             "code": "CSL7150",
@@ -1655,7 +1803,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Mohit Kumar Jangid",
             "Student Registered*": "14",
-            "Classroom": "BB 105"
+            "Classroom": "BB 105",
+            "instructorEmail": "mjangid@iitj.ac.in"
         },
         {
             "code": "BBL4040",
@@ -1666,7 +1815,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Dinesh Kumar Ahirwar",
             "Student Registered*": "14",
-            "Classroom": "BB 102"
+            "Classroom": "BB 102",
+            "instructorEmail": "dineshahirwar@iitj.ac.in"
         },
         {
             "code": "CIL7440",
@@ -1677,7 +1827,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Amit Kumar Rathi",
             "Student Registered*": "14",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "akrathi@iitj.ac.in"
         },
         {
             "code": "MTL7060",
@@ -1688,7 +1839,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Sk Md Hasan",
             "Student Registered*": "14",
-            "Classroom": "MT 112"
+            "Classroom": "MT 112",
+            "instructorEmail": "hasan@iitj.ac.in"
         },
         {
             "code": "DSL7580",
@@ -1699,7 +1851,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Shiv Kumar Verma",
             "Student Registered*": "13",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "skv@iitj.ac.in"
         },
         {
             "code": "CIL7880",
@@ -1710,7 +1863,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Tekcham Gishan Singh",
             "Student Registered*": "12",
-            "Classroom": "ME 114"
+            "Classroom": "ME 114",
+            "instructorEmail": "tekcham@iitj.ac.in"
         },
         {
             "code": "CIL7090",
@@ -1721,7 +1875,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Monika Dubey",
             "Student Registered*": "11",
-            "Classroom": "EE 115"
+            "Classroom": "EE 115",
+            "instructorEmail": "monikadubey@iitj.ac.in"
         },
         {
             "code": "MEL7670",
@@ -1732,7 +1887,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Jayant Kumar Mohanta",
             "Student Registered*": "11",
-            "Classroom": "ME 109"
+            "Classroom": "ME 109",
+            "instructorEmail": "jayant@iitj.ac.in"
         },
         {
             "code": "AIL7550",
@@ -1743,7 +1899,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Manish Aggarwal",
             "Student Registered*": "7",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "ma@iitj.ac.in"
         },
         {
             "code": "EEL7240",
@@ -1754,7 +1911,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Arun Kumar Singh",
             "Student Registered*": "7",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "singhak@iitj.ac.in"
         },
         {
             "code": "AIL4260",
@@ -1765,7 +1923,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Sidharth Ranjan",
             "Student Registered*": "6",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "sranjan@iitj.ac.in"
         },
         {
             "code": "MTL7200",
@@ -1776,7 +1935,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Amitava Banerjee",
             "Student Registered*": "5",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "amitava@iitj.ac.in"
         },
         {
             "code": "CSL7590",
@@ -1787,7 +1947,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Angshuman Paul",
             "Student Registered*": "230",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "apaul@iitj.ac.in"
         },
         {
             "code": "MSL72140",
@@ -1798,7 +1959,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Jangam Bhushan Praveen",
             "Student Registered*": "55",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "bhushanj@iitj.ac.in"
         },
         {
             "code": "CYL6080",
@@ -1809,7 +1971,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Dibyendu Kumar Sasmal",
             "Student Registered*": "38",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "sasmal@iitj.ac.in"
         },
         {
             "code": "PHL6080",
@@ -1820,7 +1983,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Naveen Kumar Tailor",
             "Student Registered*": "36",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "nktailor@iitj.ac.in"
         },
         {
             "code": "DSL7630",
@@ -1831,7 +1995,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Pranjal Protim Borah",
             "Student Registered*": "35",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "pranjalborah@iitj.ac.in"
         },
         {
             "code": "MAL6040",
@@ -1842,7 +2007,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Dilpreet Kaur",
             "Student Registered*": "29",
-            "Classroom": "LHC 306"
+            "Classroom": "LHC 306",
+            "instructorEmail": "dilpreetkaur@iitj.ac.in"
         },
         {
             "code": "AIL6010",
@@ -1853,7 +2019,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Abhinaba Lahiri",
             "Student Registered*": "24",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "abhinaba@iitj.ac.in"
         },
         {
             "code": "MSL7780",
@@ -1864,7 +2031,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Neha",
             "Student Registered*": "24",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "neha@iitj.ac.in"
         },
         {
             "code": "PHL7510",
@@ -1875,7 +2043,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Shahab Ahmad",
             "Student Registered*": "23",
-            "Classroom": "PH 104"
+            "Classroom": "PH 104",
+            "instructorEmail": "shahab@iitj.ac.in"
         },
         {
             "code": "PHL2200",
@@ -1886,7 +2055,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Ram Prakash",
             "Student Registered*": "18",
-            "Classroom": "EE 114"
+            "Classroom": "EE 114",
+            "instructorEmail": "ramprakash@iitj.ac.in"
         },
         {
             "code": "CSL7820",
@@ -1897,7 +2067,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Gaurav Harit",
             "Student Registered*": "16",
-            "Classroom": "CSE 101"
+            "Classroom": "CSE 101",
+            "instructorEmail": "gharit@iitj.ac.in"
         },
         {
             "code": "CHL7450",
@@ -1908,7 +2079,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Prashant Kumar Gupta",
             "Student Registered*": "14",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "guptapk@iitj.ac.in"
         },
         {
             "code": "CIL7070",
@@ -1919,7 +2091,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Monika Dubey",
             "Student Registered*": "11",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "monikadubey@iitj.ac.in"
         },
         {
             "code": "PHL7480",
@@ -1930,7 +2103,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Subhashish Banerjee",
             "Student Registered*": "11",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "subhashish@iitj.ac.in"
         },
         {
             "code": "CIL7460",
@@ -1941,7 +2115,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Shuvajit Mukherjee",
             "Student Registered*": "10",
-            "Classroom": "ME 109"
+            "Classroom": "ME 109",
+            "instructorEmail": "shuvajit@iitj.ac.in"
         },
         {
             "code": "MTL7160",
@@ -1952,7 +2127,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Abir Bhattacharyya",
             "Student Registered*": "9",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "abir.mtl@gmail.com"
         },
         {
             "code": "LAP4120",
@@ -1963,7 +2139,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Bhaswati Sarma",
             "Student Registered*": "4",
-            "Classroom": "SOLA"
+            "Classroom": "SOLA",
+            "instructorEmail": "bhaswatisarma@iitj.ac.in"
         },
         {
             "code": "MSP7070",
@@ -1974,7 +2151,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Bhargab Chattopadhyay",
             "Student Registered*": "4",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "bhargab@iitj.ac.in"
         },
         {
             "code": "CSL7410",
@@ -1985,7 +2163,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Tanmay Nitin Inamdar",
             "Student Registered*": "168",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "taninamdar@iitj.ac.in"
         },
         {
             "code": "MSL73160",
@@ -1996,7 +2175,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Neha",
             "Student Registered*": "103",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "neha@iitj.ac.in"
         },
         {
             "code": "CSL7450",
@@ -2007,7 +2187,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Hardik Jain",
             "Student Registered*": "96",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "hardik.jain@iitj.ac.in"
         },
         {
             "code": "CIL7390",
@@ -2018,7 +2199,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Amit Sharma",
             "Student Registered*": "73",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "amit.sharma@iitj.ac.in"
         },
         {
             "code": "CYL6090",
@@ -2029,7 +2211,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Dibyendu Kumar Sasmal",
             "Student Registered*": "39",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "sasmal@iitj.ac.in"
         },
         {
             "code": "EEL7500",
@@ -2040,7 +2223,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Saakshi Dhanekar",
             "Student Registered*": "37",
-            "Classroom": "EE 108"
+            "Classroom": "EE 108",
+            "instructorEmail": "saakshi@iitj.ac.in"
         },
         {
             "code": "MAL6050",
@@ -2051,7 +2235,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Kirankumar Rajshekhar Hiremath",
             "Student Registered*": "33",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "k.r.hiremath@iitj.ac.in"
         },
         {
             "code": "MEL7990",
@@ -2062,7 +2247,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Pratyaksh Karan",
             "Student Registered*": "28",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "pratyakshkaran@iitj.ac.in"
         },
         {
             "code": "CIL4390",
@@ -2073,7 +2259,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Subham Jain",
             "Student Registered*": "27",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "sjain@iitj.ac.in"
         },
         {
             "code": "MTL7150",
@@ -2084,7 +2271,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Pranay Ranjan",
             "Student Registered*": "26",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "pranay.ranjan@iitj.ac.in"
         },
         {
             "code": "CHL7090",
@@ -2095,7 +2283,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Parag Arvind Deshpande",
             "Student Registered*": "24",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "parag@iitj.ac.in"
         },
         {
             "code": "AIL7390",
@@ -2106,7 +2295,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Deeksha Varshney",
             "Student Registered*": "23",
-            "Classroom": "CSE 101"
+            "Classroom": "CSE 101",
+            "instructorEmail": "deeksha@iitj.ac.in"
         },
         {
             "code": "BBL7600",
@@ -2117,7 +2307,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Sucharita Dey",
             "Student Registered*": "18",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "sdey@iitj.ac.in"
         },
         {
             "code": "MSL7370",
@@ -2128,7 +2319,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Aman Pathak",
             "Student Registered*": "18",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "amanpathak@iitj.ac.in"
         },
         {
             "code": "LAL6330",
@@ -2139,7 +2331,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Akanksha Choudhary",
             "Student Registered*": "16",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "akanksha@iitj.ac.in"
         },
         {
             "code": "MSL7460",
@@ -2150,7 +2343,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Seema",
             "Student Registered*": "16",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "seemasaini@iitj.ac.in"
         },
         {
             "code": "CIL7950",
@@ -2161,7 +2355,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Yogiraj Sargam",
             "Student Registered*": "9",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "ysargam@iitj.ac.in"
         },
         {
             "code": "CIL7470",
@@ -2172,7 +2367,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Pradeep Kumar Dammala",
             "Student Registered*": "4",
-            "Classroom": "PH 105"
+            "Classroom": "PH 105",
+            "instructorEmail": "pkdammala@iitj.ac.in"
         },
         {
             "code": "LAL7410",
@@ -2183,7 +2379,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "George K. J.",
             "Student Registered*": "4",
-            "Classroom": "SOLA"
+            "Classroom": "SOLA",
+            "instructorEmail": "kjg@iitj.ac.in"
         },
         {
             "code": "DSL7570",
@@ -2194,7 +2391,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Shiv Kumar Verma",
             "Student Registered*": "13",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "skv@iitj.ac.in"
         },
         {
             "code": "MSL73150",
@@ -2205,7 +2403,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Jitesh Mohnot",
             "Student Registered*": "86",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "jiteshm@iitj.ac.in"
         },
         {
             "code": "MSL4020",
@@ -2216,7 +2415,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Venkat Ram Reddy Ganuthula",
             "Student Registered*": "57",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "ram@iitj.ac.in"
         },
         {
             "code": "MTL7490",
@@ -2227,7 +2427,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Devendra Singh Negi",
             "Student Registered*": "45",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "devendra@iitj.ac.in"
         },
         {
             "code": "CYP6070",
@@ -2238,7 +2439,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Manikandan Paranjothy",
             "Student Registered*": "39",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "pmanikandan@iitj.ac.in"
         },
         {
             "code": "MAL7360",
@@ -2249,7 +2451,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Moumita Mandal",
             "Student Registered*": "39",
-            "Classroom": "LHC 306"
+            "Classroom": "LHC 306",
+            "instructorEmail": "moumita@iitj.ac.in"
         },
         {
             "code": "BBL7450",
@@ -2260,7 +2463,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Amit Kumar Mishra",
             "Student Registered*": "35",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "amit@iitj.ac.in"
         },
         {
             "code": "PHL6090",
@@ -2271,7 +2475,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Jitendra Kumar",
             "Student Registered*": "35",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "jkumar@iitj.ac.in"
         },
         {
             "code": "CIL4340",
@@ -2282,7 +2487,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Tekcham Gishan Singh",
             "Student Registered*": "34",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "tekcham@iitj.ac.in"
         },
         {
             "code": "MAL6060",
@@ -2293,7 +2499,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Moumita Mandal (Rakesh Ratnakar Pawar)",
             "Student Registered*": "29",
-            "Classroom": "LHC 307"
+            "Classroom": "LHC 307",
+            "instructorEmail": "moumita@iitj.ac.in"
         },
         {
             "code": "CYL7440",
@@ -2304,7 +2511,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Nirmal Kumar Rana",
             "Student Registered*": "27",
-            "Classroom": "CY 108"
+            "Classroom": "CY 108",
+            "instructorEmail": "nirmalrana@iitj.ac.in"
         },
         {
             "code": "AIL6020",
@@ -2315,7 +2523,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "S. Srivatsa Srinivas",
             "Student Registered*": "24",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "srivatsa@iitj.ac.in"
         },
         {
             "code": "MSL7360",
@@ -2326,7 +2535,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Vinod Vijay Kumar",
             "Student Registered*": "22",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "vinodvk@iitj.ac.in"
         },
         {
             "code": "CHL4420",
@@ -2337,7 +2547,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Vikky Anand",
             "Student Registered*": "20",
-            "Classroom": "MT 112"
+            "Classroom": "MT 112",
+            "instructorEmail": "vikky@iitj.ac.in"
         },
         {
             "code": "AIL7370",
@@ -2348,7 +2559,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Bikash Santra",
             "Student Registered*": "19",
-            "Classroom": "LHC 207"
+            "Classroom": "LHC 207",
+            "instructorEmail": "bikash@iitj.ac.in"
         },
         {
             "code": "EEL7220",
@@ -2359,7 +2571,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Shaik Abdul Gafoor",
             "Student Registered*": "19",
-            "Classroom": "EE 108"
+            "Classroom": "EE 108",
+            "instructorEmail": "saadgafoor@iitj.ac.in"
         },
         {
             "code": "EEL7840",
@@ -2370,7 +2583,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Saakshi Dhanekar",
             "Student Registered*": "17",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "saakshi@iitj.ac.in"
         },
         {
             "code": "EEL7140",
@@ -2381,7 +2595,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Bijnan Bandyopadhyay",
             "Student Registered*": "16",
-            "Classroom": "EE 114"
+            "Classroom": "EE 114",
+            "instructorEmail": "bijnan@iitj.ac.in"
         },
         {
             "code": "AIL7250",
@@ -2392,7 +2607,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Shilpa Dang",
             "Student Registered*": "14",
-            "Classroom": "LHC 304"
+            "Classroom": "LHC 304",
+            "instructorEmail": "sdang@iitj.ac.in"
         },
         {
             "code": "EEL7630",
@@ -2403,7 +2619,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Aashish Mathur",
             "Student Registered*": "14",
-            "Classroom": "EE 115"
+            "Classroom": "EE 115",
+            "instructorEmail": "aashishmathur@iitj.ac.in"
         },
         {
             "code": "CIL7630",
@@ -2414,7 +2631,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Sanhita Das",
             "Student Registered*": "13",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "sanhitadas@iitj.ac.in"
         },
         {
             "code": "CHL7530",
@@ -2425,7 +2643,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Sumit Kamal",
             "Student Registered*": "10",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "sumitkamal@iitj.ac.in"
         },
         {
             "code": "MEL7490",
@@ -2436,7 +2655,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Chandan Pandey",
             "Student Registered*": "9",
-            "Classroom": "ME 114"
+            "Classroom": "ME 114",
+            "instructorEmail": "jscpandey@iitj.ac.in"
         },
         {
             "code": "MTL7340",
@@ -2447,7 +2667,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Nitin Kumar Sharma",
             "Student Registered*": "8",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "nitinksh@iitj.ac.in"
         },
         {
             "code": "PHL7340",
@@ -2458,7 +2679,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Monika Sinha",
             "Student Registered*": "8",
-            "Classroom": "PH 104"
+            "Classroom": "PH 104",
+            "instructorEmail": "ms@iitj.ac.in"
         },
         {
             "code": "CIL7530",
@@ -2469,7 +2691,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Mayank Suman",
             "Student Registered*": "7",
-            "Classroom": "PH 105"
+            "Classroom": "PH 105",
+            "instructorEmail": "mayanksuman@iitj.ac.in"
         },
         {
             "code": "MTL7360",
@@ -2480,7 +2703,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Nitesh Arora",
             "Student Registered*": "6",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "nitesharora@iitj.ac.in"
         },
         {
             "code": "PHL7310",
@@ -2491,7 +2715,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Ambesh Dixit",
             "Student Registered*": "6",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "ambesh@iitj.ac.in"
         },
         {
             "code": "MEL7600",
@@ -2502,7 +2727,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Nipun Arora",
             "Student Registered*": "5",
-            "Classroom": "BB 104"
+            "Classroom": "BB 104",
+            "instructorEmail": "nipun@iitj.ac.in"
         },
         {
             "code": "AIL7180",
@@ -2513,7 +2739,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Ganesh Manjhi",
             "Student Registered*": "4",
-            "Classroom": "BB 105"
+            "Classroom": "BB 105",
+            "instructorEmail": "gmanjhi@iitj.ac.in"
         },
         {
             "code": "MEL7390",
@@ -2524,7 +2751,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Shobhana Singh",
             "Student Registered*": "4",
-            "Classroom": "ME 109"
+            "Classroom": "ME 109",
+            "instructorEmail": "shobhana@iitj.ac.in"
         },
         {
             "code": "CIL7400",
@@ -2535,7 +2763,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Ranju Mohan",
             "Student Registered*": "10",
-            "Classroom": "LHC-2 102"
+            "Classroom": "LHC-2 102",
+            "instructorEmail": "ranju@iitj.ac.in"
         },
         {
             "code": "MAL7071",
@@ -2546,7 +2775,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Md Abu Talhamainuddin Ansary",
             "Student Registered*": "9",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "mdabutalha@iitj.ac.in"
         },
         {
             "code": "DSL7130",
@@ -2557,7 +2787,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Sumana Som",
             "Student Registered*": "13",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "sumanasom@iitj.ac.in"
         },
         {
             "code": "CYL6330",
@@ -2568,7 +2799,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Atul Kumar",
             "Student Registered*": "39",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "atulk@iitj.ac.in"
         },
         {
             "code": "EEL7450",
@@ -2579,7 +2811,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Ajay Agarwal",
             "Student Registered*": "32",
-            "Classroom": "EE 108"
+            "Classroom": "EE 108",
+            "instructorEmail": "ajayagarwal@iitj.ac.in"
         },
         {
             "code": "MAL6310",
@@ -2590,7 +2823,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Kuntal Som",
             "Student Registered*": "29",
-            "Classroom": "LHC 307"
+            "Classroom": "LHC 307",
+            "instructorEmail": "kuntals@iitj.ac.in"
         },
         {
             "code": "CYL7540",
@@ -2601,7 +2835,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Monika Gupta",
             "Student Registered*": "28",
-            "Classroom": "ME 115"
+            "Classroom": "ME 115",
+            "instructorEmail": "mgupta@iitj.ac.in"
         },
         {
             "code": "MTL7280",
@@ -2612,7 +2847,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Srijan Sengupta",
             "Student Registered*": "27",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "srijansengupta@iitj.ac.in"
         },
         {
             "code": "BBL4020",
@@ -2623,7 +2859,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Ayan Sadhukhan",
             "Student Registered*": "25",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "ayansadhukhan@iitj.ac.in"
         },
         {
             "code": "CHL7380",
@@ -2634,7 +2871,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Angan Sengupta",
             "Student Registered*": "24",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "angan@iitj.ac.in"
         },
         {
             "code": "CYL7360",
@@ -2645,7 +2883,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Monika Gupta",
             "Student Registered*": "20",
-            "Classroom": "CY 108"
+            "Classroom": "CY 108",
+            "instructorEmail": "mgupta@iitj.ac.in"
         },
         {
             "code": "LAL6130",
@@ -2656,7 +2895,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Bhaskar Kumar Kakati",
             "Student Registered*": "19",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "bhaskar@iitj.ac.in"
         },
         {
             "code": "MSL71490",
@@ -2667,7 +2907,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Neha",
             "Student Registered*": "19",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "neha@iitj.ac.in"
         },
         {
             "code": "MSL7350",
@@ -2678,7 +2919,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Deepak Kumar Saxena",
             "Student Registered*": "19",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "saxenad@iitj.ac.in"
         },
         {
             "code": "PHL6320",
@@ -2689,7 +2931,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Lata Panwar",
             "Student Registered*": "19",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "lata@iitj.ac.in"
         },
         {
             "code": "EEL7930",
@@ -2700,7 +2943,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Manoj Gupta",
             "Student Registered*": "18",
-            "Classroom": "EE 114"
+            "Classroom": "EE 114",
+            "instructorEmail": "manojgupta@iitj.ac.in"
         },
         {
             "code": "MAL7130",
@@ -2711,7 +2955,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Nil Kamal Hazra",
             "Student Registered*": "20",
-            "Classroom": "LHC 305"
+            "Classroom": "LHC 305",
+            "instructorEmail": "nilkamal@iitj.ac.in"
         },
         {
             "code": "AIL7150",
@@ -2722,7 +2967,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Dipanjan Roy",
             "Student Registered*": "16",
-            "Classroom": "LHC 306"
+            "Classroom": "LHC 306",
+            "instructorEmail": "droy@iitj.ac.in"
         },
         {
             "code": "BBL7470",
@@ -2733,7 +2979,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Raviraj Vankayala",
             "Student Registered*": "16",
-            "Classroom": "BB 102"
+            "Classroom": "BB 102",
+            "instructorEmail": "rvankayala@iitj.ac.in"
         },
         {
             "code": "CHL7800",
@@ -2744,7 +2991,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Gangawane Krunal Madhukar",
             "Student Registered*": "16",
-            "Classroom": "MT 112"
+            "Classroom": "MT 112",
+            "instructorEmail": "krunalg@iitj.ac.in"
         },
         {
             "code": "PHL6110",
@@ -2755,7 +3003,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Prabhat Kumar Jaiswal",
             "Student Registered*": "16",
-            "Classroom": "PH 104"
+            "Classroom": "PH 104",
+            "instructorEmail": "prabhat.jaiswal@iitj.ac.in"
         },
         {
             "code": "MEL7420",
@@ -2766,7 +3015,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Shrutidhara Sarma",
             "Student Registered*": "15",
-            "Classroom": "ME 114"
+            "Classroom": "ME 114",
+            "instructorEmail": "shrutidhara@iitj.ac.in"
         },
         {
             "code": "CSL7500",
@@ -2777,7 +3027,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Pallavi Jain",
             "Student Registered*": "14",
-            "Classroom": "CSE 101"
+            "Classroom": "CSE 101",
+            "instructorEmail": "pallavi@iitj.ac.in"
         },
         {
             "code": "LAL7310",
@@ -2788,7 +3039,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Rachel Philip",
             "Student Registered*": "14",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "rachel@iitj.ac.in"
         },
         {
             "code": "MEL7540",
@@ -2799,7 +3051,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Atul Kumar Sharma",
             "Student Registered*": "13",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "atulksharma@iitj.ac.in"
         },
         {
             "code": "MTL7440",
@@ -2810,7 +3063,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Koundinya Ntbn",
             "Student Registered*": "13",
-            "Classroom": "MT 113"
+            "Classroom": "MT 113",
+            "instructorEmail": "koundinya@iitj.ac.in"
         },
         {
             "code": "CIL7320",
@@ -2821,7 +3075,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Deepika Bhattu",
             "Student Registered*": "12",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "dbhattu@iitj.ac.in"
         },
         {
             "code": "MEL7180",
@@ -2832,7 +3087,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Mrityunjay Rudrappa Doddamani",
             "Student Registered*": "12",
-            "Classroom": "BB 105"
+            "Classroom": "BB 105",
+            "instructorEmail": "mrityunjay@iitj.ac.in"
         },
         {
             "code": "AIL7490",
@@ -2843,7 +3099,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Divya Saxena",
             "Student Registered*": "11",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "divyasaxena@iitj.ac.in"
         },
         {
             "code": "AIL7170",
@@ -2854,7 +3111,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Dweepobotee Brahma",
             "Student Registered*": "10",
-            "Classroom": "LHC 207"
+            "Classroom": "LHC 207",
+            "instructorEmail": "dweepobotee@iitj.ac.in"
         },
         {
             "code": "PHL7450",
@@ -2865,7 +3123,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Reetanjali Moharana",
             "Student Registered*": "8",
-            "Classroom": "PH 105"
+            "Classroom": "PH 105",
+            "instructorEmail": "reetanjali@iitj.ac.in"
         },
         {
             "code": "CSL7160",
@@ -2876,7 +3135,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Pallavi Jain",
             "Student Registered*": "8",
-            "Classroom": "EE 115"
+            "Classroom": "EE 115",
+            "instructorEmail": "pallavi@iitj.ac.in"
         },
         {
             "code": "EEL71160",
@@ -2887,7 +3147,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Soumava Mukherjee",
             "Student Registered*": "5",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "soumava@iitj.ac.in"
         },
         {
             "code": "MAL7550",
@@ -2898,7 +3159,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Anuj Kumar",
             "Student Registered*": "5",
-            "Classroom": "LHC 304"
+            "Classroom": "LHC 304",
+            "instructorEmail": "anujkumar@iitj.ac.in"
         },
         {
             "code": "CIL7040",
@@ -2909,7 +3171,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Debanjan Guha Roy",
             "Student Registered*": "4",
-            "Classroom": "ME 109"
+            "Classroom": "ME 109",
+            "instructorEmail": "dguharoy@iitj.ac.in"
         },
         {
             "code": "LAL2010",
@@ -2920,7 +3183,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Parichay Patra",
             "Student Registered*": "84",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "parichay@iitj.ac.in"
         },
         {
             "code": "LAL2160",
@@ -2931,7 +3195,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Natasa Thoudam",
             "Student Registered*": "82",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "nthoudam@iitj.ac.in"
         },
         {
             "code": "LAL2040",
@@ -2942,7 +3207,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Vidya Sarveswaran",
             "Student Registered*": "81",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "vs@iitj.ac.in"
         },
         {
             "code": "LAL2020",
@@ -2953,7 +3219,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Kanak Yadav",
             "Student Registered*": "51",
-            "Classroom": "LHC 306"
+            "Classroom": "LHC 306",
+            "instructorEmail": "kanakyadav@iitj.ac.in"
         },
         {
             "code": "CYL6060",
@@ -2964,7 +3231,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Swati Jindal",
             "Student Registered*": "38",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "sjindal@iitj.ac.in"
         },
         {
             "code": "MTL7680",
@@ -2975,7 +3243,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Devendra Singh Negi",
             "Student Registered*": "31",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "devendra@iitj.ac.in"
         },
         {
             "code": "PHL7330",
@@ -2986,7 +3255,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Yogeshwar Nath Mishra",
             "Student Registered*": "29",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "mishrayn@iitj.ac.in"
         },
         {
             "code": "EEL7950",
@@ -2997,7 +3267,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Bhupendra Reniwal",
             "Student Registered*": "23",
-            "Classroom": "EE 109"
+            "Classroom": "EE 109",
+            "instructorEmail": "bhupendrar@iitj.ac.in"
         },
         {
             "code": "DSL7220",
@@ -3008,7 +3279,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Kedar Umesh Dicholkar",
             "Student Registered*": "27",
-            "Classroom": "MT 112"
+            "Classroom": "MT 112",
+            "instructorEmail": "kedard@iitj.ac.in"
         },
         {
             "code": "MEL4420",
@@ -3019,7 +3291,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Gourhari Ghosh",
             "Student Registered*": "24",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "gourharighosh@iitj.ac.in"
         },
         {
             "code": "MAL7340",
@@ -3030,7 +3303,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Bimal Mandal",
             "Student Registered*": "22",
-            "Classroom": "LHC 304"
+            "Classroom": "LHC 304",
+            "instructorEmail": "bimalmandal@iitj.ac.in"
         },
         {
             "code": "MSL7410",
@@ -3041,7 +3315,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Manu Kanchan",
             "Student Registered*": "22",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "manuk@iitj.ac.in"
         },
         {
             "code": "PHL3040",
@@ -3052,7 +3327,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Durgamadhab Mishra",
             "Student Registered*": "17",
-            "Classroom": "PH 104"
+            "Classroom": "PH 104",
+            "instructorEmail": "durgamadhab@iitj.ac.in"
         },
         {
             "code": "MSL7190",
@@ -3063,7 +3339,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Deepak Kumar Saxena",
             "Student Registered*": "16",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "saxenad@iitj.ac.in"
         },
         {
             "code": "EEL7020",
@@ -3074,7 +3351,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Arun Kumar Singh",
             "Student Registered*": "11",
-            "Classroom": "EE 114"
+            "Classroom": "EE 114",
+            "instructorEmail": "singhak@iitj.ac.in"
         },
         {
             "code": "CYL3060",
@@ -3085,7 +3363,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Rohan Diliprao Erande",
             "Student Registered*": "12",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "rd.erande@iitj.ac.in"
         },
         {
             "code": "MAL7440",
@@ -3096,7 +3375,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Subhash Bhagat",
             "Student Registered*": "10",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "sbhagat@iitj.ac.in"
         },
         {
             "code": "MEL7160",
@@ -3107,7 +3387,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Amrita Puri",
             "Student Registered*": "9",
-            "Classroom": "ME 114"
+            "Classroom": "ME 114",
+            "instructorEmail": "amritapuri@iitj.ac.in"
         },
         {
             "code": "LAL7530",
@@ -3118,7 +3399,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Souryabrata Mohapatra",
             "Student Registered*": "7",
-            "Classroom": "SOLA"
+            "Classroom": "SOLA",
+            "instructorEmail": "smohapatra@iitj.ac.in"
         },
         {
             "code": "MTL4310",
@@ -3129,7 +3411,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Nitin Kumar Sharma",
             "Student Registered*": "7",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "nitinksh@iitj.ac.in"
         },
         {
             "code": "EEL4370",
@@ -3140,7 +3423,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Vineeth V.",
             "Student Registered*": "6",
-            "Classroom": "EE 115"
+            "Classroom": "EE 115",
+            "instructorEmail": "vineeth@iitj.ac.in"
         },
         {
             "code": "MEL7630",
@@ -3151,7 +3435,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Himanshu Dave",
             "Student Registered*": "6",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "himanshudave@iitj.ac.in"
         },
         {
             "code": "MSL73270",
@@ -3162,7 +3447,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Jitesh Mohnot",
             "Student Registered*": "5",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "jiteshm@iitj.ac.in"
         },
         {
             "code": "MAL2160",
@@ -3173,7 +3459,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Bimal Mandal",
             "Student Registered*": "20",
-            "Classroom": "LHC 207"
+            "Classroom": "LHC 207",
+            "instructorEmail": "bimalmandal@iitj.ac.in"
         },
         {
             "code": "CYL2110",
@@ -3184,7 +3471,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Rohan Diliprao Erande",
             "Student Registered*": "10",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "rd.erande@iitj.ac.in"
         },
         {
             "code": "MSL7500",
@@ -3195,7 +3483,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Venkat Ram Reddy Ganuthula",
             "Student Registered*": "130",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "ram@iitj.ac.in"
         },
         {
             "code": "LAL2120",
@@ -3206,7 +3495,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Sunil Kumar Lohar",
             "Student Registered*": "82",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "sunillohar@iitj.ac.in"
         },
         {
             "code": "LAL2130",
@@ -3217,7 +3507,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Bhaswati Sarma",
             "Student Registered*": "81",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "bhaswatisarma@iitj.ac.in"
         },
         {
             "code": "LAL2170",
@@ -3228,7 +3519,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Soni",
             "Student Registered*": "80",
-            "Classroom": "LHC-2 102"
+            "Classroom": "LHC-2 102",
+            "instructorEmail": "soni@iitj.ac.in"
         },
         {
             "code": "MTL4340",
@@ -3239,7 +3531,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Ravi Prakash Srivastava",
             "Student Registered*": "62",
-            "Classroom": "MT 109"
+            "Classroom": "MT 109",
+            "instructorEmail": "ravip@iitj.ac.in"
         },
         {
             "code": "CHL7320",
@@ -3250,7 +3543,8 @@ export const courses = {
             "Department": "CH",
             "Instructor": "Prashant Kumar Gupta",
             "Student Registered*": "45",
-            "Classroom": "MT 112"
+            "Classroom": "MT 112",
+            "instructorEmail": "guptapk@iitj.ac.in"
         },
         {
             "code": "CSL7490",
@@ -3261,7 +3555,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Susil Kumar Mohanty",
             "Student Registered*": "40",
-            "Classroom": "EE 115"
+            "Classroom": "EE 115",
+            "instructorEmail": "susilmohanty@iitj.ac.in"
         },
         {
             "code": "PHL6070",
@@ -3272,7 +3567,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Dushyant Kumar",
             "Student Registered*": "35",
-            "Classroom": "PH 101"
+            "Classroom": "PH 101",
+            "instructorEmail": "dushyantkumar@iitj.ac.in"
         },
         {
             "code": "MSL7140",
@@ -3283,7 +3579,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Deepak Kumar Saxena",
             "Student Registered*": "26",
-            "Classroom": "SME L1"
+            "Classroom": "SME L1",
+            "instructorEmail": "saxenad@iitj.ac.in"
         },
         {
             "code": "DSL7550",
@@ -3294,7 +3591,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Sajan Sahadevan Pillai",
             "Student Registered*": "25",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "sajanpillai@iitj.ac.in"
         },
         {
             "code": "MAL4310",
@@ -3305,7 +3603,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Puneet Sharma",
             "Student Registered*": "24",
-            "Classroom": "LHC 206"
+            "Classroom": "LHC 206",
+            "instructorEmail": "puneet@iitj.ac.in"
         },
         {
             "code": "LAL2080",
@@ -3316,7 +3615,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Tonisha Guin",
             "Student Registered*": "21",
-            "Classroom": "PH 105"
+            "Classroom": "PH 105",
+            "instructorEmail": "tonisha@iitj.ac.in"
         },
         {
             "code": "PHL7390",
@@ -3327,7 +3627,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Jitendra Kumar",
             "Student Registered*": "19",
-            "Classroom": "PH 102"
+            "Classroom": "PH 102",
+            "instructorEmail": "jkumar@iitj.ac.in"
         },
         {
             "code": "MEL4050",
@@ -3338,7 +3639,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Prodyut Ranjan Chakraborty",
             "Student Registered*": "16",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "pchakraborty@iitj.ac.in"
         },
         {
             "code": "CYL7400",
@@ -3349,7 +3651,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Milan Kumar Hazra",
             "Student Registered*": "14",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "milanhazra@iitj.ac.in"
         },
         {
             "code": "MTL7110",
@@ -3360,7 +3663,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Sk Md Hasan",
             "Student Registered*": "13",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "hasan@iitj.ac.in"
         },
         {
             "code": "MAL7540",
@@ -3371,7 +3675,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Kiran Meena",
             "Student Registered*": "10",
-            "Classroom": "LHC 304"
+            "Classroom": "LHC 304",
+            "instructorEmail": "kiranmeena@iitj.ac.in"
         },
         {
             "code": "AIL4090",
@@ -3382,7 +3687,8 @@ export const courses = {
             "Department": "SOAIDS",
             "Instructor": "Abhinaba Lahiri",
             "Student Registered*": "7",
-            "Classroom": "EE 114"
+            "Classroom": "EE 114",
+            "instructorEmail": "abhinaba@iitj.ac.in"
         },
         {
             "code": "MEL7940",
@@ -3393,7 +3699,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Anand Krishnan Plappally",
             "Student Registered*": "7",
-            "Classroom": "ME 114"
+            "Classroom": "ME 114",
+            "instructorEmail": "anandk@iitj.ac.in"
         },
         {
             "code": "PHL1040",
@@ -3404,7 +3711,8 @@ export const courses = {
             "Department": "PH",
             "Instructor": "Chandan Datta",
             "Student Registered*": "46",
-            "Classroom": "LHC 207"
+            "Classroom": "LHC 207",
+            "instructorEmail": "cdatta@iitj.ac.in"
         },
         {
             "code": "CSL7530",
@@ -3415,7 +3723,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Gaurav Harit",
             "Student Registered*": "96",
-            "Classroom": "LHC 105"
+            "Classroom": "LHC 105",
+            "instructorEmail": "gharit@iitj.ac.in"
         },
         {
             "code": "MSN7060",
@@ -3426,7 +3735,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Deepak Kumar Saxena",
             "Student Registered*": "92",
-            "Classroom": "LHC 106"
+            "Classroom": "LHC 106",
+            "instructorEmail": "saxenad@iitj.ac.in"
         },
         {
             "code": "EEL2070",
@@ -3437,7 +3747,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Bharat Singh Rajpurohit",
             "Student Registered*": "50",
-            "Classroom": "LHC-2 103"
+            "Classroom": "LHC-2 103",
+            "instructorEmail": "bsr@iitj.ac.in"
         },
         {
             "code": "MEL4110",
@@ -3448,7 +3759,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Chandan Pandey",
             "Student Registered*": "47",
-            "Classroom": "ME 108"
+            "Classroom": "ME 108",
+            "instructorEmail": "jscpandey@iitj.ac.in"
         },
         {
             "code": "BBL3030",
@@ -3459,7 +3771,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Sudipta Bhattacharyya",
             "Student Registered*": "45",
-            "Classroom": "BB 101"
+            "Classroom": "BB 101",
+            "instructorEmail": "sudipta@iitj.ac.in"
         },
         {
             "code": "CSL7190",
@@ -3470,7 +3783,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Palash Das",
             "Student Registered*": "41",
-            "Classroom": "BB 104"
+            "Classroom": "BB 104",
+            "instructorEmail": "palashdas@iitj.ac.in"
         },
         {
             "code": "MAL5030",
@@ -3481,7 +3795,8 @@ export const courses = {
             "Department": "MA",
             "Instructor": "Sahil Gehlawat",
             "Student Registered*": "29",
-            "Classroom": "EE 108"
+            "Classroom": "EE 108",
+            "instructorEmail": "sahilg@iitj.ac.in"
         },
         {
             "code": "BBL7380",
@@ -3492,7 +3807,8 @@ export const courses = {
             "Department": "BB",
             "Instructor": "Indranil Banerjee",
             "Student Registered*": "25",
-            "Classroom": "BB 102"
+            "Classroom": "BB 102",
+            "instructorEmail": "indranil@iitj.ac.in"
         },
         {
             "code": "MSP7060",
@@ -3503,7 +3819,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Bhargab Chattopadhyay",
             "Student Registered*": "13",
-            "Classroom": "SME L6"
+            "Classroom": "SME L6",
+            "instructorEmail": "bhargab@iitj.ac.in"
         },
         {
             "code": "MEL7650",
@@ -3514,7 +3831,8 @@ export const courses = {
             "Department": "ME",
             "Instructor": "Himanshu Dave",
             "Student Registered*": "12",
-            "Classroom": "ME 109"
+            "Classroom": "ME 109",
+            "instructorEmail": "himanshudave@iitj.ac.in"
         },
         {
             "code": "DSL7590",
@@ -3525,7 +3843,8 @@ export const courses = {
             "Department": "SOD",
             "Instructor": "Priyabrata Rautray",
             "Student Registered*": "10",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "priyabratarautray@iitj.ac.in"
         },
         {
             "code": "MTL2015",
@@ -3536,7 +3855,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Abir Bhattacharyya",
             "Student Registered*": "98",
-            "Classroom": "LHC-2 101"
+            "Classroom": "LHC-2 101",
+            "instructorEmail": "abir.mtl@gmail.com"
         },
         {
             "code": "LAL2210",
@@ -3547,7 +3867,8 @@ export const courses = {
             "Department": "SOLA",
             "Instructor": "Hari Narayanan V.",
             "Student Registered*": "47",
-            "Classroom": "LHC 205"
+            "Classroom": "LHC 205",
+            "instructorEmail": "hari@iitj.ac.in"
         },
         {
             "code": "CYL1040",
@@ -3558,7 +3879,8 @@ export const courses = {
             "Department": "CY",
             "Instructor": "Monika Gupta",
             "Student Registered*": "46",
-            "Classroom": "CY 107"
+            "Classroom": "CY 107",
+            "instructorEmail": "mgupta@iitj.ac.in"
         },
         {
             "code": "CSL7640",
@@ -3569,7 +3891,8 @@ export const courses = {
             "Department": "CSE",
             "Instructor": "Anand Mishra",
             "Student Registered*": "245",
-            "Classroom": "LHC 308"
+            "Classroom": "LHC 308",
+            "instructorEmail": "mishra@iitj.ac.in"
         },
         {
             "code": "MSL1020",
@@ -3580,7 +3903,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Dinesh Mohan Joshi",
             "Student Registered*": "46",
-            "Classroom": "LHC-2 103"
+            "Classroom": "LHC-2 103",
+            "instructorEmail": "dineshjoshi@iitj.ac.in"
         },
         {
             "code": "MSL7800",
@@ -3591,7 +3915,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Manu Kanchan",
             "Student Registered*": "43",
-            "Classroom": "SME L2"
+            "Classroom": "SME L2",
+            "instructorEmail": "manuk@iitj.ac.in"
         },
         {
             "code": "MTL2020",
@@ -3602,7 +3927,8 @@ export const courses = {
             "Department": "MT",
             "Instructor": "Srijan Sengupta",
             "Student Registered*": "36",
-            "Classroom": "MT 110"
+            "Classroom": "MT 110",
+            "instructorEmail": "srijansengupta@iitj.ac.in"
         },
         {
             "code": "EEL7130",
@@ -3613,7 +3939,8 @@ export const courses = {
             "Department": "EE",
             "Instructor": "Niladri Sekhar Tripathy",
             "Student Registered*": "22",
-            "Classroom": "EE 108"
+            "Classroom": "EE 108",
+            "instructorEmail": "niladri@iitj.ac.in"
         },
         {
             "code": "CIL4010",
@@ -3624,7 +3951,8 @@ export const courses = {
             "Department": "CI",
             "Instructor": "Amit Sharma",
             "Student Registered*": "8",
-            "Classroom": "CI 110"
+            "Classroom": "CI 110",
+            "instructorEmail": "amit.sharma@iitj.ac.in"
         },
         {
             "code": "MSP7040",
@@ -3635,7 +3963,8 @@ export const courses = {
             "Department": "SME",
             "Instructor": "Venkat Ram Reddy Ganuthula",
             "Student Registered*": "8",
-            "Classroom": "SME L5"
+            "Classroom": "SME L5",
+            "instructorEmail": "ram@iitj.ac.in"
         }
     ]
 };
