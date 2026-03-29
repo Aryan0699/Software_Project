@@ -32,7 +32,7 @@ import {
     createSlotSystem, getSlotSystem, listSlotSystems, updateSlotSystem, softDeleteSlotSystem, hardDeleteSlotSystem,
     createSlotAlias, listSlotAliases, deleteSlotAlias,
     createCourse, getCourse, listCourses, updateCourse, softDeleteCourse, hardDeleteCourse,
-    allocateRoomToCourse, removeRoomFromCourse,
+    allocateRoomToAssignment, removeRoomFromAssignment,
 } from "../controllers/masterData.controller.js";
 
 // Admin validators
@@ -55,7 +55,7 @@ import {
     createDepartmentSchema, updateDepartmentSchema, getDepartmentsQuerySchema,
     createSlotSystemSchema, updateSlotSystemSchema,
     createSlotAliasSchema, getSlotAliasesQuerySchema,
-    createCourseSchema, updateCourseSchema, getCoursesQuerySchema, allocateRoomToCourseSchema,
+    createCourseSchema, updateCourseSchema, getCoursesQuerySchema, allocateRoomToAssignmentSchema,
 } from "../validators/masterData.validator.js";
 
 const adminRouter = Router();
@@ -428,16 +428,16 @@ adminRouter.delete(
     hardDeleteCourse
 );
 
-// Course Room Allocations
+// Course Slot Assignment Room Allocations
 adminRouter.post(
-    "/master/courses/:courseId/rooms",
-    validate(allocateRoomToCourseSchema),
-    allocateRoomToCourse
+    "/master/course-assignments/:assignmentId/rooms",
+    validate(allocateRoomToAssignmentSchema),
+    allocateRoomToAssignment
 );
 
 adminRouter.delete(
-    "/master/courses/room-allocations/:allocationId",
-    removeRoomFromCourse
+    "/master/course-assignments/room-allocations/:allocationId",
+    removeRoomFromAssignment
 );
 
 export default adminRouter;

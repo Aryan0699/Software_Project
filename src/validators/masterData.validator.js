@@ -162,6 +162,6 @@ export const getCoursesQuerySchema = paginationSchema.extend({
     isActive: z.coerce.boolean().optional(),
 });
 
-export const allocateRoomToCourseSchema = z.object({
+export const allocateRoomToAssignmentSchema = z.object({
     roomId: cuidSchema,
 });

@@ -244,15 +244,15 @@ export const hardDeleteCourse = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, result.message));
 });
 
-// Course Room Allocations
-export const allocateRoomToCourse = asyncHandler(async (req, res) => {
-    const { courseId } = req.params;
-    const allocation = await masterDataService.allocateRoomToCourse({ courseId, ...req.body });
-    return res.status(201).json(new ApiResponse(201, "Room allocated to course", allocation));
+// Course Slot Assignment Room Allocations
+export const allocateRoomToAssignment = asyncHandler(async (req, res) => {
+    const { assignmentId } = req.params;
+    const allocation = await masterDataService.allocateRoomToAssignment({ courseSlotAssignmentId: assignmentId, ...req.body });
+    return res.status(201).json(new ApiResponse(201, "Room allocated to assignment", allocation));
 });
 
-export const removeRoomFromCourse = asyncHandler(async (req, res) => {
+export const removeRoomFromAssignment = asyncHandler(async (req, res) => {
     const { allocationId } = req.params;
-    const result = await masterDataService.removeRoomFromCourse(allocationId);
+    const result = await masterDataService.removeRoomFromAssignment(allocationId);
     return res.status(200).json(new ApiResponse(200, result.message));
 });

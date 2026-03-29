@@ -642,22 +642,31 @@ export const getCourseById = async (id) => {
                 include: {
                     faculty: { select: { id: true, name: true, email: true } },
                     slot: { select: { id: true, code: true, slotKind: true } },
-                },
-            },
-            roomAllocations: {
-                include: {
-                    room: {
-                        select: {
-                            id: true, fullCode: true, displayName: true,
-                            building: { select: { id: true, code: true, name: true } },
+                    roomAllocations: {
+                        include: {
+                            room: {
+                                select: {
+                                    id: true, fullCode: true, displayName: true,
+                                    building: { select: { id: true, code: true, name: true } },
+                                },
+                            },
                         },
                     },
                 },
             },
         },
     });
+
     if (!course) throw new ApiError(404, "Course not found");
-    return course;
+
+    //since frontend requires room allocation to be outside and not nested so need to transform the data before sending it to frontend
+    const transformedCourse = {
+        ...course,
+        roomAllocations:
+            course.assignments.flatMap(a => a.roomAllocations),
+    };
+
+    return transformedCourse;
 };
 
 export const listCourses = async ({ departmentId, isActive, page = 1, limit = 20 }) => {
@@ -722,7 +731,7 @@ export const hardDeleteCourse = async (id) => {
     const course = await prisma.course.findUnique({ where: { id } });
     if (!course) throw new ApiError(404, "Course not found");
 
-    const assignmentCount = await prisma.courseAssignment.count({ where: { courseId: id } });
+    const assignmentCount = await prisma.courseSlotAssignment.count({ where: { courseId: id } });
     if (assignmentCount > 0) {
         throw new ApiError(409, `Cannot delete: ${assignmentCount} assignments reference this course. Use soft delete.`);
     }
@@ -733,22 +742,37 @@ export const hardDeleteCourse = async (id) => {
 
 // ==================== COURSE ROOM ALLOCATIONS ====================
 
-export const allocateRoomToCourse = async ({ courseId, roomId }) => {
-    const course = await prisma.course.findUnique({ where: { id: courseId } });
-    if (!course) throw new ApiError(404, "Course not found");
+export const allocateRoomToAssignment = async ({ courseSlotAssignmentId, roomId }) => {
+    // Verify the assignment exists and get its course for context
+    const assignment = await prisma.courseSlotAssignment.findUnique({
+        where: { id: courseSlotAssignmentId },
+        include: {
+            course: { select: { id: true, code: true, name: true } },
+        },
+    });
+    if (!assignment) throw new ApiError(404, "Course slot assignment not found");
 
     const room = await prisma.room.findUnique({ where: { id: roomId } });
     if (!room) throw new ApiError(404, "Room not found");
     if (!room.isActive) throw new ApiError(400, "Cannot allocate inactive room");
 
-    const existing = await prisma.courseRoomAllocation.findFirst({
-        where: { courseId, roomId },
+    // Use the composite unique constraint for upsert-safe check
+    const existing = await prisma.courseRoomAllocation.findUnique({
+        where: { courseSlotAssignmentId_roomId: { courseSlotAssignmentId, roomId } },
     });
-    if (existing) throw new ApiError(409, "Room already allocated to this course");
+    if (existing) throw new ApiError(409, "Room already allocated to this assignment");
 
     return prisma.courseRoomAllocation.create({
-        data: { courseId, roomId },
+        data: { courseSlotAssignmentId, roomId },
         include: {
+            courseSlotAssignment: {
+                select: {
+                    id: true,
+                    course: { select: { id: true, code: true, name: true } },
+                    slot: { select: { id: true, code: true } },
+                    faculty: { select: { id: true, name: true } },
+                },
+            },
             room: {
                 select: {
                     id: true, fullCode: true, displayName: true,
@@ -759,7 +783,7 @@ export const allocateRoomToCourse = async ({ courseId, roomId }) => {
     });
 };
 
-export const removeRoomFromCourse = async (allocationId) => {
+export const removeRoomFromAssignment = async (allocationId) => {
     const allocation = await prisma.courseRoomAllocation.findUnique({ where: { id: allocationId } });
     if (!allocation) throw new ApiError(404, "Allocation not found");
 

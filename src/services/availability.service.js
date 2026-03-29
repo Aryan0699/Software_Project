@@ -464,6 +464,8 @@ const getBuildingRoomStatus = async ({ buildingId, date }) => {
     const roomIds = rooms.map(r => r.id);
 
     // Get all timetable occupancies for these rooms on this day
+    // Note: RoomSlotOccupancy has no direct `course` relation.
+    // We traverse: slot → courseAssignments → course, then match by roomAllocation.
     const timetableOccupancies = await prisma.roomSlotOccupancy.findMany({
         where: {
             roomId: { in: roomIds },
@@ -483,17 +485,15 @@ const getBuildingRoomStatus = async ({ buildingId, date }) => {
                         where: { dayOfWeek },
                         select: { startMinute: true, endMinute: true },
                     },
-                },
-            },
-            course: {
-                select: {
-                    code: true,
-                    name: true,
-                    assignments: {
+                    courseAssignments: {
+                        where: { isActive: true },
                         select: {
+                            course: { select: { code: true, name: true } },
                             faculty: { select: { name: true } },
+                            roomAllocations: {
+                                select: { roomId: true },
+                            },
                         },
-                        take: 1,
                     },
                 },
             },
@@ -521,14 +521,27 @@ const getBuildingRoomStatus = async ({ buildingId, date }) => {
     const timetableMap = new Map();
     for (const occ of timetableOccupancies) {
         if (!timetableMap.has(occ.roomId)) timetableMap.set(occ.roomId, []);
-        const instructor = occ.course?.assignments?.[0]?.faculty?.name || null;
+
+        // Find the course assignment that has a room allocation for THIS specific room
+        const matchingAssignment = occ.slot.courseAssignments?.find(
+            a => a.roomAllocations.some(ra => ra.roomId === occ.roomId)
+        );
+
+        const courseInfo = matchingAssignment
+            ? {
+                code: matchingAssignment.course.code,
+                name: matchingAssignment.course.name,
+                instructor: matchingAssignment.faculty?.name || null,
+            }
+            : null;
+
         for (const timeBlock of occ.slot.occurrences) {
             timetableMap.get(occ.roomId).push({
                 sourceType: "TIMETABLE",
                 slotCode: occ.slot.code,
                 startMinute: timeBlock.startMinute,
                 endMinute: timeBlock.endMinute,
-                course: occ.course ? { code: occ.course.code, name: occ.course.name, instructor } : null,
+                course: courseInfo,
             });
         }
     }
