@@ -1,0 +1,291 @@
+export const unmatched_courses = {
+    "firstyear": [],
+    "secondyearonward": [
+        {
+            "code": "SHL7150",
+            "name": "Biomedical nanomaterials",
+            "LTP": "2-0-2",
+            "credits": "3.0",
+            "slot": "A",
+            "Department": "Smart Healthcare",
+            "Instructor": "Raviraj Vankayala",
+            "Student Registered*": "6",
+            "Classroom": "BB 101"
+        },
+        {
+            "code": "QCL4020",
+            "name": "Quantum Computing",
+            "LTP": "3-1-0",
+            "credits": "4.0",
+            "slot": "A",
+            "Department": "Quantum Information and Computation",
+            "Instructor": "V. Narayanan",
+            "Student Registered*": "16",
+            "Classroom": "EE 109"
+        },
+        {
+            "code": "RML7120",
+            "name": "Advanced Robotic Manipulations",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "N",
+            "Department": "Robotics and Mobility Systems",
+            "Instructor": "Roshan Kumar Hota",
+            "Student Registered*": "13",
+            "Classroom": "ME 108"
+        },
+        {
+            "code": "DHL5030",
+            "name": "Place and Identity in the Digital Age",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "D",
+            "Department": "Digital Humanities",
+            "Instructor": "Kanak Yadav",
+            "Student Registered*": "16",
+            "Classroom": "PH 105"
+        },
+        {
+            "code": "SHL7160",
+            "name": "Introduction to Medical robotics",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "D",
+            "Department": "IITJ-AIIMSJ Med.Tech. Centre",
+            "Instructor": "Jayant Kumar Mohanta",
+            "Student Registered*": "6",
+            "Classroom": "CY 107"
+        },
+        {
+            "code": "EDL2020",
+            "name": "Content-cum-Pedagogy of Physical Sciences at the Secondary Stage-I",
+            "LTP": "1-0-2",
+            "credits": "2.0",
+            "slot": "CD",
+            "Department": "Center for Education Technology (CET)",
+            "Instructor": "Pankaj Sheshrao Chavan",
+            "Student Registered*": "47",
+            "Classroom": "BB 102"
+        },
+        {
+            "code": "QCL7380",
+            "name": "Continuous Variable Quantum Information",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "E",
+            "Department": "Quantum Information and Computation",
+            "Instructor": "V. Narayanan",
+            "Student Registered*": "13",
+            "Classroom": "PH 102"
+        },
+        {
+            "code": "DHL7040",
+            "name": "Digital Storytelling",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "E",
+            "Department": "Digital Humanities",
+            "Instructor": "Sunil Kumar Lohar",
+            "Student Registered*": "10",
+            "Classroom": "SOLA"
+        },
+        {
+            "code": "DHL5040",
+            "name": "Archiving and Databases",
+            "LTP": "3-0-2-0",
+            "credits": "4.0",
+            "slot": "E",
+            "Department": "Digital Humanities",
+            "Instructor": "Natasa Thoudam",
+            "Student Registered*": "9",
+            "Classroom": "PH 105"
+        },
+        {
+            "code": "SHL7360",
+            "name": "Personalized medicine Molecular techniques for precision medicine",
+            "LTP": "2-0-2",
+            "credits": "3.0",
+            "slot": "E",
+            "Department": "Smart Healthcare",
+            "Instructor": "Siddharth Srivastava",
+            "Student Registered*": "7",
+            "Classroom": "ME 114"
+        },
+        {
+            "code": "ETL7030",
+            "name": "Introduction to ESG regulation, reporting, and accounting",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "E",
+            "Department": "Center for Emerging Technologies for Sustainable Development",
+            "Instructor": "Chandana N",
+            "Student Registered*": "6",
+            "Classroom": "EE 108"
+        },
+        {
+            "code": "EDL1020",
+            "name": "Teacher and Society",
+            "LTP": "2-0-0",
+            "credits": "2.0",
+            "slot": "CE",
+            "Department": "Center for Education Technology (CET)",
+            "Instructor": "Devi Prasad Dash",
+            "Student Registered*": "46",
+            "Classroom": "ME 109"
+        },
+        {
+            "code": "ETL7140",
+            "name": "Resource Sustainability",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "F",
+            "Department": "Center for Emerging Technologies for Sustainable Development",
+            "Instructor": "Kirti Sankhala",
+            "Student Registered*": "4",
+            "Classroom": "BB 104"
+        },
+        {
+            "code": "EDL2030",
+            "name": "Content-Cum-Pedagogy of Mathematics at the Secondary Stage- I",
+            "LTP": "1-0-2",
+            "credits": "2.0",
+            "slot": "CF",
+            "Department": "Center for Education Technology (CET)",
+            "Instructor": "Sumit Kalra",
+            "Student Registered*": "47",
+            "Classroom": "CS 101"
+        },
+        {
+            "code": "EDL1030",
+            "name": "Design and Computational  Thinking",
+            "LTP": "1-0-4",
+            "credits": "3.0",
+            "slot": "CF",
+            "Department": "Center for Education Technology (CET)",
+            "Instructor": "Romi Banerjee",
+            "Student Registered*": "46",
+            "Classroom": "CY 108"
+        },
+        {
+            "code": "QCL7400",
+            "name": "Quantum Error Correction",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "G",
+            "Department": "Quantum Information and Computation",
+            "Instructor": "Chandan Datta",
+            "Student Registered*": "12",
+            "Classroom": "PH 105"
+        },
+        {
+            "code": "QCL7330",
+            "name": "Device independent quantum technologies",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "H",
+            "Department": "Quantum Information and Computation",
+            "Instructor": "Amit Mukherjee",
+            "Student Registered*": "16",
+            "Classroom": "PH 101"
+        },
+        {
+            "code": "ETL7020",
+            "name": "Climate Change risk, adaptation and mitigation",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "I",
+            "Department": "Center for Emerging Technologies for Sustainable Development",
+            "Instructor": "Rajyalakshmi Garaga",
+            "Student Registered*": "27",
+            "Classroom": "CS 101"
+        },
+        {
+            "code": "RML7220",
+            "name": "Mobile Robots",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "J",
+            "Department": "Robotics and Mobility Systems",
+            "Instructor": "Jayant Kumar Mohanta",
+            "Student Registered*": "20",
+            "Classroom": "ME 108"
+        },
+        {
+            "code": "SHL7420",
+            "name": "Surgical device development",
+            "LTP": "2-0-2",
+            "credits": "3.0",
+            "slot": "J",
+            "Department": "Smart Healthcare",
+            "Instructor": "Siddharth Srivastava",
+            "Student Registered*": "12",
+            "Classroom": "LHC 204"
+        },
+        {
+            "code": "QCL7020",
+            "name": "Quantum Machine Learning",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "J",
+            "Department": "Quantum Information and Computation",
+            "Instructor": "Kirankumar Rajshekhar Hiremath",
+            "Student Registered*": "11",
+            "Classroom": "LHC 206"
+        },
+        {
+            "code": "DHL5060",
+            "name": "Methods and Methodologies in Digital Humanities",
+            "LTP": "3-0-2-0",
+            "credits": "4.0",
+            "slot": "J",
+            "Department": "Digital Humanities",
+            "Instructor": "Natasa Thoudam",
+            "Student Registered*": "9",
+            "Classroom": "SOLA"
+        },
+        {
+            "code": "QCL7010",
+            "name": "Seminal Features of Quantum Information Processing",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "K",
+            "Department": "Quantum Information and Computation",
+            "Instructor": "Atul Kumar",
+            "Student Registered*": "14",
+            "Classroom": "CY 108"
+        },
+        {
+            "code": "RML7310",
+            "name": "Networked Dynamical Systems and Control",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "K",
+            "Department": "Robotics and Mobility Systems",
+            "Instructor": "Anoop Jain",
+            "Student Registered*": "7",
+            "Classroom": "CI 110"
+        },
+        {
+            "code": "RML6010",
+            "name": "Introduction to Robotics",
+            "LTP": "3-0-0",
+            "credits": "3.0",
+            "slot": "N",
+            "Department": "Robotics and Mobility Systems",
+            "Instructor": "Riby Abraham Boby",
+            "Student Registered*": "34",
+            "Classroom": "LHC 306"
+        },
+        {
+            "code": "OAL7020",
+            "name": "Foundations in IPR",
+            "LTP": "1-0-0-0",
+            "credits": "1.0",
+            "slot": "U",
+            "Department": "Office of Academic Affairs",
+            "Instructor": "Manu Kanchan",
+            "Student Registered*": "15",
+            "Classroom": "SME L5"
+        }
+    ]
+};

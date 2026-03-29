@@ -1,5 +1,5 @@
 import { Role } from "../src/generated/prisma/client.js";
-import { approvedUsers } from "../data/approvedUsers.js";
+import { approvedUsers } from "../data/oneTimeSeed/approvedUsers.js";
 import { normalizeEmail } from "./normalizers.js";
 import logger from "../src/utils/logger.js";
 

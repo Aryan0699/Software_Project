@@ -1,34 +1,21 @@
-import { categorised_courses } from "../data/categorizedCourses.js";
-import { deriveDepartmentCode, normalizeDepartmentName } from "./normalizers.js";
-
+import departmentCodeNameMapping from "../src/utils/departmentCodeNameMapping.js";
 export async function seedDepartments(prisma) {
   const departmentMap = new Map();
-
-  const allCourses = [
-    ...(categorised_courses.firstyear || []),
-    ...(categorised_courses.secondyearonward || []),
-  ];
-
-  const uniqueDepartments = new Set(
-    allCourses.map((c) => normalizeDepartmentName(c.Department)).filter(Boolean)
-  );
-
-  for (const deptName of uniqueDepartments) {
-    const code = deriveDepartmentCode(deptName);
-
+  for (const deptCode in departmentCodeNameMapping) {
+    const deptName = departmentCodeNameMapping[deptCode];
     const department = await prisma.department.upsert({
-      where: { code },
+      where: { code: deptCode },
       update: {
         name: deptName,
         isActive: true,
       },
       create: {
-        code,
+        code: deptCode,
         name: deptName,
       },
     });
 
-    departmentMap.set(deptName, department.id);
+    departmentMap.set(deptCode, department.id);
   }
 
   return departmentMap;

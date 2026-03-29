@@ -1,6 +1,6 @@
-import { buildingRooms } from "../data/buildingRoomMapping.js";
+import { buildingRooms } from "../data/oneTimeSeed/buildingRoomMapping.js";
 import { normalizeCode } from "./normalizers.js";
-import buildingCodeNameMapping from "../data/buildingCodeNameMapping.js";
+import buildingCodeNameMapping from "../src/utils/buildingCodeNameMapping.js";
 
 export async function seedBuildingsAndRooms(prisma) {
   const buildingMap = new Map();

@@ -1,4 +1,4 @@
-import { categorised_courses } from "../data/categorizedCourses.js";
+import { courses } from "../data/recurring/matchedCourses.js";
 import { faculty } from "../data/faculty.js";
 import logger from "../src/utils/logger.js";
 import {
@@ -32,8 +32,8 @@ export async function seedCoursesAssignmentsAllocationsAndOccupancies(
   const occupancyKeys = new Set();
 
   const grouped = [
-    { systemKey: "firstyear", courses: categorised_courses.firstyear || [] },
-    { systemKey: "secondyearonward", courses: categorised_courses.secondyearonward || [] },
+    { systemKey: "firstyear", courses: courses.firstyear || [] },
+    { systemKey: "secondyearonward", courses: courses.secondyearonward || [] },
   ];
 
   for (const group of grouped) {
@@ -44,8 +44,8 @@ export async function seedCoursesAssignmentsAllocationsAndOccupancies(
     for (const row of group.courses) {
       const courseCode = normalizeCode(row.code).toUpperCase();
       const canonicalName = getCanonicalCourseName(row.name);
-      const departmentName = normalizeDepartmentName(row.Department);
-      const departmentId = departmentMap.get(departmentName) || null;
+      const departmentCode = normalizeDepartmentName(row.Department);
+      const departmentId = departmentMap.get(departmentCode) || null;
       const credits = parseCredits(row.credits);
       const rawSlotCode = normalizeCode(row.slot).toUpperCase();
       const effectiveSlotCode = getBaseSlotCode(rawSlotCode);
@@ -112,7 +112,6 @@ export async function seedCoursesAssignmentsAllocationsAndOccupancies(
       }
 
       const { buildingCode, roomNumber, fullCode } = extractBuildingAndRoom(row.Classroom);
-
       if (!buildingCode || !roomNumber) {
         logger.warn(`Skipping room allocation for ${courseCode}: invalid classroom "${row.Classroom}"`);
         continue;

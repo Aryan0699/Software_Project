@@ -1,4 +1,4 @@
-import { slotTimingData } from "../data/slotTimeMapping.js";
+import { slotTimingData } from "../data/recurring/slotTimeMapping.js";
 import logger from "../src/utils/logger.js";
 import { DAY_MAP, SLOT_SYSTEMS } from "./constants.js";
 import { buildAliasPairs, getBaseSlotCode, inferSlotKind } from "./slotHelpers.js";
