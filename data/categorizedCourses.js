@@ -74,7 +74,7 @@ export const categorised_courses = {
             "Classroom": "LHC 205"
         },
         {
-            "code": "MAL1010",
+            "code": "MAL1020",
             "name": "Mathematics II-Non English (Conversational Language)",
             "LTP": "3-1-0",
             "credits": "4.0",
@@ -170,7 +170,7 @@ export const categorised_courses = {
             "Classroom": "LHC 306"
         },
         {
-            "code": "MAL1010",
+            "code": "MAL1020",
             "name": "Mathematics II-Non English (Conversational Language)",
             "LTP": "3-1-2",
             "credits": "4.0",

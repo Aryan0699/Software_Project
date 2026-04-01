@@ -1,3 +1,4 @@
+import { log } from "node:console";
 import { prisma } from "../db/index.js";
 import ApiError from "../utils/apiError.js";
 import logger from "../utils/logger.js";
@@ -20,6 +21,7 @@ export const createBuilding = async ({ code, name, location }) => {
 };
 
 export const getBuildingById = async (id) => {
+    logger.info(`Fetching building with ID: ${id}`);
     const building = await prisma.building.findUnique({
         where: { id },
         include: {
@@ -39,13 +41,18 @@ export const getBuildingById = async (id) => {
             _count: { select: { rooms: true } },
         },
     });
+    logger.info(`Building fetch result for ID ${id}: ${building ? "Found" : "Not found"}`);
 
-    if (!building) throw new ApiError(404, "Building not found");
+    if (!building){
+        logger.warn(`Building with ID ${id} not found in database`);
+        throw new ApiError(404, "Building not found");
+    } 
     return building;
 };
 
 export const listBuildings = async ({ isActive, page = 1, limit = 20 }) => {
     const where = {};
+    logger.info(`Listing buildings with filters: ${JSON.stringify(where)}`);
     if (isActive !== undefined) where.isActive = isActive;
 
     const skip = (page - 1) * limit;
@@ -62,11 +69,12 @@ export const listBuildings = async ({ isActive, page = 1, limit = 20 }) => {
         }),
         prisma.building.count({ where }),
     ]);
-
+    logger.info(`Buildings listed: ${data.length} out of total ${total}`);
     return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 };
 
 export const updateBuilding = async (id, data) => {
+    logger.info(`Updating building with ID: ${id}`);
     const building = await prisma.building.findUnique({ where: { id } });
     if (!building) throw new ApiError(404, "Building not found");
 
@@ -81,31 +89,38 @@ export const updateBuilding = async (id, data) => {
                 ],
             },
         });
-        if (conflicts) throw new ApiError(409, "Building with that code or name already exists");
+        if (conflicts) {
+            logger.warn(`Building with ID ${id} has conflicts.`);
+            throw new ApiError(409, "Building with that code or name already exists");
+        }
     }
-
+    logger.info(`Building with ID ${id} found. Proceeding with update.`);
     return prisma.building.update({ where: { id }, data });
 };
 
 export const softDeleteBuilding = async (id) => {
+    logger.info(`Soft deleting building with ID: ${id}`);
     const building = await prisma.building.findUnique({ where: { id } });
     if (!building) throw new ApiError(404, "Building not found");
+    logger.info(`Building with ID ${id} found. Proceeding with soft delete.`);
     return prisma.building.update({ where: { id }, data: { isActive: false } });
 };
 
 export const hardDeleteBuilding = async (id) => {
+    logger.info(`Hard deleting building with ID: ${id}`);
     const building = await prisma.building.findUnique({ where: { id } });
     if (!building) throw new ApiError(404, "Building not found");
 
     // Check for referential constraints
     const roomCount = await prisma.room.count({ where: { buildingId: id } });
     if (roomCount > 0) {
+        logger.warn(`Cannot hard delete building with ID ${id}: ${roomCount} rooms still reference it.`);
         throw new ApiError(
             409,
             `Cannot delete building: ${roomCount} rooms still reference it. Remove rooms first or use soft delete.`
         );
     }
-
+    logger.info(`No rooms reference building with ID ${id}. Proceeding with hard delete.`);
     await prisma.building.delete({ where: { id } });
     return { message: "Building permanently deleted" };
 };
