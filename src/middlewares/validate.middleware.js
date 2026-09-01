@@ -1,9 +1,8 @@
 import ApiError from "../utils/ApiError.js"
 
-// This is for validating the request body against a Zod schema. If the validation fails, it will throw an ApiError with status code 400 and details about the validation errors. If the validation succeeds, it will attach the validated data to req.validatedBody for use in subsequent middleware or route handlers.
-export function validateBody(schema) {
+function validateRequestPart({ schema, source, target }) {
     return (req, _res, next) => {
-        const result = schema.safeParse(req.body)
+        const result = schema.safeParse(req[source])
 
         if (!result.success) {
             return next(
@@ -17,7 +16,31 @@ export function validateBody(schema) {
             )
         }
 
-        req.validatedBody = result.data
+        req[target] = result.data
         return next()
     }
+}
+
+export function validateBody(schema) {
+    return validateRequestPart({
+        schema,
+        source: "body",
+        target: "validatedBody",
+    })
+}
+
+export function validateParams(schema) {
+    return validateRequestPart({
+        schema,
+        source: "params",
+        target: "validatedParams",
+    })
+}
+
+export function validateQuery(schema) {
+    return validateRequestPart({
+        schema,
+        source: "query",
+        target: "validatedQuery",
+    })
 }
