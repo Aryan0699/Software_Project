@@ -5,6 +5,7 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  Warehouse,
   UserRound,
   X,
 } from "lucide-react"
@@ -25,6 +26,9 @@ function Navigation({ close }: { close?: () => void }) {
     { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
     ...(user?.role === "ADMIN"
       ? [{ to: "/admin/access", label: "Access", icon: ShieldCheck, end: false }]
+      : []),
+    ...(user?.role === "ADMIN" || user?.role === "STAFF"
+      ? [{ to: "/facilities", label: "Facilities", icon: Warehouse, end: false }]
       : []),
     { to: "/account", label: "Account", icon: UserRound, end: false },
   ]

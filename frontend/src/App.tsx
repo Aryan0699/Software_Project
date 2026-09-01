@@ -6,6 +6,7 @@ import { AppShell } from "./components/AppShell"
 import { AccessPage } from "./pages/AccessPage"
 import { AccountPage } from "./pages/AccountPage"
 import { DashboardPage } from "./pages/DashboardPage"
+import { FacilitiesPage } from "./pages/FacilitiesPage"
 import { LoginPage } from "./pages/LoginPage"
 
 function ProtectedRoutes() {
@@ -25,6 +26,11 @@ function AdminOnly({ children }: { children: ReactNode }) {
   return user?.role === "ADMIN" ? children : <Navigate to="/" replace />
 }
 
+function FacilitiesOnly({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
+  return user?.role === "ADMIN" || user?.role === "STAFF" ? children : <Navigate to="/" replace />
+}
+
 function App() {
   return (
     <Routes>
@@ -33,6 +39,14 @@ function App() {
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
           <Route path="account" element={<AccountPage />} />
+          <Route
+            path="facilities"
+            element={
+              <FacilitiesOnly>
+                <FacilitiesPage />
+              </FacilitiesOnly>
+            }
+          />
           <Route
             path="admin/access"
             element={
