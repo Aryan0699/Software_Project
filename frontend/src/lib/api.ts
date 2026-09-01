@@ -1,5 +1,41 @@
 export type Role = "STUDENT" | "FACULTY" | "STAFF" | "ADMIN"
 export type DeanOffice = "DOSA" | "ADOSA" | "DOAA"
+export type RoomStatus = "ACTIVE" | "INACTIVE"
+export type RestrictionStatus = "ACTIVE" | "CANCELLED"
+
+export type Department = {
+  id: string
+  code: string
+  name: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type RoomTypeRecord = Department
+
+export type StudentProfile = {
+  id: string
+  userId: string
+  rollNumber: string | null
+  batchYear: number | null
+  departmentId: string | null
+  department?: Department | null
+}
+
+export type FacultyProfile = {
+  id: string
+  userId: string
+  designation: string | null
+  departmentId: string | null
+  department?: Department | null
+}
+
+export type StaffProfile = {
+  id: string
+  userId: string
+  designation: string | null
+}
 
 export type BasicUser = {
   id: string
@@ -13,9 +49,9 @@ export type BasicUser = {
 export type CurrentUser = BasicUser & {
   lastLoginAt?: string | null
   createdAt?: string
-  studentProfile?: Record<string, unknown> | null
-  facultyProfile?: Record<string, unknown> | null
-  staffProfile?: Record<string, unknown> | null
+  studentProfile?: StudentProfile | null
+  facultyProfile?: FacultyProfile | null
+  staffProfile?: StaffProfile | null
   deanOfficeHeld?: { office: DeanOffice; assignedAt: string } | null
   staffBuildings?: Array<{
     assignedAt: string
@@ -73,6 +109,59 @@ export type StaffAssignment = {
 export type AssignmentOptions = {
   buildings: Array<{ id: string; code: string; name: string }>
   staffUsers: Array<Pick<BasicUser, "id" | "name" | "email">>
+}
+
+export type Building = {
+  id: string
+  code: string
+  name: string
+  location: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  canManageRestrictions?: boolean
+  _count: { rooms: number; staffAssignments: number }
+}
+
+export type Room = {
+  id: string
+  buildingId: string
+  roomTypeId: string | null
+  roomNumber: string
+  fullCode: string
+  displayName: string | null
+  capacity: number | null
+  isAccessible: boolean
+  features: string[]
+  status: RoomStatus
+  statusReason: string | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+  canManageRestrictions?: boolean
+  building: Pick<Building, "id" | "code" | "name" | "isActive">
+  roomType: RoomTypeRecord | null
+}
+
+export type RoomRestriction = {
+  id: string
+  roomId: string
+  restrictionDate: string
+  startMinute: number
+  endMinute: number
+  reason: string
+  status: RestrictionStatus
+  cancelledAt: string | null
+  createdAt: string
+  updatedAt: string
+  room: {
+    id: string
+    fullCode: string
+    displayName: string | null
+    building: Pick<Building, "id" | "code" | "name">
+  }
+  createdBy: Pick<BasicUser, "id" | "name" | "email"> | null
+  cancelledBy: Pick<BasicUser, "id" | "name" | "email"> | null
 }
 
 type ApiEnvelope<T> = {
@@ -180,6 +269,18 @@ export const authApi = {
       }),
     })
   },
+  updateProfile(changes: {
+    name?: string
+    departmentId?: string | null
+    rollNumber?: string | null
+    batchYear?: number | null
+    designation?: string | null
+  }) {
+    return request<{ user: CurrentUser }>("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(changes),
+    })
+  },
 }
 
 export const adminAccessApi = {
@@ -223,6 +324,21 @@ export const adminAccessApi = {
       body: JSON.stringify(changes),
     })
   },
+  updateUserProfile(
+    id: string,
+    changes: {
+      name?: string
+      departmentId?: string | null
+      rollNumber?: string | null
+      batchYear?: number | null
+      designation?: string | null
+    },
+  ) {
+    return request<{ user: AdminUser }>(`/admin/users/${id}/profile`, {
+      method: "PATCH",
+      body: JSON.stringify(changes),
+    })
+  },
   getDeanOffices() {
     return request<{ offices: DeanOfficeEntry[] }>("/admin/dean-offices")
   },
@@ -248,6 +364,160 @@ export const adminAccessApi = {
   },
   deleteStaffAssignment(id: string) {
     return request<null>(`/admin/staff-building-assignments/${id}`, { method: "DELETE" })
+  },
+}
+
+export const facilitiesApi = {
+  listDepartments(values: {
+    page?: number
+    pageSize?: number
+    search?: string
+    isActive?: boolean
+  } = {}) {
+    return request<{ records: Department[]; pagination: Pagination }>(
+      `/facilities/departments${queryString(values)}`,
+    )
+  },
+  createDepartment(code: string, name: string) {
+    return request<{ department: Department }>("/facilities/departments", {
+      method: "POST",
+      body: JSON.stringify({ code, name }),
+    })
+  },
+  updateDepartment(id: string, changes: Partial<Pick<Department, "code" | "name" | "isActive">>) {
+    return request<{ department: Department }>(`/facilities/departments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(changes),
+    })
+  },
+  listRoomTypes(values: {
+    page?: number
+    pageSize?: number
+    search?: string
+    isActive?: boolean
+  } = {}) {
+    return request<{ records: RoomTypeRecord[]; pagination: Pagination }>(
+      `/facilities/room-types${queryString(values)}`,
+    )
+  },
+  createRoomType(code: string, name: string) {
+    return request<{ roomType: RoomTypeRecord }>("/facilities/room-types", {
+      method: "POST",
+      body: JSON.stringify({ code, name }),
+    })
+  },
+  updateRoomType(
+    id: string,
+    changes: Partial<Pick<RoomTypeRecord, "code" | "name" | "isActive">>,
+  ) {
+    return request<{ roomType: RoomTypeRecord }>(`/facilities/room-types/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(changes),
+    })
+  },
+  listBuildings(values: {
+    page?: number
+    pageSize?: number
+    search?: string
+    isActive?: boolean
+  } = {}) {
+    return request<{ records: Building[]; pagination: Pagination }>(
+      `/facilities/buildings${queryString(values)}`,
+    )
+  },
+  createBuilding(data: { code: string; name: string; location?: string | null }) {
+    return request<{ building: Building }>("/facilities/buildings", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+  updateBuilding(
+    id: string,
+    changes: Partial<Pick<Building, "code" | "name" | "location" | "isActive">>,
+  ) {
+    return request<{ building: Building }>(`/facilities/buildings/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(changes),
+    })
+  },
+  listRooms(values: {
+    page?: number
+    pageSize?: number
+    search?: string
+    buildingId?: string
+    roomTypeId?: string
+    status?: RoomStatus
+    minCapacity?: number
+    isAccessible?: boolean
+  } = {}) {
+    return request<{ records: Room[]; pagination: Pagination }>(
+      `/facilities/rooms${queryString(values)}`,
+    )
+  },
+  createRoom(data: {
+    buildingId: string
+    roomTypeId?: string | null
+    roomNumber: string
+    displayName?: string | null
+    capacity?: number | null
+    isAccessible?: boolean
+    features?: string[]
+    notes?: string | null
+  }) {
+    return request<{ room: Room }>("/facilities/rooms", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+  updateRoom(
+    id: string,
+    changes: Partial<{
+      buildingId: string
+      roomTypeId: string | null
+      roomNumber: string
+      displayName: string | null
+      capacity: number | null
+      isAccessible: boolean
+      features: string[]
+      notes: string | null
+      status: RoomStatus
+      statusReason: string | null
+    }>,
+  ) {
+    return request<{ room: Room }>(`/facilities/rooms/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(changes),
+    })
+  },
+  listRestrictions(values: {
+    page?: number
+    pageSize?: number
+    buildingId?: string
+    roomId?: string
+    status?: RestrictionStatus
+    dateFrom?: string
+    dateTo?: string
+  } = {}) {
+    return request<{ records: RoomRestriction[]; pagination: Pagination }>(
+      `/facilities/restrictions${queryString(values)}`,
+    )
+  },
+  createRestriction(data: {
+    roomId: string
+    restrictionDate: string
+    startMinute: number
+    endMinute: number
+    reason: string
+  }) {
+    return request<{ restriction: RoomRestriction }>("/facilities/restrictions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+  cancelRestriction(id: string) {
+    return request<{ restriction: RoomRestriction }>(`/facilities/restrictions/${id}/cancel`, {
+      method: "PATCH",
+    })
   },
 }
 

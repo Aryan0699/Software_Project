@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Search } from "lucide-react"
+import { Pencil, Search } from "lucide-react"
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { ConfirmDialog } from "../../components/ConfirmDialog"
+import { FormDialog } from "../../components/FormDialog"
 import { useToast } from "../../components/toastContext"
-import { adminAccessApi, errorMessage, type AdminUser, type Role } from "../../lib/api"
+import { adminAccessApi, errorMessage, facilitiesApi, type AdminUser, type Role } from "../../lib/api"
 import { roleLabels, roles } from "./constants"
 import { PaginationBar, RoleBadge, StatusBadge, TableState } from "./shared"
 
@@ -20,6 +21,14 @@ type PendingChange = {
 
 const initialFilters: Filters = { search: "", role: "ALL", status: "ALL" }
 
+type ProfileDraft = {
+  name: string
+  departmentId: string
+  rollNumber: string
+  batchYear: string
+  designation: string
+}
+
 export function UsersPanel() {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
@@ -27,6 +36,14 @@ export function UsersPanel() {
   const [filters, setFilters] = useState<Filters>(initialFilters)
   const [page, setPage] = useState(1)
   const [pending, setPending] = useState<PendingChange | null>(null)
+  const [profileUser, setProfileUser] = useState<AdminUser | null>(null)
+  const [profile, setProfile] = useState<ProfileDraft>({
+    name: "",
+    departmentId: "",
+    rollNumber: "",
+    batchYear: "",
+    designation: "",
+  })
 
   const query = useQuery({
     queryKey: ["admin-users", filters, page],
@@ -39,6 +56,10 @@ export function UsersPanel() {
         isActive:
           filters.status === "ALL" ? undefined : filters.status === "ACTIVE",
       }),
+  })
+  const departmentsQuery = useQuery({
+    queryKey: ["departments", "active"],
+    queryFn: () => facilitiesApi.listDepartments({ pageSize: 100, isActive: true }),
   })
 
   const updateMutation = useMutation({
@@ -53,6 +74,50 @@ export function UsersPanel() {
     },
     onError: (error) => showToast("error", errorMessage(error)),
   })
+
+  const profileMutation = useMutation({
+    mutationFn: (user: AdminUser) =>
+      adminAccessApi.updateUserProfile(user.id, {
+        name: profile.name.trim(),
+        ...(user.role === "STUDENT"
+          ? {
+              departmentId: profile.departmentId || null,
+              rollNumber: profile.rollNumber.trim() || null,
+              batchYear: profile.batchYear ? Number(profile.batchYear) : null,
+            }
+          : {}),
+        ...(user.role === "FACULTY"
+          ? {
+              departmentId: profile.departmentId || null,
+              designation: profile.designation.trim() || null,
+            }
+          : {}),
+        ...(user.role === "STAFF"
+          ? { designation: profile.designation.trim() || null }
+          : {}),
+      }),
+    onSuccess: async () => {
+      setProfileUser(null)
+      showToast("success", "User profile updated")
+      await queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+      await queryClient.invalidateQueries({ queryKey: ["dean-offices"] })
+      await queryClient.invalidateQueries({ queryKey: ["assignment-options"] })
+    },
+    onError: (error) => showToast("error", errorMessage(error)),
+  })
+
+  const openProfile = (user: AdminUser) => {
+    setProfileUser(user)
+    setProfile({
+      name: user.name,
+      departmentId:
+        user.studentProfile?.departmentId || user.facultyProfile?.departmentId || "",
+      rollNumber: user.studentProfile?.rollNumber || "",
+      batchYear: user.studentProfile?.batchYear ? String(user.studentProfile.batchYear) : "",
+      designation:
+        user.facultyProfile?.designation || user.staffProfile?.designation || "",
+    })
+  }
 
   const apply = (event: FormEvent) => {
     event.preventDefault()
@@ -156,6 +221,15 @@ export function UsersPanel() {
                 <td><StatusBadge active={user.isActive} /></td>
                 <td>
                   <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      className="icon-button border border-slate-200"
+                      onClick={() => openProfile(user)}
+                      aria-label={`Edit profile for ${user.name}`}
+                      title="Edit profile"
+                    >
+                      <Pencil className="size-4" />
+                    </button>
                     <select
                       className="field-select min-h-9 w-36"
                       value={user.role}
@@ -218,6 +292,87 @@ export function UsersPanel() {
         onClose={() => setPending(null)}
         onConfirm={() => pending && updateMutation.mutate(pending)}
       />
+
+      <FormDialog
+        open={Boolean(profileUser)}
+        title="Edit user profile"
+        description={profileUser ? `${profileUser.name} · ${roleLabels[profileUser.role]}` : undefined}
+        onClose={() => setProfileUser(null)}
+      >
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (profileUser) profileMutation.mutate(profileUser)
+          }}
+        >
+          <label className="block">
+            <span className="field-label">Full name</span>
+            <input
+              className="field-input"
+              value={profile.name}
+              onChange={(event) => setProfile({ ...profile, name: event.target.value })}
+              minLength={2}
+              maxLength={100}
+              required
+            />
+          </label>
+          {(profileUser?.role === "STUDENT" || profileUser?.role === "FACULTY") ? (
+            <label className="block">
+              <span className="field-label">Department</span>
+              <select
+                className="field-select"
+                value={profile.departmentId}
+                onChange={(event) => setProfile({ ...profile, departmentId: event.target.value })}
+              >
+                <option value="">Not specified</option>
+                {departmentsQuery.data?.records.map((department) => (
+                  <option value={department.id} key={department.id}>{department.code} - {department.name}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {profileUser?.role === "STUDENT" ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label>
+                <span className="field-label">Roll number</span>
+                <input
+                  className="field-input uppercase"
+                  value={profile.rollNumber}
+                  onChange={(event) => setProfile({ ...profile, rollNumber: event.target.value })}
+                  maxLength={50}
+                />
+              </label>
+              <label>
+                <span className="field-label">Batch year</span>
+                <input
+                  className="field-input"
+                  type="number"
+                  min={1900}
+                  max={2200}
+                  value={profile.batchYear}
+                  onChange={(event) => setProfile({ ...profile, batchYear: event.target.value })}
+                />
+              </label>
+            </div>
+          ) : null}
+          {(profileUser?.role === "FACULTY" || profileUser?.role === "STAFF") ? (
+            <label className="block">
+              <span className="field-label">Designation</span>
+              <input
+                className="field-input"
+                value={profile.designation}
+                onChange={(event) => setProfile({ ...profile, designation: event.target.value })}
+                maxLength={120}
+              />
+            </label>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <button type="button" className="button-secondary" onClick={() => setProfileUser(null)}>Cancel</button>
+            <button type="submit" className="button-primary" disabled={profileMutation.isPending}>Save profile</button>
+          </div>
+        </form>
+      </FormDialog>
     </div>
   )
 }
