@@ -427,6 +427,23 @@ export async function listStaffAssignments({
     return { records, pagination: pagination(page, pageSize, total) }
 }
 
+export async function getStaffAssignmentOptions() {
+    const [buildings, staffUsers] = await prisma.$transaction([
+        prisma.building.findMany({
+            where: { isActive: true },
+            select: { id: true, code: true, name: true },
+            orderBy: [{ code: "asc" }, { id: "asc" }],
+        }),
+        prisma.user.findMany({
+            where: { role: "STAFF", isActive: true },
+            select: { id: true, name: true, email: true },
+            orderBy: [{ name: "asc" }, { id: "asc" }],
+        }),
+    ])
+
+    return { buildings, staffUsers }
+}
+
 export async function createStaffAssignment({
     buildingId,
     staffUserId,

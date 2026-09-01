@@ -5,6 +5,7 @@ import {
     createStaffAssignment,
     deleteStaffAssignment,
     getDeanOffices,
+    getStaffAssignmentOptions,
     listApprovedUsers,
     listStaffAssignments,
     listUsers,
@@ -76,6 +77,10 @@ adminAccessRouter.get(
     "/staff-building-assignments",
     validateQuery(listStaffAssignmentsQuerySchema),
     listStaffAssignments
+)
+adminAccessRouter.get(
+    "/staff-building-assignment-options",
+    getStaffAssignmentOptions
 )
 adminAccessRouter.post(
     "/staff-building-assignments",

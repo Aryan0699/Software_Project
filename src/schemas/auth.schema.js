@@ -4,7 +4,7 @@ const email = z.string().trim().toLowerCase().email().max(320)
 
 const password = z
     .string()
-    .min(10, "Password must contain at least 10 characters")
+    .min(5, "Password must contain at least 5 characters")
     .max(72, "Password must contain at most 72 characters")
     .refine(
         (value) => Buffer.byteLength(value, "utf8") <= 72,

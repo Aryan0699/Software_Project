@@ -4,6 +4,7 @@ import {
     createStaffAssignment as createStaffAssignmentService,
     deleteStaffAssignment as deleteStaffAssignmentService,
     getDeanOffices as getDeanOfficesService,
+    getStaffAssignmentOptions as getStaffAssignmentOptionsService,
     listApprovedUsers as listApprovedUsersService,
     listStaffAssignments as listStaffAssignmentsService,
     listUsers as listUsersService,
@@ -75,6 +76,11 @@ export const assignDeanOffice = asyncHandler(async (req, res) => {
 export const listStaffAssignments = asyncHandler(async (req, res) => {
     const result = await listStaffAssignmentsService(req.validatedQuery)
     res.json(new ApiResponse(200, "Staff-building assignments", result))
+})
+
+export const getStaffAssignmentOptions = asyncHandler(async (_req, res) => {
+    const options = await getStaffAssignmentOptionsService()
+    res.json(new ApiResponse(200, "Staff assignment options", options))
 })
 
 export const createStaffAssignment = asyncHandler(async (req, res) => {
