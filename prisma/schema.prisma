@@ -8,20 +8,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ENUMS
+// Cross-row invariants requiring PostgreSQL partial indexes, exclusion
+// constraints, and CHECK constraints are defined in final_db_schema_spec.md.
+
 enum Role {
-  USER
-  ADMIN
+  STUDENT
   FACULTY
   STAFF
+  ADMIN
 }
 
+enum AcademicTermStatus {
+  PLANNED
+  CURRENT
+  CLOSED
+}
+
+enum DeanOffice {
+  DOSA
+  ADOSA
+  DOAA
+}
+
+enum RoomStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RoomRestrictionStatus {
+  ACTIVE
+  CANCELLED
+}
 
 enum SlotKind {
   LECTURE
   LAB
   TUTORIAL
   SPECIAL
+}
+
+enum SlotGridStatus {
+  DRAFT
+  LOCKED
+  DISCARDED
 }
 
 enum DayOfWeek {
@@ -34,200 +63,421 @@ enum DayOfWeek {
   SATURDAY
 }
 
+enum CalendarExceptionType {
+  NO_CLASSES
+  FOLLOW_DAY
+}
+
+enum ImportBatchStatus {
+  PREVIEWED
+  PUBLISHED
+  SUPERSEDED
+  CANCELLED
+  FAILED
+}
+
+enum ImportRowStatus {
+  VALID
+  UNRESOLVED_SLOT
+  UNRESOLVED_ROOM
+  CONFLICTING_MAPPING
+  DUPLICATE_ROW
+  MISSING_REQUIRED_FIELD
+}
+
+enum ImportDecisionAction {
+  PENDING
+  RESOLVE
+  SKIP
+}
+
+enum ComponentKind {
+  LECTURE
+  TUTORIAL
+  LAB
+  SEMINAR
+  OTHER
+}
+
 enum BookingStatus {
   PENDING_FACULTY
-  PENDING_STAFF
+  PENDING_DEANS
   APPROVED
   REJECTED
   CANCELLED
+}
+
+enum BookingEventType {
+  ACADEMIC
+  CLUB
+  MEETING
+  WORKSHOP
+  SEMINAR
+  OTHER
+}
+
+enum BookingApprovalRole {
+  FACULTY
+  DOSA
+  ADOSA
+  DOAA
+}
+
+enum BookingApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CLOSED
 }
 
 enum BookingActionType {
   CREATED
   FACULTY_APPROVED
   FACULTY_REJECTED
-  STAFF_APPROVED
-  STAFF_REJECTED
+  SENT_TO_DEANS
+  DEAN_APPROVED
+  DEAN_REJECTED
+  FINAL_APPROVED
+  AUTO_REJECTED_CONFLICT
   CANCELLED
+  ADMIN_CONFLICT_RELOCATED
+  ADMIN_CONFLICT_RESCHEDULED
+  ADMIN_CONFLICT_CANCELLED
+  NOTE_ADDED
 }
 
+enum NotificationType {
+  FACULTY_REVIEW_REQUIRED
+  FACULTY_APPROVED
+  FACULTY_REJECTED
+  DEAN_REVIEW_REQUIRED
+  DEAN_APPROVAL_PROGRESS
+  BOOKING_APPROVED
+  BOOKING_REJECTED
+  BOOKING_AUTO_REJECTED
+  BOOKING_CANCELLED
+  BOOKING_RELOCATED
+  BOOKING_RESCHEDULED
+  ADMIN_ACTION_REQUIRED
+}
 
-//USER SCHEMAS
+enum AdministrativeAuditAction {
+  CREATE
+  UPDATE
+  ACTIVATE
+  DEACTIVATE
+  DISCARD
+  ASSIGN
+  UNASSIGN
+  RESOLVE
+  SKIP
+  SET_CURRENT
+  CLOSE
+  PUBLISH
+  SUPERSEDE
+  CANCEL
+  REBUILD
+}
+
+enum AdministrativeEntityType {
+  ACADEMIC_TERM
+  DEPARTMENT
+  SLOT_SYSTEM
+  SLOT_GRID_VERSION
+  SLOT
+  CALENDAR_EXCEPTION
+  BUILDING
+  ROOM_TYPE
+  ROOM
+  ROOM_RESTRICTION
+  USER
+  USER_ROLE
+  DEAN_OFFICE_ASSIGNMENT
+  STAFF_BUILDING_ASSIGNMENT
+  TIMETABLE_IMPORT
+  TIMETABLE_IMPORT_ROW
+  TIMETABLE_PUBLICATION
+  OCCUPANCY_PROJECTION
+}
 
 model User {
-  id              String   @id @default(cuid())
-  name            String
-  email           String   @unique
-  hashedPassword  String
-  role            Role     @default(USER)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  hashedPassword String?
+  googleId       String?   @unique
+  avatarUrl      String?
+  role           Role      @default(STUDENT)
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime? @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
 
-  studentProfile  StudentProfile?
-  facultyProfile  FacultyProfile?
-  staffProfile    StaffProfile?
+  studentProfile StudentProfile?
+  facultyProfile FacultyProfile?
+  staffProfile   StaffProfile?
+  sessions       AuthSession[]
 
-  taughtAssignments    CourseSlotAssignment[]     @relation("FacultyCourseAssignments")
-  enrollments          Enrollment[]               @relation("StudentEnrollments")
-  buildingAssignments  BuildingStaffAssignment[]  @relation("StaffBuildingAssignments")
-  bookingRequestsCreated BookingRequest[]           @relation("BookingRequester")  // which req created by this user
-  facultyReviewBookingRequests BookingRequest[]           @relation("BookingFacultyReviewer") // kaunsi req ye faculty handle kar raha hai
-  staffReviewBookingRequests BookingRequest[]           @relation("BookingStaffReviewer") // kaunsi req ye staff handle kar raha hai
-  bookingActionsPerformed BookingActionHistory[]     @relation("BookingActionPerformer")  // those booking in which he or she is approved it
+  approvedUsersInvited ApprovedUser[] @relation("ApprovedUserInviter")
+
+  deanOfficeHeld       DeanOfficeAssignment?     @relation("DeanOfficeHolder")
+  deanAssignmentsMade  DeanOfficeAssignment[]    @relation("DeanOfficeAssigner")
+  staffBuildings       BuildingStaffAssignment[] @relation("AssignedStaff")
+  staffAssignmentsMade BuildingStaffAssignment[] @relation("StaffAssignmentCreator")
+
+  gridVersionsCreated       SlotGridVersion[]      @relation("SlotGridCreator")
+  calendarCreated           CalendarException[]    @relation("CalendarExceptionCreator")
+  calendarUpdated           CalendarException[]    @relation("CalendarExceptionUpdater")
+  importsCreated            TimetableImportBatch[] @relation("ImportBatchCreator")
+  timetableBatchesPublished TimetableImportBatch[] @relation("ImportBatchPublisher")
+  importRowsResolved        TimetableImportRow[]   @relation("ImportRowResolver")
+
+  courseAssignments CourseSlotAssignmentFaculty[] @relation("CourseAssignmentFacultyUser")
+
+  roomRestrictionsCreated   RoomRestriction[] @relation("RoomRestrictionCreator")
+  roomRestrictionsCancelled RoomRestriction[] @relation("RoomRestrictionCanceller")
+
+  bookingRequestsCreated BookingRequest[]       @relation("BookingRequester")
+  bookingsCancelled      BookingRequest[]       @relation("BookingCanceller")
+  bookingApprovals       BookingApproval[]
+  bookingActions         BookingActionHistory[] @relation("BookingActionPerformer")
+
+  notifications             Notification[]             @relation("NotificationRecipient")
+  administrativeAuditEvents AdministrativeAuditEvent[] @relation("AdministrativeAuditActor")
 }
 
 model ApprovedUser {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  role      Role
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  email           String   @unique
+  initialRole     Role
+  isActive        Boolean  @default(true)
+  invitedByUserId String?
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+
+  invitedBy User? @relation("ApprovedUserInviter", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([initialRole, isActive])
+  @@index([invitedByUserId])
+}
+
+model AuthSession {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime  @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
 }
 
 model StudentProfile {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  rollNumber    String?   @unique
-  batchYear     Int?
-  departmentId  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  rollNumber   String?  @unique
+  batchYear    Int?
+  departmentId String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
 
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   @@index([departmentId])
 }
 
 model FacultyProfile {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  designation   String?
-  departmentId  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  designation  String?
+  departmentId String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
 
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   @@index([departmentId])
 }
 
 model StaffProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  designation   String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  designation String?
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 
-  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model DeanOfficeAssignment {
+  id               String     @id @default(cuid())
+  office           DeanOffice @unique
+  userId           String     @unique
+  assignedByUserId String?
+  assignedAt       DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @db.Timestamptz(3)
 
-// ACADEMIC STRUCTURE SCHEMAS - DEPARTMENT BUILDINGS ROOMS
+  user       User  @relation("DeanOfficeHolder", fields: [userId], references: [id], onDelete: Restrict)
+  assignedBy User? @relation("DeanOfficeAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([assignedByUserId])
+}
+
 model Department {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  name        String   @unique
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  courses         Course[]
-  studentProfiles StudentProfile[] //a virtual reverse relation (for easy querying)
-  facultyProfiles FacultyProfile[]
+  students StudentProfile[]
+  faculty  FacultyProfile[]
+  courses  Course[]
 }
 
 model Building {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  name        String   @unique
-  location    String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String   @unique
+  location  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  rooms       Room[]
-  staffLinks  BuildingStaffAssignment[]
+  rooms            Room[]
+  staffAssignments BuildingStaffAssignment[]
+
+  @@index([isActive])
 }
 
 model BuildingStaffAssignment {
-  buildingId   String
-  staffUserId  String
-  createdAt    DateTime @default(now())
+  id               String   @id @default(cuid())
+  buildingId       String
+  staffUserId      String
+  assignedByUserId String?
+  assignedAt       DateTime @default(now()) @db.Timestamptz(3)
 
-  building     Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
-  staffUser    User     @relation("StaffBuildingAssignments", fields: [staffUserId], references: [id], onDelete: Cascade)
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  staffUser  User     @relation("AssignedStaff", fields: [staffUserId], references: [id], onDelete: Cascade)
+  assignedBy User?    @relation("StaffAssignmentCreator", fields: [assignedByUserId], references: [id], onDelete: SetNull)
 
-  @@id([buildingId, staffUserId])
+  @@unique([buildingId, staffUserId])
   @@index([staffUserId])
+  @@index([assignedByUserId])
 }
 
-//Since it is not fixed might change so not made an enum .
 model RoomType {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  name        String   @unique
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  rooms       Room[]
+  rooms Room[]
 }
 
 model Room {
-  id            String   @id @default(cuid())
-  buildingId    String
-  roomTypeId    String?
-  roomNumber    String
-  fullCode      String   @unique
-  displayName   String?
-  capacity      Int?
-  isActive      Boolean  @default(true)
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String     @id @default(cuid())
+  buildingId   String
+  roomTypeId   String?
+  roomNumber   String
+  fullCode     String     @unique
+  displayName  String?
+  capacity     Int?
+  isAccessible Boolean    @default(true)
+  features     String[]   @default([])
+  status       RoomStatus @default(ACTIVE)
+  statusReason String?
+  notes        String?
+  createdAt    DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime   @updatedAt @db.Timestamptz(3)
 
-  building      Building @relation(fields: [buildingId], references: [id], onDelete: Restrict)
-  roomType      RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
+  building Building  @relation(fields: [buildingId], references: [id], onDelete: Restrict)
+  roomType RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
 
-  features      RoomFeatureAssignment[]
-  roomAllocations CourseRoomAllocation[]
-  slotOccupancies RoomSlotOccupancy[]
-  bookingRequests BookingRequest[]
+  restrictions       RoomRestriction[]
+  resolvedImportRows TimetableImportRow[]
+  courseAllocations  CourseRoomAllocation[]
+  slotOccupancies    RoomSlotOccupancy[]
+  bookingRequests    BookingRequest[]
 
   @@unique([buildingId, roomNumber])
-  @@index([buildingId])
+  @@index([buildingId, status])
   @@index([roomTypeId])
   @@index([capacity])
-  @@index([isActive])
-}
-//Since can change so not made an enum .
-model RoomFeature {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  name        String   @unique
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  roomAssignments RoomFeatureAssignment[]
 }
 
-model RoomFeatureAssignment {
-  roomId      String
-  featureId   String
-  value       String?
+model RoomRestriction {
+  id                String                @id @default(cuid())
+  roomId            String
+  restrictionDate   DateTime              @db.Date
+  startMinute       Int
+  endMinute         Int
+  reason            String
+  status            RoomRestrictionStatus @default(ACTIVE)
+  createdByUserId   String?
+  cancelledByUserId String?
+  cancelledAt       DateTime?             @db.Timestamptz(3)
+  createdAt         DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime              @updatedAt @db.Timestamptz(3)
 
-  room        Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  feature     RoomFeature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  room        Room  @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  createdBy   User? @relation("RoomRestrictionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  cancelledBy User? @relation("RoomRestrictionCanceller", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
 
-  @@id([roomId, featureId])
-  @@index([featureId])
+  @@index([roomId, restrictionDate, status, startMinute, endMinute])
+  @@index([createdByUserId])
 }
 
+model AcademicTerm {
+  id        String             @id @default(cuid())
+  termCode  String             @unique
+  name      String
+  startDate DateTime           @db.Date
+  endDate   DateTime           @db.Date
+  status    AcademicTermStatus @default(PLANNED)
+  createdAt DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime           @updatedAt @db.Timestamptz(3)
 
-// SLOT SCHEMAS
+  calendarExceptions CalendarException[]
+  imports            TimetableImportBatch[]
+  slotOccupancies    RoomSlotOccupancy[]
+
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model CalendarException {
+  id              String                @id @default(cuid())
+  academicTermId  String
+  name            String
+  exceptionType   CalendarExceptionType
+  startDate       DateTime              @db.Date
+  endDate         DateTime              @db.Date
+  targetDayOfWeek DayOfWeek?
+  isActive        Boolean               @default(true)
+  deactivatedAt   DateTime?             @db.Timestamptz(3)
+  createdByUserId String?
+  updatedByUserId String?
+  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @db.Timestamptz(3)
+
+  academicTerm AcademicTerm @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
+  createdBy    User?        @relation("CalendarExceptionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updatedBy    User?        @relation("CalendarExceptionUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([academicTermId, isActive, startDate, endDate])
+  @@index([exceptionType])
+}
 
 model SlotSystem {
   id            String   @id @default(cuid())
@@ -236,212 +486,374 @@ model SlotSystem {
   description   String?
   applicableFor String?
   isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
 
-  slots         Slot[]
-  aliases       SlotAlias[]
+  gridVersions SlotGridVersion[]
+  imports      TimetableImportBatch[]
+
+  @@index([isActive])
 }
 
+model SlotGridVersion {
+  id               String         @id @default(cuid())
+  slotSystemId     String
+  versionNumber    Int
+  status           SlotGridStatus @default(DRAFT)
+  basedOnVersionId String?
+  createdByUserId  String?
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  lockedAt         DateTime?      @db.Timestamptz(3)
+  discardedAt      DateTime?      @db.Timestamptz(3)
+
+  slotSystem      SlotSystem        @relation(fields: [slotSystemId], references: [id], onDelete: Restrict)
+  basedOn         SlotGridVersion?  @relation("SlotGridLineage", fields: [basedOnVersionId], references: [id], onDelete: SetNull)
+  derivedVersions SlotGridVersion[] @relation("SlotGridLineage")
+  createdBy       User?             @relation("SlotGridCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  slots   Slot[]
+  imports TimetableImportBatch[]
+
+  @@unique([slotSystemId, versionNumber])
+  @@index([slotSystemId, status])
+  @@index([basedOnVersionId])
+}
 
 model Slot {
-  id            String   @id @default(cuid())
-  slotSystemId  String
-  code          String
-  slotKind      SlotKind @default(LECTURE)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  aliases       SlotAlias[]
+  id                String   @id @default(cuid())
+  slotGridVersionId String
+  code              String
+  slotKind          SlotKind @default(LECTURE)
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
 
-  slotSystem    SlotSystem @relation(fields: [slotSystemId], references: [id], onDelete: Cascade)
-  occurrences   SlotOccurrence[]
-  courseAssignments CourseSlotAssignment[]
-  slotOccupancies RoomSlotOccupancy[]
-  @@unique([slotSystemId, code])
-  @@index([slotSystemId])
-} 
+  slotGridVersion    SlotGridVersion        @relation(fields: [slotGridVersionId], references: [id], onDelete: Cascade)
+  occurrences        SlotOccurrence[]
+  courseAssignments  CourseSlotAssignment[]
+  resolvedImportRows TimetableImportRow[]
+
+  @@unique([slotGridVersionId, code])
+  @@index([slotGridVersionId])
+}
 
 model SlotOccurrence {
-  id           String    @id @default(cuid())
-  slotId       String
-  dayOfWeek    DayOfWeek
-  startMinute  Int
-  endMinute    Int
-  createdAt    DateTime  @default(now())
+  id          String    @id @default(cuid())
+  slotId      String
+  dayOfWeek   DayOfWeek
+  startMinute Int
+  endMinute   Int
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
 
-  slot         Slot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slot            Slot                @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  roomOccupancies RoomSlotOccupancy[]
 
-  @@index([slotId])
-  @@index([dayOfWeek])
+  @@unique([slotId, dayOfWeek, startMinute, endMinute])
   @@index([dayOfWeek, startMinute, endMinute])
 }
 
-model SlotAlias {
-  id              String   @id @default(cuid())
-  rawCode         String   
-  effectiveSlotId String
-  slotSystemId    String
-  note            String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+model TimetableImportBatch {
+  id                String            @id @default(cuid())
+  academicTermId    String
+  slotSystemId      String
+  slotGridVersionId String
+  fileName          String
+  fileHash          String
+  fileSizeBytes     Int?
+  mimeType          String?
+  status            ImportBatchStatus @default(PREVIEWED)
+  totalRows         Int               @default(0)
+  validRows         Int               @default(0)
+  errorRows         Int               @default(0)
+  skippedRows       Int               @default(0)
+  createdByUserId   String?
+  failureReason     String?
+  revisionNumber    Int?
+  publishedByUserId String?
+  publishedAt       DateTime?         @db.Timestamptz(3)
+  supersededAt      DateTime?         @db.Timestamptz(3)
+  supersededById    String?           @unique
+  cancelledAt       DateTime?         @db.Timestamptz(3)
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(3)
 
-  effectiveSlot   Slot     @relation(fields: [effectiveSlotId], references: [id], onDelete: Cascade)
-  slotSystem      SlotSystem @relation(fields: [slotSystemId], references: [id], onDelete: Cascade)
-  @@index([effectiveSlotId])
-  @@unique([slotSystemId, rawCode])
+  academicTerm      AcademicTerm           @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
+  slotSystem        SlotSystem             @relation(fields: [slotSystemId], references: [id], onDelete: Restrict)
+  slotGridVersion   SlotGridVersion        @relation(fields: [slotGridVersionId], references: [id], onDelete: Restrict)
+  createdBy         User?                  @relation("ImportBatchCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  publishedBy       User?                  @relation("ImportBatchPublisher", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+  supersededBy      TimetableImportBatch?  @relation("ImportBatchSupersession", fields: [supersededById], references: [id], onDelete: SetNull)
+  supersedes        TimetableImportBatch?  @relation("ImportBatchSupersession")
+  rows              TimetableImportRow[]
+  courseAssignments CourseSlotAssignment[]
+  roomOccupancies   RoomSlotOccupancy[]
+
+  @@unique([academicTermId, slotSystemId, revisionNumber])
+  @@index([academicTermId, slotSystemId, fileHash])
+  @@index([slotGridVersionId])
+  @@index([status, createdAt])
+  @@index([createdByUserId])
+  @@index([publishedByUserId])
 }
 
-//COURSE SCHEMAS
+model TimetableImportRow {
+  id                    String               @id @default(cuid())
+  batchId               String
+  rowIndex              Int
+  rowHash               String?
+  rawRow                Json?
+  auxiliaryData         Json?
+  rawCourseCode         String?
+  rawSlot               String?
+  rawClassroom          String?
+  rawInstructor         String?
+  normalizedCourseCode  String?
+  normalizedSlot        String?
+  normalizedClassroom   String?
+  initialClassification ImportRowStatus
+  adminDecision         ImportDecisionAction @default(PENDING)
+  isResolved            Boolean              @default(false)
+  issues                Json?
+  resolvedCourseId      String?
+  resolvedSlotId        String?
+  resolvedRoomId        String?
+  resolvedByUserId      String?
+  resolvedAt            DateTime?            @db.Timestamptz(3)
+  resolutionNote        String?
+  publishedAssignmentId String?
+  createdAt             DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime             @updatedAt @db.Timestamptz(3)
+
+  batch               TimetableImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  resolvedCourse      Course?               @relation("ImportRowResolvedCourse", fields: [resolvedCourseId], references: [id], onDelete: SetNull)
+  resolvedSlot        Slot?                 @relation(fields: [resolvedSlotId], references: [id], onDelete: SetNull)
+  resolvedRoom        Room?                 @relation(fields: [resolvedRoomId], references: [id], onDelete: SetNull)
+  resolvedBy          User?                 @relation("ImportRowResolver", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+  publishedAssignment CourseSlotAssignment? @relation("PublishedAssignmentSourceRows", fields: [publishedAssignmentId], references: [id], onDelete: SetNull)
+
+  @@unique([batchId, rowIndex])
+  @@index([batchId, initialClassification, isResolved])
+  @@index([rowHash])
+  @@index([resolvedCourseId])
+  @@index([resolvedSlotId])
+  @@index([resolvedRoomId])
+  @@index([resolvedByUserId])
+  @@index([publishedAssignmentId])
+}
 
 model Course {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  name        String
-  courseType       String?
-  ltp         String?
-  credits     Decimal? @db.Decimal(4, 1)
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String?
+  courseType   String?
+  ltp          String?
+  credits      Decimal? @db.Decimal(4, 1)
   departmentId String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
 
-  department  Department?            @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  assignments CourseSlotAssignment[]
+  department         Department?            @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  assignments        CourseSlotAssignment[]
+  resolvedImportRows TimetableImportRow[]   @relation("ImportRowResolvedCourse")
 
   @@index([departmentId])
   @@index([isActive])
 }
 
 model CourseSlotAssignment {
-  id               String   @id @default(cuid())
+  id               String        @id @default(cuid())
+  timetableBatchId String
   courseId         String
   slotId           String
-  facultyUserId    String?
+  componentKind    ComponentKind @default(OTHER)
+  rawCourseCode    String?
   rawSlotCode      String?
+  rawInstructor    String?
   variantLabel     String?
   registeredCount  Int?
-  sourceType       String?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  auxiliaryData    Json?
+  createdAt        DateTime      @default(now()) @db.Timestamptz(3)
 
-  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  slot             Slot     @relation(fields: [slotId], references: [id], onDelete: Restrict)
-  faculty          User?    @relation("FacultyCourseAssignments", fields: [facultyUserId], references: [id], onDelete: SetNull)
+  timetableBatch TimetableImportBatch @relation(fields: [timetableBatchId], references: [id], onDelete: Cascade)
+  course         Course               @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  slot           Slot                 @relation(fields: [slotId], references: [id], onDelete: Restrict)
 
+  faculty          CourseSlotAssignmentFaculty[]
   roomAllocations  CourseRoomAllocation[]
-  enrollments      Enrollment[]
+  roomOccupancies  RoomSlotOccupancy[]
+  sourceImportRows TimetableImportRow[]          @relation("PublishedAssignmentSourceRows")
 
+  @@unique([timetableBatchId, courseId, slotId])
+  @@index([timetableBatchId])
   @@index([courseId])
   @@index([slotId])
+}
+
+model CourseSlotAssignmentFaculty {
+  courseSlotAssignmentId String
+  facultyUserId          String
+  createdAt              DateTime @default(now()) @db.Timestamptz(3)
+
+  courseSlotAssignment CourseSlotAssignment @relation(fields: [courseSlotAssignmentId], references: [id], onDelete: Cascade)
+  facultyUser          User                 @relation("CourseAssignmentFacultyUser", fields: [facultyUserId], references: [id], onDelete: Restrict)
+
+  @@id([courseSlotAssignmentId, facultyUserId])
   @@index([facultyUserId])
-  @@index([rawSlotCode])
-  @@index([isActive])
 }
 
 model CourseRoomAllocation {
   id                     String   @id @default(cuid())
   courseSlotAssignmentId String
   roomId                 String
-  isActive               Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt              DateTime @default(now()) @db.Timestamptz(3)
 
-  courseSlotAssignment   CourseSlotAssignment @relation(fields: [courseSlotAssignmentId], references: [id], onDelete: Cascade)
-  room                   Room                 @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  courseSlotAssignment CourseSlotAssignment @relation(fields: [courseSlotAssignmentId], references: [id], onDelete: Cascade)
+  room                 Room                 @relation(fields: [roomId], references: [id], onDelete: Restrict)
 
   @@unique([courseSlotAssignmentId, roomId])
   @@index([roomId])
-  @@index([isActive])
 }
 
 model RoomSlotOccupancy {
-  id          String   @id @default(cuid())
-  roomId      String
-  slotId      String
-  sourceType  String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                     String    @id @default(cuid())
+  academicTermId         String
+  timetableBatchId       String
+  courseSlotAssignmentId String
+  roomId                 String
+  slotOccurrenceId       String
+  dayOfWeek              DayOfWeek
+  startMinute            Int
+  endMinute              Int
+  createdAt              DateTime  @default(now()) @db.Timestamptz(3)
 
-  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  slot        Slot     @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  academicTerm         AcademicTerm         @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
+  timetableBatch       TimetableImportBatch @relation(fields: [timetableBatchId], references: [id], onDelete: Cascade)
+  courseSlotAssignment CourseSlotAssignment @relation(fields: [courseSlotAssignmentId], references: [id], onDelete: Cascade)
+  room                 Room                 @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  slotOccurrence       SlotOccurrence       @relation(fields: [slotOccurrenceId], references: [id], onDelete: Restrict)
 
-  @@unique([roomId, slotId])
-  @@index([slotId])
-  @@index([isActive])
-}
-
-model Enrollment {
-  studentId               String
-  courseSlotAssignmentId  String
-  createdAt               DateTime @default(now())
-
-  student                 User                 @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
-  courseSlotAssignment    CourseSlotAssignment @relation(fields: [courseSlotAssignmentId], references: [id], onDelete: Cascade)
-
-  @@id([studentId, courseSlotAssignmentId])
+  @@unique([timetableBatchId, courseSlotAssignmentId, roomId, slotOccurrenceId])
+  @@index([roomId, academicTermId, dayOfWeek, startMinute, endMinute])
+  @@index([timetableBatchId])
   @@index([courseSlotAssignmentId])
 }
 
-
-//BOOKING REQUEST
 model BookingRequest {
-  id         String   @id @default(cuid())
-  requesterUserId String
-  roomId      String
-  bookingDate DateTime
-  startMinute Int
-  endMinute   Int
-  title       String
-  purpose String?
-  minCapacityRequired Int?
+  id                    String           @id @default(cuid())
+  requesterUserId       String
+  requesterRoleSnapshot Role
+  roomId                String
+  bookingDate           DateTime         @db.Date
+  startMinute           Int
+  endMinute             Int
+  title                 String
+  purpose               String
+  eventType             BookingEventType @default(OTHER)
+  expectedParticipants  Int?
+  requiredFeatures      String[]         @default([])
+  specialRequirements   String?
+  status                BookingStatus
+  statusReason          String?
+  submittedAt           DateTime         @default(now()) @db.Timestamptz(3)
+  approvedAt            DateTime?        @db.Timestamptz(3)
+  rejectedAt            DateTime?        @db.Timestamptz(3)
+  cancelledAt           DateTime?        @db.Timestamptz(3)
+  cancelledByUserId     String?
+  cancellationReason    String?
+  version               Int              @default(1)
+  createdAt             DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime         @updatedAt @db.Timestamptz(3)
 
-  status      BookingStatus
-  rejectionReason String?
+  requester   User  @relation("BookingRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
+  room        Room  @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  cancelledBy User? @relation("BookingCanceller", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
 
-  facultyReviewerUserId String?
-  staffReviewerUserId String?
+  approvals BookingApproval[]
+  actions   BookingActionHistory[]
 
-  facultyDecisionAt DateTime?
-  staffDecisionAt DateTime?
+  @@index([roomId, bookingDate, status, startMinute, endMinute])
+  @@index([requesterUserId, createdAt])
+  @@index([status, submittedAt])
+  @@index([cancelledByUserId])
+}
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model BookingApproval {
+  id               String                @id @default(cuid())
+  bookingRequestId String
+  reviewerRole     BookingApprovalRole
+  reviewerUserId   String
+  status           BookingApprovalStatus @default(PENDING)
+  decisionNote     String?
+  assignedAt       DateTime              @default(now()) @db.Timestamptz(3)
+  decidedAt        DateTime?             @db.Timestamptz(3)
+  closedAt         DateTime?             @db.Timestamptz(3)
+  updatedAt        DateTime              @updatedAt @db.Timestamptz(3)
 
-  requester   User @relation("BookingRequester",fields: [requesterUserId], references: [id], onDelete: Cascade)
-  room        Room @relation(fields: [roomId], references: [id], onDelete: Restrict) // agar room yaha pe used hai to usko delete nahi kar sakte
-  facultyReviewer User? @relation("BookingFacultyReviewer", fields: [facultyReviewerUserId], references: [id], onDelete: SetNull)
-  staffReviewer User? @relation("BookingStaffReviewer", fields: [staffReviewerUserId], references: [id], onDelete: SetNull)
+  bookingRequest BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Restrict)
+  reviewer       User           @relation(fields: [reviewerUserId], references: [id], onDelete: Restrict)
 
-
-  actionHistory BookingActionHistory[]
-
-  @@index([roomId, bookingDate])
-  @@index([requesterUserId])
-  @@index([status])
-  @@index([bookingDate, startMinute, endMinute])
-  @@index([facultyReviewerUserId])
-  @@index([staffReviewerUserId])
-
+  @@unique([bookingRequestId, reviewerRole])
+  @@index([reviewerUserId, status, assignedAt])
+  @@index([bookingRequestId, status])
 }
 
 model BookingActionHistory {
-  id              String   @id @default(cuid())
-  bookingRequestId String
-  actionType      BookingActionType
+  id                String            @id @default(cuid())
+  bookingRequestId  String
+  actionType        BookingActionType
   performedByUserId String?
+  previousStatus    BookingStatus?
+  newStatus         BookingStatus?
+  note              String?
+  metadata          Json?
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
 
-  note            String?
-  createdAt       DateTime @default(now())
-  bookingRequest  BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Cascade)
-  performedByUser User?           @relation("BookingActionPerformer",fields: [performedByUserId], references: [id], onDelete: SetNull)
+  bookingRequest BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Restrict)
+  performedBy    User?          @relation("BookingActionPerformer", fields: [performedByUserId], references: [id], onDelete: SetNull)
 
-  @@index([bookingRequestId])
-  @@index([performedByUserId])
-  @@index([actionType])
-  @@index([createdAt])
+  @@index([bookingRequestId, createdAt])
+  @@index([performedByUserId, createdAt])
+  @@index([actionType, createdAt])
 }
 
+model Notification {
+  id           String           @id @default(cuid())
+  recipientId  String
+  type         NotificationType
+  title        String
+  message      String
+  resourceType String?
+  resourceId   String?
+  data         Json?
+  isRead       Boolean          @default(false)
+  readAt       DateTime?        @db.Timestamptz(3)
+  createdAt    DateTime         @default(now()) @db.Timestamptz(3)
+
+  recipient User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, isRead, createdAt])
+  @@index([type, createdAt])
+  @@index([resourceType, resourceId])
+}
+
+model AdministrativeAuditEvent {
+  id            String                    @id @default(cuid())
+  actorUserId   String?
+  action        AdministrativeAuditAction
+  entityType    AdministrativeEntityType
+  entityId      String
+  beforeState   Json?
+  afterState    Json?
+  changedFields String[]                  @default([])
+  reason        String?
+  correlationId String?
+  metadata      Json?
+  createdAt     DateTime                  @default(now()) @db.Timestamptz(3)
+
+  actor User? @relation("AdministrativeAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([correlationId])
+  @@index([createdAt])
+}

@@ -1,60 +1,75 @@
-import express from 'express'
-import cors from 'cors'
-import cookieParser from 'cookie-parser'
-import {pinoHttp} from 'pino-http'
-import logger from './utils/logger.js'
-import { env } from './utils/env.js'
-import authRouter from './routes/auth.route.js'
-import testrouter from './routes/test.route.js'
-import boookingRouter from './routes/booking.routes.js'
+import { randomUUID } from "node:crypto"
+import cookieParser from "cookie-parser"
+import cors from "cors"
+import express from "express"
+import helmet from "helmet"
+import { pinoHttp } from "pino-http"
+import { env } from "./config/env.js"
+import {
+    errorHandler,
+    notFoundHandler,
+} from "./middlewares/error.middleware.js"
+import authRouter from "./routes/auth.route.js"
+import healthRouter from "./routes/health.route.js"
+import ApiResponse from "./utils/ApiResponse.js"
+import logger from "./utils/logger.js"
+
 const app = express()
 
-app.use(cookieParser()) // gives access to req.cookies for parsing cookies from incoming requests
+app.disable("x-powered-by")
+if (env.trustProxy) app.set("trust proxy", 1)
 
-// app.use(pinoHttp(
-//     {logger}
-// )) // Add pino-http middleware for logging HTTP requests and responses
-
-app.use(express.json({
-    limit: '16kb' 
-})) // req for req.body
-
-
-app.use(cors(
-    {
-        origin: env.CORS_ORIGIN || "*",  
-        credentials: true //allow cookies to be sent in cross-origin requests
-    }
-))
-
-app.use(express.urlencoded({
-    extended: true, // allow parsing of nested objects in URL-encoded data
-    limit: '16kb'
-}))
-
-app.use(express.static('public')) // Serve static files from the 'public' directory
-app.use(cookieParser()) // Parse cookies from incoming requests
-
-app.get('/', (req, res) => {
-    logger.info("Health Check");
-    res.status(200).json({
-        success: true,
-        message: 'API is working'
+app.use(
+    pinoHttp({
+        logger,
+        genReqId(req, res) {
+            const suppliedId = req.headers["x-request-id"]
+            const requestId =
+                typeof suppliedId === "string" &&
+                /^[A-Za-z0-9._:-]{1,128}$/.test(suppliedId)
+                    ? suppliedId
+                    : randomUUID()
+            res.setHeader("x-request-id", requestId)
+            return requestId
+        },
+        customLogLevel(_req, res, error) {
+            if (error || res.statusCode >= 500) return "error"
+            if (res.statusCode >= 400) return "warn"
+            return "info"
+        },
     })
+)
+// helmet provides default security headers to protect against common web vulnerabilities like XSS, clickjacking, and MIME sniffing.
+app.use(helmet())
+app.use(
+    // just blocks to read the response not to reach the route handler that is done by requireTrustedOrigin middleware in auth.route.js
+    cors({
+        credentials: true, // include cookies in the request
+        origin(origin, callback) {
+            if (!origin || env.corsOrigins.includes(origin))
+                return callback(null, true)
+            return callback(null, false)
+        },
+    })
+)
+app.use(express.json({ limit: "64kb" }))
+app.use(express.urlencoded({ extended: false, limit: "64kb" }))
+app.use(cookieParser())
+
+app.get("/", (_req, res) => {
+    res.json(
+        new ApiResponse(200, "URAS API", {
+            version: "v1",
+            health: "/api/v1/health/live",
+        })
+    )
 })
 
-app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/test", testrouter);
-app.use("/api/v1/bookings", boookingRouter);
+app.use("/api/v1/health", healthRouter)
+app.use("/api/v1/auth", authRouter)
 
-app.use((err, req, res, next) => {
-    // Log detailed error information for monitoring/debugging
-    logger.error(`Error occurred:${err.message}`);
-    res.status(err.statusCode || 500).json({
-        success: err.success || false,
-        message: err.message || 'Internal Server Error',
-        errors: err.errors || []
-    });
-});
+// since top down therefore if route not found or any error on top then shown over here
+app.use(notFoundHandler)
+app.use(errorHandler)
 
 export default app
