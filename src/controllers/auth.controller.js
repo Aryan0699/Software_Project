@@ -1,87 +1,108 @@
-import asyncHandler from "../utils/asyncHandler.js";
-import { signupService, loginService } from "../services/auth.service.js";
-import ApiResponse from "../utils/apiResponse.js";
-import ApiError from "../utils/apiError.js";
-import {getCurrentUser}  from "../services/auth.service.js";
-import logger from "../utils/logger.js";
+import { env } from "../config/env.js"
+import {
+    expiredSessionCookieOptions,
+    sessionCookieOptions,
+} from "../config/session.js"
+import {
+    getCurrentUser,
+    loginWithGoogle,
+    loginWithPassword,
+    registerWithPassword,
+    replacePassword,
+} from "../services/auth.service.js"
+import {
+    revokeAllUserSessions,
+    revokeSession,
+} from "../services/session.service.js"
+import ApiResponse from "../utils/ApiResponse.js"
+import asyncHandler from "../utils/asyncHandler.js"
 
-const signup = asyncHandler(async (req, res) => {
-    const { name, email, password } = req.body;
-    logger.info(`Signup attempt for email: ${email}`);
-    // Input validation - Check if all required fields are present and valid
-    const fields = { name, email, password };
-
-    for (let field in fields) {
-        if (!fields[field] || typeof fields[field] !== "string" || fields[field].trim() === "") {
-            logger.warn(`Signup failed: Missing or invalid field - ${field}`);
-            throw new ApiError(400, `${field} is required`);
-        }
+function getSessionContext(req) {
+    return {
+        userAgent: req.get("user-agent"),
+        ipAddress: req.ip,
     }
+}
 
-    const user = await signupService({ name, email, password });
-    
-    logger.info(`User registered successfully: ${user.email} (ID: ${user.id})`);
+function setSessionCookie(res, token) {
+    res.cookie(env.SESSION_COOKIE_NAME, token, sessionCookieOptions)
+}
 
-    res.status(201).json(new ApiResponse(true, "User registered successfully", 
-        { 
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-        }
-    ));
-});
+export const register = asyncHandler(async (req, res) => {
+    const result = await registerWithPassword({
+        ...req.validatedBody,
+        sessionContext: getSessionContext(req),
+    })
+    setSessionCookie(res, result.token)
+    res.status(201).json(
+        new ApiResponse(201, "Account created", {
+            user: result.user,
+            expiresAt: result.expiresAt,
+        })
+    )
+})
 
-const login = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    logger.info(`Login attempt for email: ${email}`);
-    // Input validation - Check if all required fields are present and valid
-    const fields = {email, password };
+export const login = asyncHandler(async (req, res) => {
+    const result = await loginWithPassword({
+        ...req.validatedBody,
+        sessionContext: getSessionContext(req),
+    })
+    setSessionCookie(res, result.token)
+    res.json(
+        new ApiResponse(200, "Signed in", {
+            user: result.user,
+            expiresAt: result.expiresAt,
+        })
+    )
+})
 
-    for (let field in fields) {
-        if (!fields[field] || typeof fields[field] !== "string" || fields[field].trim() === "") {
-            logger.warn(`Login failed: Missing or invalid field - ${field}`);
-            throw new ApiError(400, `${field} is required`);
-        }     
-    }
+export const googleLogin = asyncHandler(async (req, res) => {
+    const result = await loginWithGoogle({
+        ...req.validatedBody,
+        sessionContext: getSessionContext(req),
+    })
+    setSessionCookie(res, result.token)
+    res.json(
+        new ApiResponse(200, "Signed in with Google", {
+            user: result.user,
+            expiresAt: result.expiresAt,
+        })
+    )
+})
 
-    const { user, accessToken } = await loginService({ email, password });
-    logger.info(`Login successful for email: ${email} (User ID: ${user.id})`);
+export const currentUser = asyncHandler(async (req, res) => {
+    const user = await getCurrentUser(req.user.id)
+    res.set("Cache-Control", "no-store")
+    res.json(
+        new ApiResponse(200, "Current user", {
+            user,
+            sessionExpiresAt: req.auth.expiresAt,
+        })
+    )
+})
 
-    const options = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60, // 24 hours
-        path: "/",
-        sameSite: "strict"
-    };
+export const logout = asyncHandler(async (req, res) => {
+    await revokeSession(req.auth.sessionId)
+    res.clearCookie(env.SESSION_COOKIE_NAME, expiredSessionCookieOptions)
+    res.json(new ApiResponse(200, "Signed out"))
+})
 
-    return res.status(200)
-        .cookie("accessToken", accessToken, options)
-        .json(new ApiResponse(200,"Login successful",{
-        accessToken,
-        user:{
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-        }
-    }));
-});
+export const logoutAll = asyncHandler(async (req, res) => {
+    await revokeAllUserSessions(req.user.id)
+    res.clearCookie(env.SESSION_COOKIE_NAME, expiredSessionCookieOptions)
+    res.json(new ApiResponse(200, "Signed out from all devices"))
+})
 
-const getUser = asyncHandler(async (req, res) => {
-    const userId = req.user.userId;
-
-    const user = await getCurrentUser(userId);  
-
-    logger.info(`User fetched successfully: ${user.email} (ID: ${user.id})`);   
-    return res.status(200).json(new ApiResponse(200,"User fetched successfully",user));
-});
-
-export {signup,login,getUser};
-
-    
-
-
-
-
+export const setPassword = asyncHandler(async (req, res) => {
+    const result = await replacePassword({
+        userId: req.user.id,
+        ...req.validatedBody,
+        sessionContext: getSessionContext(req),
+    })
+    setSessionCookie(res, result.token)
+    res.json(
+        new ApiResponse(200, "Password updated", {
+            expiresAt: result.expiresAt,
+        })
+    )
+})

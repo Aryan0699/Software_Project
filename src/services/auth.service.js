@@ -1,118 +1,314 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken"
-import {prisma} from "../db/index.js";
-import ApiError from "../utils/apiError.js";
-import {env} from "../utils/env.js"
-import { SALT_ROUNDS } from "../constants.js";
-import logger from "../utils/logger.js";
+import bcrypt from "bcrypt"
+import { OAuth2Client } from "google-auth-library"
+import { env } from "../config/env.js"
+import { prisma } from "../db/index.js"
+import ApiError from "../utils/ApiError.js"
+import { createSession, revokeAllUserSessions } from "./session.service.js"
 
-const generateAccessToken = (user) => {
+const googleClient = env.googleClientId
+    ? new OAuth2Client(env.googleClientId)
+    : null
 
-    const payload = {
-        userId: user.id,
-        role: user.role,
-        email: user.email
-    }
-    const accessToken = jwt.sign(
-        payload,
-        env.JWT_SECRET_KEY,
-        {
-            expiresIn: env.JWT_EXPIRES_IN || "1d"
-        }    
-    )
-    logger.info(`Generated access token for user ID: ${user.id} with role: ${user.role}`);
-    return accessToken;
+const basicUserSelect = {
+    id: true,
+    name: true,
+    email: true,
+    role: true,
+    isActive: true,
+    avatarUrl: true,
 }
 
-const signupService = async ({name,email,password}) => {
-    email = email.toLowerCase().trim();
-    name = name.trim();
-    logger.info("Signup service called for email: " + email);
-    const existingUser = await prisma.user.findUnique({
-        where: { email }
-    })
-
-    if(existingUser){
-        throw new ApiError(409,"User Already Exists ! Please Login");
-    }
-
-    const approved = await prisma.approvedUser.findUnique({
-        where: { email }
-    })
-
-    const role = approved ? approved.role : "USER";
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS || 10);
-
-    const user = await prisma.user.create({
-        data:{
-            name,
-            email,
-            hashedPassword,
-            role
+const currentUserSelect = {
+    ...basicUserSelect,
+    lastLoginAt: true,
+    createdAt: true,
+    studentProfile: true,
+    facultyProfile: true,
+    staffProfile: true,
+    deanOfficeHeld: {
+        select: { office: true, assignedAt: true },
+    },
+    staffBuildings: {
+        select: {
+            assignedAt: true,
+            building: {
+                select: { id: true, code: true, name: true, isActive: true },
+            },
         },
-    })
-    
-    return user;
+    },
 }
 
-
-
-const loginService = async ({email,password}) => {
-    email = email.toLowerCase().trim();
-    logger.info("Login service called for email: " + email);
-    const user = await prisma.user.findUnique({
-        where: { email }
-    })
-
-    if(!user){
-        logger.warn(`Login failed for email: ${email} - User not found`);
-
-        throw new ApiError(401,"Invalid Credentials or User Not Found !");
-    }
-
-    if(!user.isActive){
-        logger.warn(`Login failed for email: ${email} - Account is deactivated`);
-        throw new ApiError(403,"Your Account is Deactivated. Please Contact Support.");
-    }
-    logger.info("User password is: " + user.hashedPassword);
-    const currenthashpassword = await bcrypt.hash(password, SALT_ROUNDS || 10);
-    logger.info("Current hash password is: " + currenthashpassword);
-    const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
-
-    if(!passwordMatch){
-        logger.warn(`Login failed for email: ${email} - Incorrect password`);
-        throw new ApiError(401,"Password is Incorrect !");
-    }
-
-    const accessToken = generateAccessToken(user);
-
-    return {user,accessToken};
-
+function normalizeEmail(email) {
+    return email.trim().toLowerCase()
 }
 
-const getCurrentUser = async (userId) => {
+function profileDataForRole(role) {
+    if (role === "STUDENT") return { studentProfile: { create: {} } }
+    if (role === "FACULTY") return { facultyProfile: { create: {} } }
+    if (role === "STAFF") return { staffProfile: { create: {} } }
+    return {}
+}
+
+async function requireActiveApproval(email, db = prisma) {
+    const approval = await db.approvedUser.findUnique({
+        where: { email },
+        select: { initialRole: true, isActive: true },
+    })
+
+    if (!approval?.isActive) {
+        throw new ApiError(
+            403,
+            "This institutional account is not approved for registration",
+            {
+                code: "REGISTRATION_NOT_APPROVED",
+            }
+        )
+    }
+
+    return approval
+}
+
+function assertActiveUser(user) {
+    if (!user?.isActive) {
+        throw new ApiError(
+            403,
+            "This account is inactive. Contact an administrator.",
+            {
+                code: "ACCOUNT_INACTIVE",
+            }
+        )
+    }
+}
+
+export async function registerWithPassword({
+    name,
+    email,
+    password,
+    sessionContext,
+}) {
+    const normalizedEmail = normalizeEmail(email)
+    const approval = await requireActiveApproval(normalizedEmail)
+    const hashedPassword = await bcrypt.hash(password, env.BCRYPT_ROUNDS)
+
+    return prisma.$transaction(async (tx) => {
+        const existingUser = await tx.user.findUnique({
+            where: { email: normalizedEmail },
+            select: { id: true },
+        })
+        if (existingUser) {
+            throw new ApiError(
+                409,
+                "An account already exists for this email",
+                { code: "ACCOUNT_EXISTS" }
+            )
+        }
+
+        const user = await tx.user.create({
+            data: {
+                name,
+                email: normalizedEmail,
+                hashedPassword,
+                role: approval.initialRole,
+                lastLoginAt: new Date(),
+                ...profileDataForRole(approval.initialRole),
+            },
+            select: basicUserSelect,
+        })
+
+        const { token, session } = await createSession({
+            userId: user.id,
+            ...sessionContext,
+            db: tx,
+        })
+        return { user, token, expiresAt: session.expiresAt }
+    })
+}
+
+export async function loginWithPassword({ email, password, sessionContext }) {
+    const normalizedEmail = normalizeEmail(email)
+    const credential = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        select: { ...basicUserSelect, hashedPassword: true },
+    })
+
+    const passwordMatches = credential?.hashedPassword
+        ? await bcrypt.compare(password, credential.hashedPassword)
+        : false
+
+    if (!credential || !passwordMatches) {
+        throw new ApiError(401, "Invalid email or password", {
+            code: "INVALID_CREDENTIALS",
+        })
+    }
+    assertActiveUser(credential)
+
+    return prisma.$transaction(async (tx) => {
+        const user = await tx.user.update({
+            where: { id: credential.id },
+            data: { lastLoginAt: new Date() },
+            select: basicUserSelect,
+        })
+        const { token, session } = await createSession({
+            userId: user.id,
+            ...sessionContext,
+            db: tx,
+        })
+        return { user, token, expiresAt: session.expiresAt }
+    })
+}
+
+async function verifyGoogleCredential(credential) {
+    if (!googleClient || !env.googleClientId) {
+        throw new ApiError(503, "Google login is not configured", {
+            code: "GOOGLE_LOGIN_UNAVAILABLE",
+        })
+    }
+
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: env.googleClientId,
+        })
+        const payload = ticket.getPayload()
+
+        if (
+            !payload?.sub ||
+            !payload.email ||
+            payload.email_verified !== true
+        ) {
+            throw new Error("Google identity is incomplete or unverified")
+        }
+
+        return {
+            googleId: payload.sub,
+            email: normalizeEmail(payload.email),
+            name: payload.name?.trim() || payload.email.split("@")[0],
+            avatarUrl: payload.picture || null,
+        }
+    } catch (error) {
+        if (error instanceof ApiError) throw error
+        throw new ApiError(401, "Google sign-in could not be verified", {
+            code: "INVALID_GOOGLE_CREDENTIAL",
+            cause: error,
+        })
+    }
+}
+
+export async function loginWithGoogle({ credential, sessionContext }) {
+    const identity = await verifyGoogleCredential(credential)
+
+    return prisma.$transaction(async (tx) => {
+        let user = await tx.user.findUnique({
+            where: { googleId: identity.googleId },
+            select: basicUserSelect,
+        })
+
+        if (!user) {
+            const emailUser = await tx.user.findUnique({
+                where: { email: identity.email },
+                select: { ...basicUserSelect, googleId: true },
+            })
+
+            if (
+                emailUser?.googleId &&
+                emailUser.googleId !== identity.googleId
+            ) {
+                throw new ApiError(
+                    409,
+                    "This email is already linked to another Google identity",
+                    {
+                        code: "GOOGLE_IDENTITY_CONFLICT",
+                    }
+                )
+            }
+
+            if (emailUser) {
+                assertActiveUser(emailUser)
+                user = await tx.user.update({
+                    where: { id: emailUser.id },
+                    data: {
+                        googleId: identity.googleId,
+                        avatarUrl: emailUser.avatarUrl || identity.avatarUrl,
+                    },
+                    select: basicUserSelect,
+                })
+            } else {
+                const approval = await requireActiveApproval(identity.email, tx)
+                user = await tx.user.create({
+                    data: {
+                        name: identity.name,
+                        email: identity.email,
+                        googleId: identity.googleId,
+                        avatarUrl: identity.avatarUrl,
+                        role: approval.initialRole,
+                        ...profileDataForRole(approval.initialRole),
+                    },
+                    select: basicUserSelect,
+                })
+            }
+        }
+
+        assertActiveUser(user)
+        user = await tx.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+            select: basicUserSelect,
+        })
+
+        const { token, session } = await createSession({
+            userId: user.id,
+            ...sessionContext,
+            db: tx,
+        })
+        return { user, token, expiresAt: session.expiresAt }
+    })
+}
+
+export async function getCurrentUser(userId) {
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            createdAt: true,
-            updatedAt: true
+        select: currentUserSelect,
+    })
+    assertActiveUser(user)
+    return user
+}
+
+export async function replacePassword({
+    userId,
+    currentPassword,
+    newPassword,
+    sessionContext,
+}) {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, hashedPassword: true, isActive: true },
+    })
+    assertActiveUser(user)
+
+    if (user.hashedPassword) {
+        const matches = currentPassword
+            ? await bcrypt.compare(currentPassword, user.hashedPassword)
+            : false
+        if (!matches) {
+            throw new ApiError(401, "The current password is incorrect", {
+                code: "INVALID_CURRENT_PASSWORD",
+            })
         }
-    });
-
-    if(!user){
-        throw new ApiError(404,"User Not Found !");
     }
 
-    if(!user.isActive){
-        logger.warn(`User fetch failed for ID: ${userId} - Account is deactivated`);
-        throw new ApiError(403,"Your Account is Deactivated. Please Contact Support.");
-    }
-    logger.info(`User fetched successfully: ${user.email} (ID: ${user.id})`);
-    return user;
-};
+    const hashedPassword = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS)
 
-export {signupService, loginService, getCurrentUser};
+    return prisma.$transaction(async (tx) => {
+        await tx.user.update({
+            where: { id: userId },
+            data: { hashedPassword },
+        })
+        await revokeAllUserSessions(userId, tx)
+        const { token, session } = await createSession({
+            userId,
+            ...sessionContext,
+            db: tx,
+        })
+        return { token, expiresAt: session.expiresAt }
+    })
+}
