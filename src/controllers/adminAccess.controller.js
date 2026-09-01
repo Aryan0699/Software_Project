@@ -13,6 +13,7 @@ import {
 } from "../services/adminAccess.service.js"
 import ApiResponse from "../utils/ApiResponse.js"
 import asyncHandler from "../utils/asyncHandler.js"
+import { updateProfile } from "../services/profile.service.js"
 
 export const listApprovedUsers = asyncHandler(async (req, res) => {
     const result = await listApprovedUsersService(req.validatedQuery)
@@ -53,6 +54,14 @@ export const updateUserAccess = asyncHandler(async (req, res) => {
         actorUserId: req.user.id,
     })
     res.json(new ApiResponse(200, "User access updated", { user }))
+})
+
+export const updateUserProfile = asyncHandler(async (req, res) => {
+    const user = await updateProfile(
+        req.validatedParams.id,
+        req.validatedBody
+    )
+    res.json(new ApiResponse(200, "User profile updated", { user }))
 })
 
 export const getDeanOffices = asyncHandler(async (_req, res) => {

@@ -22,8 +22,8 @@ const currentUserSelect = {
     ...basicUserSelect,
     lastLoginAt: true,
     createdAt: true,
-    studentProfile: true,
-    facultyProfile: true,
+    studentProfile: { include: { department: true } },
+    facultyProfile: { include: { department: true } },
     staffProfile: true,
     deanOfficeHeld: {
         select: { office: true, assignedAt: true },

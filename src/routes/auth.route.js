@@ -9,6 +9,7 @@ import {
     logoutAll,
     register,
     setPassword,
+    updateCurrentProfile,
 } from "../controllers/auth.controller.js"
 import { requireAuth } from "../middlewares/auth.middleware.js"
 import { requireTrustedOrigin } from "../middlewares/security.middleware.js"
@@ -19,6 +20,7 @@ import {
     registerSchema,
     setPasswordSchema,
 } from "../schemas/auth.schema.js"
+import { updateProfileSchema } from "../schemas/profile.schema.js"
 
 const authRouter = Router()
 
@@ -66,6 +68,13 @@ authRouter.put(
     requireTrustedOrigin,
     validateBody(setPasswordSchema),
     setPassword
+)
+authRouter.patch(
+    "/profile",
+    requireAuth,
+    requireTrustedOrigin,
+    validateBody(updateProfileSchema),
+    updateCurrentProfile
 )
 
 export default authRouter

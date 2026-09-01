@@ -14,6 +14,7 @@ import {
     revokeAllUserSessions,
     revokeSession,
 } from "../services/session.service.js"
+import { updateProfile } from "../services/profile.service.js"
 import ApiResponse from "../utils/ApiResponse.js"
 import asyncHandler from "../utils/asyncHandler.js"
 
@@ -105,4 +106,9 @@ export const setPassword = asyncHandler(async (req, res) => {
             expiresAt: result.expiresAt,
         })
     )
+})
+
+export const updateCurrentProfile = asyncHandler(async (req, res) => {
+    const user = await updateProfile(req.user.id, req.validatedBody)
+    res.json(new ApiResponse(200, "Profile updated", { user }))
 })

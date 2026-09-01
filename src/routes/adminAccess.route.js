@@ -11,6 +11,7 @@ import {
     listUsers,
     updateApprovedUser,
     updateUserAccess,
+    updateUserProfile,
 } from "../controllers/adminAccess.controller.js"
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js"
 import { requireTrustedOrigin } from "../middlewares/security.middleware.js"
@@ -31,6 +32,7 @@ import {
     updateApprovedUserSchema,
     updateUserAccessSchema,
 } from "../schemas/adminAccess.schema.js"
+import { updateProfileSchema } from "../schemas/profile.schema.js"
 
 const adminAccessRouter = Router()
 
@@ -62,6 +64,13 @@ adminAccessRouter.patch(
     validateParams(recordIdParamsSchema),
     validateBody(updateUserAccessSchema),
     updateUserAccess
+)
+adminAccessRouter.patch(
+    "/users/:id/profile",
+    requireTrustedOrigin,
+    validateParams(recordIdParamsSchema),
+    validateBody(updateProfileSchema),
+    updateUserProfile
 )
 
 adminAccessRouter.get("/dean-offices", getDeanOffices)
