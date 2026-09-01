@@ -1,27 +1,34 @@
-import pino from "pino";
-import { NODE_ENV, LOG_LEVEL } from "../constants.js";
+import pino from "pino"
+import { env } from "../config/env.js"
 
-const isDevelopment = NODE_ENV === "development";
+const isDevelopment = env.NODE_ENV === "development"
 
-const transport_obj = isDevelopment?
-{
-  transport:
-  {
-    target:"pino-pretty",
-    options:
-    {
-      colorise: true,
-      translateTime: "yyyy-mm-dd HH:MM:ss",
-      ignore: "pid,hostname"
+const transport = isDevelopment
+    ? {
+          target: "pino-pretty",
+          options: {
+              colorize: true,
+              translateTime: "yyyy-mm-dd HH:MM:ss",
+              ignore: "pid,hostname",
+              singleLine: true,
+          },
+      }
+    : undefined
+
+const logger = pino({
+    level: env.LOG_LEVEL,
+    transport,
+    redact: {
+        paths: [
+            "req.headers.authorization",
+            "req.headers.cookie",
+            "password",
+            "currentPassword",
+            "newPassword",
+            "credential",
+        ],
+        censor: "[REDACTED]",
     },
-  },
+})
 
-}:{};
-
-const logger = pino(
-  {
-    level: LOG_LEVEL,
-    ...transport_obj
-  }
-)
-export default logger;
+export default logger
