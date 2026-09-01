@@ -1,34 +1,30 @@
-import { PrismaClient } from "../generated/prisma/client.js";
-import {NODE_ENV} from "../constants.js";
-import logger from "../utils/logger.js";
+import { PrismaClient } from "../generated/prisma/client.js"
+import { env } from "../config/env.js"
+import logger from "../utils/logger.js"
 
-const globalPrisma = globalThis // Use globalThis to store the PrismaClient instance // globalThis is a object
+const globalPrisma = globalThis
 
-// First time → create PrismaClient  
-// Next reload → reuse existing one
+// In development, we want to use a single PrismaClient instance across hot reloads to avoid exhausting database connections. In production, we create a new instance for each serverless function invocation.
 
-const prisma =  globalPrisma.prisma || new PrismaClient(
-    {
-        log: ["warn", "error"] // Log warnings and errors for better debugging
-    }
-)
-if(NODE_ENV !== "production")
-{
-    globalPrisma.prisma = prisma; //In production: // App runs once
+// If the file simply contained const prisma = new PrismaClient(), every time you saved a file, Node.js would instantiate a new PrismaClient connection pool without closing the old ones. Within 5–10 file saves, your database would crash with a PostgreSQL error:
+const prisma =
+    globalPrisma.__urasPrisma ??
+    new PrismaClient({
+        log: env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+    })
+
+if (!env.isProduction) {
+    globalPrisma.__urasPrisma = prisma
 }
 
-
-// In prisma its optional to connect to the database, it will connect lazily when you make the first query. But we want to connect eagerly and log any connection errors at startup.
 async function connectDB() {
-    try {
-        await prisma.$connect();
-        logger.info("Connected to the database successfully.");
-    } catch (error) {
-        logger.error(`Failed to connect to the database: ${error}`);
-        process.exit(1); // Exit the process with an error code
-    }
-    
+    await prisma.$connect()
+    logger.info("Database connection established")
 }
 
-export { prisma, connectDB };
+async function disconnectDB() {
+    await prisma.$disconnect()
+    logger.info("Database connection closed")
+}
 
+export { prisma, connectDB, disconnectDB }

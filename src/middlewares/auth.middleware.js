@@ -1,31 +1,43 @@
-import jwt from "jsonwebtoken"
-import ApiError  from "../utils/apiError.js"
-import {env} from "../utils/env.js"
-import logger from "../utils/logger.js";
+import { env } from "../config/env.js"
+import { expiredSessionCookieOptions } from "../config/session.js"
+import { findActiveSession } from "../services/session.service.js"
+import ApiError from "../utils/ApiError.js"
+import asyncHandler from "../utils/asyncHandler.js"
 
-const verifyJWTToken = (req,res,next) => {
-    logger.info("Verifying JWT token for incoming request");
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
-        token = req.headers.authorization.split(" ")[1];
-    } else if (req.cookies?.accessToken) {
-        token = req.cookies.accessToken;
+export const requireAuth = asyncHandler(async (req, res, next) => {
+    const token = req.cookies?.[env.SESSION_COOKIE_NAME]
+    const session = await findActiveSession(token)
+
+    if (!session) {
+        if (token)
+            res.clearCookie(
+                env.SESSION_COOKIE_NAME,
+                expiredSessionCookieOptions
+            )
+        throw new ApiError(401, "Authentication is required", {
+            code: "UNAUTHENTICATED",
+        })
     }
 
-    if (!token) {
-        return next(new ApiError(401, "Unauthorized: No token provided"));
+    req.auth = {
+        sessionId: session.id,
+        expiresAt: session.expiresAt,
     }
+    req.user = session.user
+    next()
+})
 
-    try {
-        const payload = jwt.verify(token,env.JWT_SECRET_KEY);
-        req.user = payload; // {userId, role, email}
-        logger.info(`Token verification successful for user ID: ${payload.userId}`);
-        next();
-    } catch (error) {
-        logger.warn("Token verification failed: Invalid token or expired");
-        throw new ApiError(401,"Unauthorized ! Invalid token | Token Expired");
+export function requireRole(...roles) {
+    return (req, _res, next) => {
+        if (!req.user || !roles.includes(req.user.role)) {
+            return next(
+                new ApiError(
+                    403,
+                    "You do not have permission to perform this action",
+                    { code: "FORBIDDEN" }
+                )
+            )
+        }
+        return next()
     }
-        
 }
-
-export default verifyJWTToken;
