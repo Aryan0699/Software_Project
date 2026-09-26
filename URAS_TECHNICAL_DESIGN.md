@@ -277,6 +277,8 @@ An administrator may resolve the slot, course, and one room or skip the row with
 
 Valid rows are ready without an administrative decision. A problematic row becomes ready after `RESOLVE` or `SKIP` has complete metadata.
 
+When a preview contains many systematic issues, the administrator may upload a corrected workbook as a replacement. The new workbook is parsed successfully before the earlier preview is cancelled, and the UI compares issue totals between both previews. This remains a staging action and never changes the currently published timetable.
+
 ## 10. Atomic Timetable Publication
 
 Publication uses one short, protected transaction rather than a multi-phase commit session.
@@ -343,7 +345,7 @@ The final transition:
 5. Updates the final task and request to `APPROVED`.
 6. Appends history and notifications.
 7. Finds other overlapping pending requests for the same room/date/time.
-8. Rejects them, closes their pending approval tasks, and creates history and notifications.
+8. Rejects them, closes their pending approval tasks, and creates history and notifications with a system conflict message plus the final approver's optional privacy-safe shared note.
 
 The partial PostgreSQL exclusion constraint on approved requests is the final overlap backstop.
 
@@ -372,6 +374,8 @@ Timetable publication and calendar-exception confirmation accept one decision pe
 - `CANCEL`: required reason.
 
 The preview decisions are not a separate workflow table or queue. The confirmation request carries them with the previewed booking versions. The server recomputes impact and rejects the command if any decision is missing, stale, no longer available, or conflicts with another replacement in the same command.
+
+The confirmation UI renders one card per affected event. Relocation keeps date and time while selecting a suitable available room. Rescheduling edits room, date, start minute, and end minute. Cancellation requires a reason. A summary keeps confirmation disabled until every card contains a valid decision.
 
 ### 13.3 Applied Outcomes
 
@@ -438,14 +442,14 @@ All endpoints are under `/api/v1`. Exact payload details will be defined with Zo
 | Area | Representative endpoints |
 | --- | --- |
 | Auth | `/auth/login`, `/auth/google`, `/auth/logout`, `/auth/me` |
-| Users | `/users`, `/approved-users`, `/dean-offices`, `/staff-building-assignments` |
-| Terms | `/academic-terms`, `/academic-terms/:id/set-current`, `/academic-terms/:id/close` |
-| Buildings | `/buildings`, `/buildings/:id` |
-| Rooms | `/rooms`, `/rooms/:id`, `/rooms/:id/restrictions` |
+| Users | `/admin/users`, `/admin/approved-users`, `/admin/dean-offices`, `/admin/staff-building-assignments` |
+| Terms | `/academic-calendar/terms`, `/academic-calendar/terms/:id/set-current`, `/academic-calendar/terms/:id/close` |
+| Buildings | `/facilities/buildings`, `/facilities/buildings/:id` |
+| Rooms | `/facilities/rooms`, `/facilities/rooms/:id`, `/facilities/restrictions` |
 | Slots | `/slot-systems`, `/slot-systems/:id/grid-versions`, `/grid-versions/:id/slots` |
 | Imports | `/timetable-imports`, `/timetable-imports/:id/rows`, `/timetable-imports/:id/resolutions` |
 | Publications | `/timetable-imports/:id/publication-preview`, `/timetable-imports/:id/publish`, `/timetable-imports/:id` |
-| Calendar | `/calendar-exceptions`, `/calendar-exceptions/:id/impact`, `/calendar-exceptions/:id/confirm-change` |
+| Calendar | `/academic-calendar/exceptions`, `/academic-calendar/exceptions/impact`, `/academic-calendar/exceptions/:id/deactivate` |
 | Availability | `/availability/rooms`, `/availability/rooms/:id`, `/availability/rooms/:id/timeline` |
 | Requests | `/booking-requests`, `/booking-requests/:id`, `/booking-requests/:id/cancel` |
 | Approvals | `/approvals/me`, `/booking-requests/:id/approvals/:role/decision` |

@@ -354,9 +354,11 @@ For a problematic row, an administrator may:
 
 - Accept a valid interpretation.
 - Select an existing slot.
-- Select one or more existing rooms.
+- Select one existing room.
 - Correct the interpreted mapping.
 - Skip the row with a reason.
+
+One import row always represents one physical room. An administrator who needs simultaneous multi-room occupancy will resolve or provide one row per room.
 
 Why: Real institutional spreadsheets contain naming inconsistencies that require controlled human decisions.
 
@@ -387,6 +389,14 @@ Why: Administrators need recoverable, observable outcomes rather than uncertain 
 Rows with the same normalized course and slot may contribute multiple simultaneous room allocations to the same academic room-use group.
 
 Any faculty names found across those rows will be preserved and associated with that group where they can be resolved.
+
+### IMPORT-13 Replace Upload
+
+From a preview with many unresolved rows, an administrator may upload a corrected workbook as a replacement instead of resolving every row manually.
+
+The replacement is parsed and previewed before the earlier staging batch is cancelled. A failed replacement upload leaves the earlier preview available. The interface will show the new issue totals beside the earlier totals so the administrator can confirm that the corrected workbook reduced the work.
+
+Why: Correcting a systematic source-file problem once is safer and faster than repeating the same manual decision across many rows.
 
 Why: Phase 1 manages occupancy and does not require academic section reconstruction.
 
@@ -690,6 +700,8 @@ Reviewers will be able to see overlapping pending requests and their submission 
 
 Once one request is finally approved, other pending requests that overlap the same room and time will be automatically rejected with a conflict reason and notifications.
 
+Every automatically rejected requester will receive a clear system-generated message identifying that the room was allocated to another request. The final approver may add one shared note for all requests rejected by that approval. The interface will preview how many requesters will receive the shared note, and the note must not include another requester's private details.
+
 Why: Pending requests may overlap, but only one can become an approved occupancy.
 
 ### APPROVAL-08 No Phase 1 Bypass
@@ -759,6 +771,18 @@ Why: An administrative conflict resolution changes an approved institutional dec
 After successful confirmation, each affected requester will receive an in-app notification explaining whether the event was relocated, rescheduled, or cancelled and why.
 
 Why: The requester should receive the final actionable outcome, not an unresolved conflict alert.
+
+### CONFLICT-10 Inline Editing Controls
+
+Each impacted event will show its current room, date, time, conflict source, and three explicit resolution choices:
+
+- Relocate: keep the date and time and choose from suitable rooms that are available in the resulting schedule.
+- Reschedule: edit the date, start time, end time, and room, then validate the complete replacement.
+- Cancel: enter a required reason.
+
+The administrator can revise any choice before final confirmation. A summary will show unresolved conflicts and the selected outcomes, and confirmation remains disabled until every event has one valid decision.
+
+Why: Conflict resolution should happen in context without making administrators translate an error into a separate room or booking workflow.
 
 ## 15. Notification Features
 
@@ -1061,7 +1085,11 @@ Two deans approve and the third rejects with a reason. The complete request beco
 
 ### Scenario E: Competing Pending Requests
 
-Two pending requests overlap the same room and time. Both display warnings. The request that intentionally completes final approval first reserves the room. The other request is automatically rejected with a conflict reason.
+Two pending requests overlap the same room and time. Both display warnings. The request that intentionally completes final approval first reserves the room. The other request is automatically rejected with a conflict reason and an in-app message. If the approver supplied a shared note, every request rejected by that approval receives the same note without seeing private details from the winning request.
+
+### Scenario E2: Replace a Noisy Import
+
+An uploaded workbook has many unresolved room values caused by a source-file naming problem. The administrator corrects the workbook and chooses Replace upload. The corrected workbook is previewed with lower issue counts, the earlier preview is retained as cancelled import history, and no row from either preview changes the published timetable until explicit publication.
 
 ### Scenario F: Timetable Conflict Resolved During Publication
 

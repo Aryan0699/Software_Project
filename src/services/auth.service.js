@@ -87,10 +87,10 @@ export async function registerWithPassword({
     sessionContext,
 }) {
     const normalizedEmail = normalizeEmail(email)
-    const approval = await requireActiveApproval(normalizedEmail)
     const hashedPassword = await bcrypt.hash(password, env.BCRYPT_ROUNDS)
 
     return prisma.$transaction(async (tx) => {
+        const approval = await requireActiveApproval(normalizedEmail, tx)
         const existingUser = await tx.user.findUnique({
             where: { email: normalizedEmail },
             select: { id: true },
