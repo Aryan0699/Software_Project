@@ -65,9 +65,7 @@ export const listBuildings = asyncHandler(async (req, res) => {
 
 export const createBuilding = asyncHandler(async (req, res) => {
     const building = await createBuildingService(req.validatedBody)
-    res.status(201).json(
-        new ApiResponse(201, "Building created", { building })
-    )
+    res.status(201).json(new ApiResponse(201, "Building created", { building }))
 })
 
 export const updateBuilding = asyncHandler(async (req, res) => {
@@ -120,4 +118,3 @@ export const cancelRestriction = asyncHandler(async (req, res) => {
         new ApiResponse(200, "Room restriction cancelled", { restriction })
     )
 })
-

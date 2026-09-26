@@ -31,7 +31,10 @@ const isoDate = z
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must use YYYY-MM-DD")
     .refine((value) => {
         const date = new Date(`${value}T00:00:00.000Z`)
-        return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
+        return (
+            !Number.isNaN(date.getTime()) &&
+            date.toISOString().startsWith(value)
+        )
     }, "Date is invalid")
 
 export const recordIdParamsSchema = z.object({ id: recordId }).strict()
@@ -47,7 +50,11 @@ export const listReferenceQuerySchema = z
 export const createReferenceSchema = z.object({ code, name }).strict()
 
 export const updateReferenceSchema = z
-    .object({ code: code.optional(), name: name.optional(), isActive: z.boolean().optional() })
+    .object({
+        code: code.optional(),
+        name: name.optional(),
+        isActive: z.boolean().optional(),
+    })
     .strict()
     .refine((value) => Object.keys(value).length > 0, {
         message: "At least one field must be provided",
@@ -77,10 +84,7 @@ export const updateBuildingSchema = z
         message: "At least one field must be provided",
     })
 
-const features = z
-    .array(z.string().trim().min(1).max(60))
-    .max(30)
-    .optional()
+const features = z.array(z.string().trim().min(1).max(60)).max(30).optional()
 
 export const listRoomsQuerySchema = z
     .object({
@@ -100,7 +104,9 @@ export const createRoomSchema = z
         roomTypeId: z.union([recordId, z.null()]).optional(),
         roomNumber: z.string().trim().min(1).max(40),
         displayName: optionalText(120),
-        capacity: z.union([z.number().int().min(1).max(100_000), z.null()]).optional(),
+        capacity: z
+            .union([z.number().int().min(1).max(100_000), z.null()])
+            .optional(),
         isAccessible: z.boolean().optional(),
         features,
         notes: optionalText(2_000),
@@ -113,7 +119,9 @@ export const updateRoomSchema = z
         roomTypeId: z.union([recordId, z.null()]).optional(),
         roomNumber: z.string().trim().min(1).max(40).optional(),
         displayName: optionalText(120),
-        capacity: z.union([z.number().int().min(1).max(100_000), z.null()]).optional(),
+        capacity: z
+            .union([z.number().int().min(1).max(100_000), z.null()])
+            .optional(),
         isAccessible: z.boolean().optional(),
         features,
         notes: optionalText(2_000),
@@ -145,7 +153,8 @@ export const listRestrictionsQuerySchema = z
     })
     .strict()
     .refine(
-        (value) => !value.dateFrom || !value.dateTo || value.dateFrom <= value.dateTo,
+        (value) =>
+            !value.dateFrom || !value.dateTo || value.dateFrom <= value.dateTo,
         { path: ["dateTo"], message: "End date must not be before start date" }
     )
 
@@ -162,4 +171,3 @@ export const createRestrictionSchema = z
         path: ["endMinute"],
         message: "End time must be after start time",
     })
-

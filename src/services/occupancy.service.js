@@ -26,13 +26,10 @@ async function resolveAcademicDay(db, academicTermId, date) {
     return exception?.targetDayOfWeek || dayOfWeek(date)
 }
 
-export async function findIntervalConflicts(db, {
-    roomId,
-    date,
-    startMinute,
-    endMinute,
-    includeRestrictions = true,
-}) {
+export async function findIntervalConflicts(
+    db,
+    { roomId, date, startMinute, endMinute, includeRestrictions = true }
+) {
     const academicTerm = await db.academicTerm.findFirst({
         where: {
             status: "CURRENT",
@@ -44,11 +41,7 @@ export async function findIntervalConflicts(db, {
 
     let academic = []
     if (academicTerm) {
-        const effectiveDay = await resolveAcademicDay(
-            db,
-            academicTerm.id,
-            date
-        )
+        const effectiveDay = await resolveAcademicDay(db, academicTerm.id, date)
         if (effectiveDay) {
             academic = await db.roomSlotOccupancy.findMany({
                 where: {
@@ -146,8 +139,8 @@ export async function findRoomDeactivationBlockers(db, roomIds) {
         select: { id: true, termCode: true, startDate: true, endDate: true },
     })
 
-    const [bookings, restrictions, occupancies, exceptions] =
-        await Promise.all([
+    const [bookings, restrictions, occupancies, exceptions] = await Promise.all(
+        [
             db.bookingRequest.findMany({
                 where: {
                     roomId: { in: roomIds },
@@ -190,10 +183,7 @@ export async function findRoomDeactivationBlockers(db, roomIds) {
                     endMinute: true,
                     reason: true,
                 },
-                orderBy: [
-                    { restrictionDate: "asc" },
-                    { startMinute: "asc" },
-                ],
+                orderBy: [{ restrictionDate: "asc" }, { startMinute: "asc" }],
             }),
             term
                 ? db.roomSlotOccupancy.findMany({
@@ -229,7 +219,8 @@ export async function findRoomDeactivationBlockers(db, roomIds) {
                       },
                   })
                 : Promise.resolve([]),
-        ])
+        ]
+    )
 
     const blockers = new Map(roomIds.map((roomId) => [roomId, []]))
     for (const booking of bookings) {
@@ -265,9 +256,13 @@ export async function findRoomDeactivationBlockers(db, roomIds) {
                 (item) => item.startDate <= date && item.endDate >= date
             )
         const academicRoomsFound = new Set()
-        let date = term.startDate > now.dateValue ? term.startDate : now.dateValue
+        let date =
+            term.startDate > now.dateValue ? term.startDate : now.dateValue
 
-        while (date <= term.endDate && academicRoomsFound.size < roomIds.length) {
+        while (
+            date <= term.endDate &&
+            academicRoomsFound.size < roomIds.length
+        ) {
             const exception = exceptionFor(date)
             const effectiveDay =
                 exception?.exceptionType === "NO_CLASSES"

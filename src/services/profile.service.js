@@ -93,7 +93,12 @@ export function updateProfile(userId, changes) {
                 where: { userId },
                 update: {
                     ...(changes.rollNumber !== undefined
-                        ? { rollNumber: cleanNullable(changes.rollNumber)?.toUpperCase() || null }
+                        ? {
+                              rollNumber:
+                                  cleanNullable(
+                                      changes.rollNumber
+                                  )?.toUpperCase() || null,
+                          }
                         : {}),
                     ...(changes.batchYear !== undefined
                         ? { batchYear: changes.batchYear }
@@ -105,7 +110,8 @@ export function updateProfile(userId, changes) {
                 create: {
                     userId,
                     rollNumber:
-                        cleanNullable(changes.rollNumber)?.toUpperCase() || null,
+                        cleanNullable(changes.rollNumber)?.toUpperCase() ||
+                        null,
                     batchYear: changes.batchYear,
                     departmentId: changes.departmentId,
                 },
@@ -148,4 +154,3 @@ export function updateProfile(userId, changes) {
         })
     })
 }
-

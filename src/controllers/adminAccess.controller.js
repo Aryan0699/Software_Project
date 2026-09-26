@@ -57,10 +57,7 @@ export const updateUserAccess = asyncHandler(async (req, res) => {
 })
 
 export const updateUserProfile = asyncHandler(async (req, res) => {
-    const user = await updateProfile(
-        req.validatedParams.id,
-        req.validatedBody
-    )
+    const user = await updateProfile(req.validatedParams.id, req.validatedBody)
     res.json(new ApiResponse(200, "User profile updated", { user }))
 })
 

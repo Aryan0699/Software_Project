@@ -105,11 +105,7 @@ facilitiesRouter.patch(
     updateBuilding
 )
 
-facilitiesRouter.get(
-    "/rooms",
-    validateQuery(listRoomsQuerySchema),
-    listRooms
-)
+facilitiesRouter.get("/rooms", validateQuery(listRoomsQuerySchema), listRooms)
 facilitiesRouter.post(
     "/rooms",
     requireRole("ADMIN"),
@@ -148,4 +144,3 @@ facilitiesRouter.patch(
 )
 
 export default facilitiesRouter
-

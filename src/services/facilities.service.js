@@ -581,10 +581,7 @@ async function assertRestrictionScope(db, user, roomId) {
             code: "ROOM_NOT_FOUND",
         })
     }
-    if (
-        user.role !== "ADMIN" &&
-        !room.building.staffAssignments.length
-    ) {
+    if (user.role !== "ADMIN" && !room.building.staffAssignments.length) {
         throw new ApiError(
             403,
             "You can manage restrictions only in assigned buildings",
@@ -597,9 +594,7 @@ async function assertRestrictionScope(db, user, roomId) {
 export async function listRestrictions(query, user) {
     const where = {
         ...(query.roomId ? { roomId: query.roomId } : {}),
-        ...(query.buildingId
-            ? { room: { buildingId: query.buildingId } }
-            : {}),
+        ...(query.buildingId ? { room: { buildingId: query.buildingId } } : {}),
         ...(query.status ? { status: query.status } : {}),
         ...(query.dateFrom || query.dateTo
             ? {
@@ -632,10 +627,7 @@ export async function listRestrictions(query, user) {
         prisma.roomRestriction.findMany({
             where,
             select: restrictionSelect,
-            orderBy: [
-                { restrictionDate: "desc" },
-                { startMinute: "asc" },
-            ],
+            orderBy: [{ restrictionDate: "desc" }, { startMinute: "asc" }],
             skip: pageOffset(query.page, query.pageSize),
             take: query.pageSize,
         }),
