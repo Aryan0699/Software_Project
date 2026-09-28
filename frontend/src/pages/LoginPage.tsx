@@ -11,6 +11,32 @@ import { PASSWORD_MIN_LENGTH, passwordIssues } from "../lib/password"
 
 type Mode = "login" | "register"
 
+const demoAccounts = [
+  {
+    role: "Administrator",
+    email: "admin@iitj.ac.in",
+    password: "admin@iitj123",
+  },
+  {
+    role: "Faculty",
+    email: "faculty@iitj.ac.in",
+    password: "faculty1",
+  },
+  {
+    role: "Student",
+    email: "student@iitj.ac.in",
+    password: "student1",
+  },
+  {
+    role: "Building staff",
+    email: "staff_lhc@iitj.ac.in",
+    password: "staff_lhc1",
+  },
+] as const
+
+const showDemoAccounts =
+  import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_ACCOUNTS === "true"
+
 export function LoginPage() {
   const { user, loading: sessionLoading, login, register, loginWithGoogle } = useAuth()
   const [mode, setMode] = useState<Mode>("login")
@@ -56,6 +82,13 @@ export function LoginPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const fillDemoAccount = (emailAddress: string, accountPassword: string) => {
+    setMode("login")
+    setEmail(emailAddress)
+    setPassword(accountPassword)
+    setError(null)
   }
 
   if (sessionLoading) {
@@ -175,6 +208,39 @@ export function LoginPage() {
                 {mode === "login" ? "Sign in" : "Create account"}
               </button>
             </form>
+
+            {mode === "login" && showDemoAccounts ? (
+              <section className="mt-6 rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-3">
+                  <p className="text-sm font-semibold text-slate-800">Demo accounts</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Select an account to fill in the sign-in form.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {demoAccounts.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => fillDemoAccount(account.email, account.password)}
+                      className="rounded-md border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-brand-500 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Use ${account.role} demo account`}
+                    >
+                      <span className="block text-xs font-semibold text-slate-800">
+                        {account.role}
+                      </span>
+                      <span className="mt-1 block truncate text-[11px] text-slate-500">
+                        {account.email}
+                      </span>
+                      <span className="mt-0.5 block truncate font-mono text-[11px] text-slate-500">
+                        {account.password}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
               <span className="h-px flex-1 bg-slate-200" />

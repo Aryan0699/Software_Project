@@ -29,14 +29,14 @@ The non-legacy directories of `Software-engineering-project` remain a behavior a
 
 ### 1.2 Technology Direction
 
-| Layer | Direction |
-| --- | --- |
-| Web | React, TypeScript, Vite, React Router, TanStack Query, React Hook Form, Zod, existing component conventions. |
-| API | Node.js, modern ESM JavaScript, Express 5, Zod request validation, JSDoc contracts, ESLint, and Pino structured logging. |
-| Data | PostgreSQL and Prisma. |
+| Layer          | Direction                                                                                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web            | React, TypeScript, Vite, React Router, TanStack Query, React Hook Form, Zod, existing component conventions.                                                     |
+| API            | Node.js, modern ESM JavaScript, Express 5, Zod request validation, JSDoc contracts, ESLint, and Pino structured logging.                                         |
+| Data           | PostgreSQL and Prisma.                                                                                                                                           |
 | Authentication | Institution-approved accounts with both password and Google login issuing the same opaque, revocable database-backed session cookie. No URAS-issued JWT session. |
-| Uploads | Size-limited `.xlsx` upload parsed through an isolated spreadsheet adapter. |
-| Exports | Streamed CSV generated from authorized filtered queries. |
+| Uploads        | Size-limited `.xlsx` upload parsed through an isolated spreadsheet adapter.                                                                                      |
+| Exports        | Streamed CSV generated from authorized filtered queries.                                                                                                         |
 
 The API will remain JavaScript. Runtime boundaries use Zod, service inputs and outputs use JSDoc types, and strict ESLint rules prevent implicit globals and unsafe patterns. The React frontend remains TypeScript because its existing type-safe component and API patterns are useful and already established.
 
@@ -122,21 +122,21 @@ Controllers validate and translate HTTP. They do not contain business rules. Pri
 
 ## 4. Backend Module Responsibilities
 
-| Module | Owns |
-| --- | --- |
-| `auth` | Login, Google callback, sessions, logout, current identity. |
-| `users` | Approved-user allowlist, activation, base roles, profiles, dean offices, staff-building assignments. |
-| `academic-terms` | Planned/current/closed lifecycle and the one-current-term rule. |
-| `buildings` | Building directory and active state. |
-| `rooms` | Rooms, room types, operational state, restrictions, suitability filters. |
-| `slot-systems` | Dynamic systems, draft grid versions, slots, occurrences, validation, clone/discard. |
-| `timetable-imports` | File validation, parsing, normalization, staging, row resolution, publication revisions, atomic replacement, and projection rebuild. |
-| `calendar-exceptions` | No-class and follow-day rules and impact preview. |
-| `availability` | Combined occupancy decisions, pending warnings, room search, timeline, suggestions. |
-| `booking-requests` | Request creation, cancellation, requester lists, booking history. |
-| `approvals` | Faculty decision, three-dean decisions, final approval, competing-request rejection. |
-| `notifications` | In-app creation, listing, unread count, read state. |
-| `dashboards` | Role-specific summaries assembled from module-owned queries. |
+| Module                | Owns                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `auth`                | Login, Google callback, sessions, logout, current identity.                                                                          |
+| `users`               | Approved-user allowlist, activation, base roles, profiles, dean offices, staff-building assignments.                                 |
+| `academic-terms`      | Planned/current/closed lifecycle and the one-current-term rule.                                                                      |
+| `buildings`           | Building directory and active state.                                                                                                 |
+| `rooms`               | Rooms, room types, operational state, restrictions, suitability filters.                                                             |
+| `slot-systems`        | Dynamic systems, draft grid versions, slots, occurrences, validation, clone/discard.                                                 |
+| `timetable-imports`   | File validation, parsing, normalization, staging, row resolution, publication revisions, atomic replacement, and projection rebuild. |
+| `calendar-exceptions` | No-class and follow-day rules and impact preview.                                                                                    |
+| `availability`        | Combined occupancy decisions, pending warnings, room search, timeline, suggestions.                                                  |
+| `booking-requests`    | Request creation, cancellation, requester lists, booking history.                                                                    |
+| `approvals`           | Faculty decision, three-dean decisions, final approval, competing-request rejection.                                                 |
+| `notifications`       | In-app creation, listing, unread count, read state.                                                                                  |
+| `dashboards`          | Role-specific summaries assembled from module-owned queries.                                                                         |
 
 Modules may read another module's public query service. They must not update another module's tables directly except inside an explicitly documented cross-module transaction.
 
@@ -158,16 +158,16 @@ The API must not place role authorization solely in frontend route guards.
 
 ### 5.2 Authorization Matrix
 
-| Capability | Student | Faculty | Dean office holder | Staff | Admin |
-| --- | --- | --- | --- | --- | --- |
-| Check availability | Yes | Yes | Yes | Yes | Yes |
-| Create event request | Own | Own | Own as faculty | No unless separately faculty | Optional administrative view only |
-| Faculty verification | No | Assigned requests | If assigned as faculty | No | No bypass |
-| Dean decision | No | Only if office holder | Assigned office tasks | No | No bypass |
-| View booking history | Own | Own and assigned student requests | All booking history | Assigned buildings | All |
-| Resolve timetable/calendar event conflicts | No | No | View history | View affected room schedules | All |
-| Manage room restrictions | No | No | View | Assigned buildings | All buildings |
-| Manage terms, grids, imports | No | No | View where useful | View operational results | All |
+| Capability                                 | Student | Faculty                           | Dean office holder     | Staff                        | Admin                             |
+| ------------------------------------------ | ------- | --------------------------------- | ---------------------- | ---------------------------- | --------------------------------- |
+| Check availability                         | Yes     | Yes                               | Yes                    | Yes                          | Yes                               |
+| Create event request                       | Own     | Own                               | Own as faculty         | No unless separately faculty | Optional administrative view only |
+| Faculty verification                       | No      | Assigned requests                 | If assigned as faculty | No                           | No bypass                         |
+| Dean decision                              | No      | Only if office holder             | Assigned office tasks  | No                           | No bypass                         |
+| View booking history                       | Own     | Own and assigned student requests | All booking history    | Assigned buildings           | All                               |
+| Resolve timetable/calendar event conflicts | No      | No                                | View history           | View affected room schedules | All                               |
+| Manage room restrictions                   | No      | No                                | View                   | Assigned buildings           | All buildings                     |
+| Manage terms, grids, imports               | No      | No                                | View where useful      | View operational results     | All                               |
 
 Dean authority is evaluated from `DeanOfficeAssignment`, not from a `DEAN` base-role enum.
 
@@ -211,20 +211,20 @@ Pending warnings are computed separately and never participate in the occupied b
 
 ```json
 {
-  "roomId": "room_id",
-  "date": "2026-10-24",
-  "startMinute": 600,
-  "endMinute": 660,
-  "isAvailable": false,
-  "blockingReasons": [
-    {
-      "source": "ACADEMIC_TIMETABLE",
-      "startMinute": 570,
-      "endMinute": 620,
-      "label": "CSL2020"
-    }
-  ],
-  "pendingWarningCount": 2
+    "roomId": "room_id",
+    "date": "2026-10-24",
+    "startMinute": 600,
+    "endMinute": 660,
+    "isAvailable": false,
+    "blockingReasons": [
+        {
+            "source": "ACADEMIC_TIMETABLE",
+            "startMinute": 570,
+            "endMinute": 620,
+            "label": "CSL2020"
+        }
+    ],
+    "pendingWarningCount": 2
 }
 ```
 
@@ -236,11 +236,13 @@ Ordinary users see that another event exists without receiving another requester
 stateDiagram-v2
   [*] --> DRAFT
   DRAFT --> DISCARDED: admin discards
-  DRAFT --> LOCKED: successful timetable publication
+  DRAFT --> LOCKED: initial activation or successful timetable publication
   LOCKED --> DRAFT: clone as next version
 ```
 
 Only `DRAFT` rows and their child slots/occurrences are mutable. Editing a live grid means cloning it, editing the clone, uploading a replacement timetable against it, and publishing both together.
+
+The initial grid may be locked directly only when the slot system has no earlier locked grid and no timetable import history. The service rejects empty grids, slots without occurrences, and overlapping occurrences before initial activation. Every later grid version is locked only as part of successful replacement timetable publication.
 
 The current published batch and its grid remain live throughout preview and resolution.
 
@@ -345,7 +347,10 @@ The final transition:
 5. Updates the final task and request to `APPROVED`.
 6. Appends history and notifications.
 7. Finds other overlapping pending requests for the same room/date/time.
-8. Rejects them, closes their pending approval tasks, and creates history and notifications with a system conflict message plus the final approver's optional privacy-safe shared note.
+8. Validates either the pre-filled common rejection message or one message for every recomputed competing request. If the competing set changed since preview, it returns a stale-preview conflict instead of silently omitting a recipient.
+9. Rejects the competing requests, closes their pending approval tasks, and creates history and notifications with the validated privacy-safe message for each recipient.
+
+The approval UI defaults to common-message mode. Switching to individual mode copies that message into each request field and progressively reveals those fields. Message text sent to one requester must not expose identifying details from another request.
 
 The partial PostgreSQL exclusion constraint on approved requests is the final overlap backstop.
 
@@ -439,23 +444,23 @@ History supports last 7 days, last 30 days, custom dates, room, building, actor,
 
 All endpoints are under `/api/v1`. Exact payload details will be defined with Zod beside each module.
 
-| Area | Representative endpoints |
-| --- | --- |
-| Auth | `/auth/login`, `/auth/google`, `/auth/logout`, `/auth/me` |
-| Users | `/admin/users`, `/admin/approved-users`, `/admin/dean-offices`, `/admin/staff-building-assignments` |
-| Terms | `/academic-calendar/terms`, `/academic-calendar/terms/:id/set-current`, `/academic-calendar/terms/:id/close` |
-| Buildings | `/facilities/buildings`, `/facilities/buildings/:id` |
-| Rooms | `/facilities/rooms`, `/facilities/rooms/:id`, `/facilities/restrictions` |
-| Slots | `/slot-systems`, `/slot-systems/:id/grid-versions`, `/grid-versions/:id/slots` |
-| Imports | `/timetable-imports`, `/timetable-imports/:id/rows`, `/timetable-imports/:id/resolutions` |
-| Publications | `/timetable-imports/:id/publication-preview`, `/timetable-imports/:id/publish`, `/timetable-imports/:id` |
-| Calendar | `/academic-calendar/exceptions`, `/academic-calendar/exceptions/impact`, `/academic-calendar/exceptions/:id/deactivate` |
-| Availability | `/availability/rooms`, `/availability/rooms/:id`, `/availability/rooms/:id/timeline` |
-| Requests | `/booking-requests`, `/booking-requests/:id`, `/booking-requests/:id/cancel` |
-| Approvals | `/approvals/me`, `/booking-requests/:id/approvals/:role/decision` |
-| Notifications | `/notifications`, `/notifications/unread-count`, `/notifications/:id/read` |
-| History | `/booking-history`, `/booking-history/export` |
-| Dashboards | `/dashboard` |
+| Area          | Representative endpoints                                                                                                |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Auth          | `/auth/login`, `/auth/google`, `/auth/logout`, `/auth/me`                                                               |
+| Users         | `/admin/users`, `/admin/approved-users`, `/admin/dean-offices`, `/admin/staff-building-assignments`                     |
+| Terms         | `/academic-calendar/terms`, `/academic-calendar/terms/:id/set-current`, `/academic-calendar/terms/:id/close`            |
+| Buildings     | `/facilities/buildings`, `/facilities/buildings/:id`                                                                    |
+| Rooms         | `/facilities/rooms`, `/facilities/rooms/:id`, `/facilities/restrictions`                                                |
+| Slots         | `/slot-systems`, `/slot-systems/:id/grid-versions`, `/slot-systems/:systemId/grid-versions/:gridId/slots`               |
+| Imports       | `/timetable-imports`, `/timetable-imports/:id/rows`, `/timetable-imports/:id/resolutions`                               |
+| Publications  | `/timetable-imports/:id/publication-preview`, `/timetable-imports/:id/publish`, `/timetable-imports/:id`                |
+| Calendar      | `/academic-calendar/exceptions`, `/academic-calendar/exceptions/impact`, `/academic-calendar/exceptions/:id/deactivate` |
+| Availability  | `/availability/rooms`, `/availability/rooms/:id`, `/availability/rooms/:id/timeline`                                    |
+| Requests      | `/booking-requests`, `/booking-requests/:id`, `/booking-requests/:id/cancel`                                            |
+| Approvals     | `/approvals/me`, `/booking-requests/:id/approvals/:role/decision`                                                       |
+| Notifications | `/notifications`, `/notifications/unread-count`, `/notifications/:id/read`                                              |
+| History       | `/booking-history`, `/booking-history/export`                                                                           |
+| Dashboards    | `/dashboard`                                                                                                            |
 
 Commands that may be retried accept an idempotency key or enforce idempotency from current state and unique constraints.
 
@@ -467,12 +472,12 @@ Errors contain:
 
 ```json
 {
-  "error": {
-    "code": "ROOM_NO_LONGER_AVAILABLE",
-    "message": "The room was approved for another request.",
-    "details": {},
-    "correlationId": "request-correlation-id"
-  }
+    "error": {
+        "code": "ROOM_NO_LONGER_AVAILABLE",
+        "message": "The room was approved for another request.",
+        "details": {},
+        "correlationId": "request-correlation-id"
+    }
 }
 ```
 

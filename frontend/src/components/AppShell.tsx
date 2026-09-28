@@ -6,6 +6,7 @@ import {
     LogOut,
     Menu,
     ShieldCheck,
+    Shapes,
     Warehouse,
     UserRound,
     X,
@@ -37,6 +38,12 @@ function Navigation({ close }: { close?: () => void }) {
                       to: "/admin/calendar",
                       label: "Academic calendar",
                       icon: CalendarDays,
+                      end: false,
+                  },
+                  {
+                      to: "/admin/slot-systems",
+                      label: "Slot systems",
+                      icon: Shapes,
                       end: false,
                   },
               ]

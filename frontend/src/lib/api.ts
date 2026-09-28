@@ -276,7 +276,10 @@ const API_URL = (
     import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"
 ).replace(/\/$/, "")
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(
+    path: string,
+    init: RequestInit = {}
+): Promise<T> {
     const response = await fetch(`${API_URL}${path}`, {
         ...init,
         credentials: "include",
@@ -304,7 +307,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     return (payload as ApiEnvelope<T>).data
 }
 
-function queryString(
+export function queryString(
     values: Record<string, string | number | boolean | undefined>
 ) {
     const query = new URLSearchParams()

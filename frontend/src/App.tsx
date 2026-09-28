@@ -9,6 +9,7 @@ import { AcademicCalendarPage } from "./pages/AcademicCalendarPage"
 import { DashboardPage } from "./pages/DashboardPage"
 import { FacilitiesPage } from "./pages/FacilitiesPage"
 import { LoginPage } from "./pages/LoginPage"
+import { SlotSystemsPage } from "./pages/SlotSystemsPage"
 
 function ProtectedRoutes() {
     const { user, loading } = useAuth()
@@ -68,6 +69,14 @@ function App() {
                         element={
                             <AdminOnly>
                                 <AcademicCalendarPage />
+                            </AdminOnly>
+                        }
+                    />
+                    <Route
+                        path="admin/slot-systems"
+                        element={
+                            <AdminOnly>
+                                <SlotSystemsPage />
                             </AdminOnly>
                         }
                     />

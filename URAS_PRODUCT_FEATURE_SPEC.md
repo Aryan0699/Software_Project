@@ -6,7 +6,6 @@ This document defines the confirmed product functionality for the greenfield red
 
 It describes what the product must provide, who it serves, the rules it must enforce, and why each capability is required. It intentionally does not prescribe database tables, API shapes, programming languages, frameworks, or internal implementation techniques.
 
-
 ## 1. Product Objective
 
 URAS will provide one reliable place for the institution to:
@@ -233,6 +232,8 @@ Why: Slot identity is meaningful only within its slot system.
 
 Administrators will be able to create and maintain slot systems and their slot grids through the dashboard, including when no grid exists.
 
+The editor presents slots as a selectable palette and weekly day/time cells. Selecting a slot and clicking a cell assigns or removes that weekly occurrence, while custom time rows remain available for non-standard teaching hours.
+
 Why: Initial configuration must not depend solely on developer-run seed scripts.
 
 ### SLOT-03 Weekly Slot Occurrences
@@ -260,6 +261,8 @@ Why: Stable normalization reduces repetitive work while preserving safety for un
 ### SLOT-06 Published Grid Protection
 
 The slot grid used by the current published timetable will not be edited destructively in place.
+
+For initial setup, when a slot system has no active grid and has never been used by a timetable import, an administrator may activate a complete, overlap-free first grid directly. Activation makes that grid read-only.
 
 Why: An incomplete slot edit must not alter live room availability.
 
@@ -700,7 +703,7 @@ Reviewers will be able to see overlapping pending requests and their submission 
 
 Once one request is finally approved, other pending requests that overlap the same room and time will be automatically rejected with a conflict reason and notifications.
 
-Every automatically rejected requester will receive a clear system-generated message identifying that the room was allocated to another request. The final approver may add one shared note for all requests rejected by that approval. The interface will preview how many requesters will receive the shared note, and the note must not include another requester's private details.
+Every automatically rejected requester will receive a clear message identifying that the room was allocated to another request. The approval dialog defaults to one pre-filled, editable message for every competing request and previews how many requesters will receive it. The final approver may switch to individual messages; each individual field starts with the common message so no recipient can be missed. The server requires one privacy-safe message per rejected request and recomputes the competing set at confirmation so a stale dialog cannot leave a requester unnotified. Recipients see only their own message and no private details from the winning or other requests.
 
 Why: Pending requests may overlap, but only one can become an approved occupancy.
 
@@ -1085,7 +1088,7 @@ Two deans approve and the third rejects with a reason. The complete request beco
 
 ### Scenario E: Competing Pending Requests
 
-Two pending requests overlap the same room and time. Both display warnings. The request that intentionally completes final approval first reserves the room. The other request is automatically rejected with a conflict reason and an in-app message. If the approver supplied a shared note, every request rejected by that approval receives the same note without seeing private details from the winning request.
+Two pending requests overlap the same room and time. Both display warnings. The request that intentionally completes final approval first reserves the room. The approval dialog shows a pre-filled common rejection message and the number of affected requests. The approver keeps that message or switches to pre-filled per-request messages. Final approval reserves the room, rejects the competing requests, and sends each requester only their own privacy-safe message.
 
 ### Scenario E2: Replace a Noisy Import
 

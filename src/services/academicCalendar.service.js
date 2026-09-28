@@ -1,6 +1,7 @@
 import { prisma } from "../db/index.js"
 import ApiError from "../utils/ApiError.js"
 import { dayOfWeek, formatDateOnly, parseDateOnly } from "../utils/dateTime.js"
+import { pagination, pageOffset } from "../utils/pagination.js"
 import { acquireOccupancyLock } from "./occupancy.service.js"
 
 const termSelect = {
@@ -45,19 +46,6 @@ const exceptionSelect = {
     },
     createdBy: { select: { id: true, name: true, email: true } },
     updatedBy: { select: { id: true, name: true, email: true } },
-}
-
-function pagination(page, pageSize, total) {
-    return {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
-    }
-}
-
-function pageOffset(page, pageSize) {
-    return (page - 1) * pageSize
 }
 
 function candidateToStored(candidate) {

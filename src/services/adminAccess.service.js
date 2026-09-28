@@ -1,5 +1,6 @@
 import { prisma } from "../db/index.js"
 import ApiError from "../utils/ApiError.js"
+import { pagination, pageOffset } from "../utils/pagination.js"
 
 const DEAN_OFFICES = ["DOSA", "ADOSA", "DOAA"]
 
@@ -80,19 +81,6 @@ const staffAssignmentSelect = {
     assignedBy: {
         select: { id: true, name: true, email: true },
     },
-}
-
-function pagination(page, pageSize, total) {
-    return {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
-    }
-}
-
-function pageOffset(page, pageSize) {
-    return (page - 1) * pageSize
 }
 
 export async function listApprovedUsers({

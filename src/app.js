@@ -14,6 +14,7 @@ import academicCalendarRouter from "./routes/academicCalendar.route.js"
 import authRouter from "./routes/auth.route.js"
 import facilitiesRouter from "./routes/facilities.route.js"
 import healthRouter from "./routes/health.route.js"
+import slotSystemsRouter from "./routes/slotSystems.route.js"
 import ApiResponse from "./utils/ApiResponse.js"
 import logger from "./utils/logger.js"
 
@@ -73,6 +74,7 @@ app.use("/api/v1/auth", authRouter)
 app.use("/api/v1/admin", adminAccessRouter)
 app.use("/api/v1/facilities", facilitiesRouter)
 app.use("/api/v1/academic-calendar", academicCalendarRouter)
+app.use("/api/v1/slot-systems", slotSystemsRouter)
 
 // since top down therefore if route not found or any error on top then shown over here
 app.use(notFoundHandler)
