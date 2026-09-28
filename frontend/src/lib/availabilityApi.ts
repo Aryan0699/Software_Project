@@ -69,6 +69,11 @@ export type AvailabilitySearch = {
 
 export type RoomTimeline = RoomAvailabilityRecord & {
     date: string
+    freeWindows: Array<{
+        startMinute: number
+        endMinute: number
+        durationMinutes: number
+    }>
     academicContext: AcademicContext
 }
 

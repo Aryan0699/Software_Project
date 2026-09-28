@@ -44,6 +44,15 @@ function readableDate(value: string) {
     }).format(new Date(value + "T00:00:00.000Z"))
 }
 
+function readableDuration(minutes: number) {
+    const hours = Math.floor(minutes / 60)
+    const remainder = minutes % 60
+    if (hours === 0) return String(remainder) + "m"
+    return remainder
+        ? String(hours) + "h " + String(remainder) + "m"
+        : String(hours) + "h"
+}
+
 export function RoomTimeline({
     timeline,
     config,
@@ -86,8 +95,12 @@ export function RoomTimeline({
     const customEndMinute = timeToMinute(customEnd)
     const customDuration = customEndMinute - customStartMinute
     const customOrderValid = customDuration > 0
+    const customWindowValid =
+        customOrderValid &&
+        customStartMinute >= config.windowStartMinute &&
+        customEndMinute <= config.windowEndMinute
     const customDurationValid =
-        customOrderValid && customDuration >= config.minimumDurationMinutes
+        customWindowValid && customDuration >= config.minimumDurationMinutes
     const rangeStart =
         mode === "GRID"
             ? selection?.startMinute
@@ -182,6 +195,75 @@ export function RoomTimeline({
 
             {mode === "GRID" ? (
                 <div className="mt-4">
+                    <div className="mb-3">
+                        <p className="mb-2 text-xs font-medium text-slate-700">
+                            Free windows
+                        </p>
+                        {timeline.freeWindows.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {timeline.freeWindows.map((window) => {
+                                    const selected =
+                                        selection?.startMinute ===
+                                            window.startMinute &&
+                                        selection?.endMinute ===
+                                            window.endMinute
+                                    const pendingCount =
+                                        timeline.pendingWarnings.filter(
+                                            (item) =>
+                                                overlaps(
+                                                    item,
+                                                    window.startMinute,
+                                                    window.endMinute
+                                                )
+                                        ).length
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={
+                                                String(window.startMinute) +
+                                                "-" +
+                                                String(window.endMinute)
+                                            }
+                                            aria-pressed={selected}
+                                            onClick={() =>
+                                                setSelection({
+                                                    startMinute:
+                                                        window.startMinute,
+                                                    endMinute: window.endMinute,
+                                                })
+                                            }
+                                            className={
+                                                "inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                                                (selected
+                                                    ? "border-blue-700 bg-blue-700 text-white"
+                                                    : "border-slate-300 bg-white text-slate-700 hover:border-brand-400 hover:bg-brand-50")
+                                            }
+                                        >
+                                            {pendingCount > 0 ? (
+                                                <span
+                                                    className="size-2 rounded-full bg-amber-400"
+                                                    aria-label={
+                                                        String(pendingCount) +
+                                                        " pending request warning"
+                                                    }
+                                                />
+                                            ) : null}
+                                            {minuteToTime(window.startMinute)}–
+                                            {minuteToTime(window.endMinute)} ·{" "}
+                                            {readableDuration(
+                                                window.durationMinutes
+                                            )}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-slate-500">
+                                No bookable free window remains in the displayed
+                                operating hours.
+                            </p>
+                        )}
+                    </div>
                     <ContinuousTimeline
                         windowStart={config.windowStartMinute}
                         windowEnd={config.windowEndMinute}
@@ -213,7 +295,9 @@ export function RoomTimeline({
                     </div>
                     <p className="mt-2 text-xs text-slate-500">
                         Drag across a free period to select an exact range, or
-                        click once to select a default interval.
+                        click once to select a default interval. On touch
+                        screens, swipe the bar and use a free-window chip or
+                        custom time to select.
                     </p>
                 </div>
             ) : (
@@ -223,6 +307,8 @@ export function RoomTimeline({
                         <input
                             className="field-input"
                             type="time"
+                            min={minuteToTime(config.windowStartMinute)}
+                            max={minuteToTime(config.windowEndMinute)}
                             step={config.selectionStepMinutes * 60}
                             value={customStart}
                             onChange={(event) =>
@@ -235,6 +321,8 @@ export function RoomTimeline({
                         <input
                             className="field-input"
                             type="time"
+                            min={minuteToTime(config.windowStartMinute)}
+                            max={minuteToTime(config.windowEndMinute)}
                             step={config.selectionStepMinutes * 60}
                             value={customEnd}
                             onChange={(event) =>
@@ -248,6 +336,15 @@ export function RoomTimeline({
                             role="alert"
                         >
                             End time must be later than start time.
+                        </p>
+                    ) : !customWindowValid ? (
+                        <p
+                            className="text-xs text-red-700 sm:col-span-2"
+                            role="alert"
+                        >
+                            Choose a time between{" "}
+                            {minuteToTime(config.windowStartMinute)} and{" "}
+                            {minuteToTime(config.windowEndMinute)}.
                         </p>
                     ) : !customDurationValid ? (
                         <p

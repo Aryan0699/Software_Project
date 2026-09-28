@@ -68,6 +68,18 @@ export const searchAvailabilityQuerySchema = z
         (value) =>
             value.startMinute === undefined ||
             value.endMinute === undefined ||
+            (value.startMinute >= env.BOOKING_TIMELINE_START_MINUTE &&
+                value.endMinute <= env.BOOKING_TIMELINE_END_MINUTE),
+        {
+            path: ["endMinute"],
+            message:
+                "Availability intervals must be inside the configured booking window",
+        }
+    )
+    .refine(
+        (value) =>
+            value.startMinute === undefined ||
+            value.endMinute === undefined ||
             value.endMinute - value.startMinute >=
                 env.BOOKING_MIN_DURATION_MINUTES,
         {

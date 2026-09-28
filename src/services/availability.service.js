@@ -3,7 +3,10 @@ import { env } from "../config/env.js"
 import ApiError from "../utils/ApiError.js"
 import { formatDateOnly, parseDateOnly } from "../utils/dateTime.js"
 import { pagination } from "../utils/pagination.js"
-import { halfOpenOverlapWhere } from "../utils/timeInterval.js"
+import {
+    freeWindowsWithin,
+    halfOpenOverlapWhere,
+} from "../utils/timeInterval.js"
 import { resolveAcademicDate } from "./occupancy.service.js"
 
 const roomSelect = {
@@ -32,6 +35,8 @@ const roomSelect = {
 
 function roomWhere(query) {
     return {
+        status: "ACTIVE",
+        building: { isActive: true },
         ...(query.search
             ? {
                   OR: [
@@ -395,9 +400,16 @@ export async function getRoomTimeline(roomId, dateValue, viewer) {
         endMinute: 1440,
         viewer,
     })
+    const record = evaluated.records[0]
     return {
         date: formatDateOnly(date),
-        ...evaluated.records[0],
+        ...record,
+        freeWindows: freeWindowsWithin(
+            env.BOOKING_TIMELINE_START_MINUTE,
+            env.BOOKING_TIMELINE_END_MINUTE,
+            record.blockingConflicts,
+            env.BOOKING_MIN_DURATION_MINUTES
+        ),
         academicContext: evaluated.academicContext,
     }
 }

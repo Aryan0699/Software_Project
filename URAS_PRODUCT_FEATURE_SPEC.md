@@ -543,6 +543,8 @@ Why: Recurring slot occupancy must be term-bound.
 
 Users will first discover suitable rooms for a selected date and filter by building, capacity, room type, accessibility, features, and room or building text. Choosing an exact time is deferred until the user opens a room.
 
+Ordinary discovery results will exclude inactive rooms and rooms in inactive buildings.
+
 Why: Users should not have to test every room individually.
 
 ### AVAIL-05 Room Timeline
@@ -554,6 +556,10 @@ The primary selector will show one continuous, proportional daily timeline. Acad
 Users may drag across a free period to choose an exact continuous interval or click a free window to select the configured default duration. Confirmed occupancy and restrictions cannot be selected. Pending requests remain warnings and are selectable.
 
 Bookings must be at least 30 minutes long. A shorter free gap remains visible on the timeline but cannot be selected. The expanded room provides an explicit Timeline / Custom time toggle. Free time uses a neutral treatment, while selected, occupied, and pending states remain visibly labelled. Hover and keyboard focus expose the exact interval and relevant privacy-safe details. Once a valid interval is selected, the interface shows exact availability feedback and exposes the booking-request action.
+
+Both timeline and custom-time selections must remain inside the configured operating window. The server will enforce the same boundary when validating an exact availability interval.
+
+The server will return merged free windows that meet the minimum duration. These windows ignore pending requests because pending requests do not hold the room. The interface will expose them as keyboard- and touch-friendly selection chips. Pending intervals remain amber overlays on the continuous free timeline instead of dividing a free window into separate selectable segments. On narrow screens, touch gestures pan the timeline horizontally rather than starting a drag selection.
 
 Why: A timeline helps users choose a nearby feasible time without repeated searches.
 

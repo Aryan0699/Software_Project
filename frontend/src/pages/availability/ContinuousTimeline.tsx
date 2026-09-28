@@ -5,7 +5,7 @@ import { minuteToTime } from "../../lib/time"
 type TimelineSegment = {
     startMinute: number
     endMinute: number
-    state: "FREE" | "PENDING" | "BLOCKED"
+    state: "FREE" | "BLOCKED"
     interval?: AvailabilityInterval
 }
 
@@ -34,10 +34,9 @@ function overlaps(
 function buildSegments(
     windowStart: number,
     windowEnd: number,
-    blocking: AvailabilityInterval[],
-    pending: AvailabilityInterval[]
+    blocking: AvailabilityInterval[]
 ) {
-    const relevant = [...blocking, ...pending].filter((interval) =>
+    const relevant = blocking.filter((interval) =>
         overlaps(interval, windowStart, windowEnd)
     )
     const boundaries = new Set([windowStart, windowEnd])
@@ -53,14 +52,11 @@ function buildSegments(
         const blocker = blocking.find((item) =>
             overlaps(item, startMinute, endMinute)
         )
-        const warning = pending.find((item) =>
-            overlaps(item, startMinute, endMinute)
-        )
         segments.push({
             startMinute,
             endMinute,
-            state: blocker ? "BLOCKED" : warning ? "PENDING" : "FREE",
-            interval: blocker || warning,
+            state: blocker ? "BLOCKED" : "FREE",
+            interval: blocker,
         })
     }
     return segments
@@ -69,11 +65,6 @@ function buildSegments(
 function segmentClassName(segment: TimelineSegment, tooShort: boolean) {
     if (segment.state === "BLOCKED") {
         return "cursor-not-allowed bg-red-300 hover:bg-red-400"
-    }
-    if (segment.state === "PENDING") {
-        return tooShort
-            ? "cursor-not-allowed bg-amber-100"
-            : "cursor-crosshair bg-amber-300 hover:bg-amber-400"
     }
     return tooShort
         ? "cursor-not-allowed bg-slate-100"
@@ -106,11 +97,13 @@ export function ContinuousTimeline({
     const movedRef = useRef(false)
     const [preview, setPreview] = useState<Selection | null>(null)
     const [hovered, setHovered] = useState<TimelineSegment | null>(null)
+    const [hoveredPending, setHoveredPending] =
+        useState<AvailabilityInterval | null>(null)
     const [selectionError, setSelectionError] = useState<string | null>(null)
 
     const segments = useMemo(
-        () => buildSegments(windowStart, windowEnd, blocking, pending),
-        [windowStart, windowEnd, blocking, pending]
+        () => buildSegments(windowStart, windowEnd, blocking),
+        [windowStart, windowEnd, blocking]
     )
     const duration = windowEnd - windowStart
     const displayedSelection = preview || selection
@@ -165,7 +158,12 @@ export function ContinuousTimeline({
                 : "Free window " +
                       minuteToTime(segment.startMinute) +
                       "–" +
-                      minuteToTime(segment.endMinute)
+                      minuteToTime(segment.endMinute) +
+                      (pending.some((item) =>
+                          overlaps(item, segment.startMinute, segment.endMinute)
+                      )
+                          ? " · Pending interest inside this window"
+                          : "")
         }
         return (
             sourceLabels[segment.interval!.source] +
@@ -231,6 +229,7 @@ export function ContinuousTimeline({
     }
 
     const beginDrag = (event: PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType === "touch") return
         const minute = minuteAt(event.clientX)
         const segment = segmentAt(minute)
         if (!segment || segment.state === "BLOCKED") return
@@ -274,7 +273,19 @@ export function ContinuousTimeline({
         if (segment) selectSegment(segment, current)
     }
 
-    const tooltipText = hovered ? describeSegment(hovered) : null
+    const tooltipText = hoveredPending
+        ? sourceLabels[hoveredPending.source] +
+          " · " +
+          minuteToTime(hoveredPending.startMinute) +
+          "–" +
+          minuteToTime(hoveredPending.endMinute) +
+          " · " +
+          hoveredPending.label
+        : hovered
+          ? describeSegment(hovered)
+          : null
+    const tooltipStart = hoveredPending?.startMinute ?? hovered?.startMinute
+    const tooltipEnd = hoveredPending?.endMinute ?? hovered?.endMinute
 
     return (
         <div>
@@ -283,17 +294,15 @@ export function ContinuousTimeline({
                     className="relative pt-14"
                     style={{ minWidth: Math.max(720, duration * 1.1) }}
                 >
-                    {hovered && tooltipText ? (
+                    {tooltipStart != null &&
+                    tooltipEnd != null &&
+                    tooltipText ? (
                         <div
                             className="pointer-events-none absolute top-0 z-30 max-w-64 -translate-x-1/2 rounded-md bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-lg"
                             style={{
                                 left:
                                     String(
-                                        percent(
-                                            (hovered.startMinute +
-                                                hovered.endMinute) /
-                                                2
-                                        )
+                                        percent((tooltipStart + tooltipEnd) / 2)
                                     ) + "%",
                             }}
                             role="tooltip"
@@ -316,7 +325,7 @@ export function ContinuousTimeline({
 
                     <div
                         ref={barRef}
-                        className="relative h-11 touch-none select-none overflow-hidden rounded-md border border-slate-300 bg-white shadow-inner"
+                        className="relative h-11 touch-auto select-none overflow-hidden rounded-md border border-slate-300 bg-white shadow-inner"
                         onPointerDownCapture={beginDrag}
                         onPointerMove={moveDrag}
                         onPointerUp={finishDrag}
@@ -328,7 +337,7 @@ export function ContinuousTimeline({
                         {hourMarks.slice(1, -1).map((minute) => (
                             <span
                                 key={minute}
-                                className="pointer-events-none absolute inset-y-0 z-10 border-l border-slate-200"
+                                className="pointer-events-none absolute inset-y-0 z-40 border-l border-slate-200"
                                 style={{ left: String(percent(minute)) + "%" }}
                             />
                         ))}
@@ -356,7 +365,12 @@ export function ContinuousTimeline({
                                         "-" +
                                         String(segment.endMinute)
                                     }
-                                    className="absolute inset-y-0"
+                                    className={
+                                        "absolute inset-y-0 " +
+                                        (segment.state === "BLOCKED"
+                                            ? "z-20"
+                                            : "z-0")
+                                    }
                                     style={{
                                         left:
                                             String(
@@ -368,7 +382,10 @@ export function ContinuousTimeline({
                                                     percent(segment.startMinute)
                                             ) + "%",
                                     }}
-                                    onMouseEnter={() => setHovered(segment)}
+                                    onMouseEnter={() => {
+                                        setHoveredPending(null)
+                                        setHovered(segment)
+                                    }}
                                     onMouseLeave={() => setHovered(null)}
                                     onFocus={() => setHovered(segment)}
                                     onBlur={() => setHovered(null)}
@@ -391,9 +408,68 @@ export function ContinuousTimeline({
                                 </div>
                             )
                         })}
+                        {pending
+                            .filter((interval) =>
+                                overlaps(interval, windowStart, windowEnd)
+                            )
+                            .map((interval, index) => {
+                                const startMinute = Math.max(
+                                    windowStart,
+                                    interval.startMinute
+                                )
+                                const endMinute = Math.min(
+                                    windowEnd,
+                                    interval.endMinute
+                                )
+                                const label =
+                                    sourceLabels[interval.source] +
+                                    " · " +
+                                    minuteToTime(interval.startMinute) +
+                                    "–" +
+                                    minuteToTime(interval.endMinute) +
+                                    " · " +
+                                    interval.label
+                                return (
+                                    <span
+                                        key={
+                                            String(interval.startMinute) +
+                                            "-" +
+                                            String(interval.endMinute) +
+                                            "-" +
+                                            String(index)
+                                        }
+                                        role="img"
+                                        tabIndex={0}
+                                        aria-label={label}
+                                        className="absolute inset-y-0 z-10 border-x border-amber-400 bg-amber-300/80"
+                                        style={{
+                                            left:
+                                                String(percent(startMinute)) +
+                                                "%",
+                                            width:
+                                                String(
+                                                    percent(endMinute) -
+                                                        percent(startMinute)
+                                                ) + "%",
+                                        }}
+                                        onMouseEnter={() => {
+                                            setHovered(null)
+                                            setHoveredPending(interval)
+                                        }}
+                                        onMouseLeave={() =>
+                                            setHoveredPending(null)
+                                        }
+                                        onFocus={() => {
+                                            setHovered(null)
+                                            setHoveredPending(interval)
+                                        }}
+                                        onBlur={() => setHoveredPending(null)}
+                                    />
+                                )
+                            })}
                         {displayedSelection ? (
                             <span
-                                className="pointer-events-none absolute inset-y-0 z-20 border-x-2 border-blue-700 bg-blue-500/90"
+                                className="pointer-events-none absolute inset-y-0 z-30 border-x-2 border-blue-700 bg-blue-500/90"
                                 style={{
                                     left:
                                         String(
