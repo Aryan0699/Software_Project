@@ -36,7 +36,7 @@ import { updateProfileSchema } from "../schemas/profile.schema.js"
 
 const adminAccessRouter = Router()
 
-adminAccessRouter.use(requireAuth, requireRole("ADMIN"))
+adminAccessRouter.use(requireAuth, requireRole("ADMIN"), requireTrustedOrigin)
 
 adminAccessRouter.get(
     "/approved-users",
@@ -45,13 +45,11 @@ adminAccessRouter.get(
 )
 adminAccessRouter.post(
     "/approved-users",
-    requireTrustedOrigin,
     validateBody(createApprovedUserSchema),
     createApprovedUser
 )
 adminAccessRouter.patch(
     "/approved-users/:id",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateApprovedUserSchema),
     updateApprovedUser
@@ -60,14 +58,12 @@ adminAccessRouter.patch(
 adminAccessRouter.get("/users", validateQuery(listUsersQuerySchema), listUsers)
 adminAccessRouter.patch(
     "/users/:id/access",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateUserAccessSchema),
     updateUserAccess
 )
 adminAccessRouter.patch(
     "/users/:id/profile",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateProfileSchema),
     updateUserProfile
@@ -76,7 +72,6 @@ adminAccessRouter.patch(
 adminAccessRouter.get("/dean-offices", getDeanOffices)
 adminAccessRouter.put(
     "/dean-offices/:office",
-    requireTrustedOrigin,
     validateParams(deanOfficeParamsSchema),
     validateBody(assignDeanOfficeSchema),
     assignDeanOffice
@@ -93,13 +88,11 @@ adminAccessRouter.get(
 )
 adminAccessRouter.post(
     "/staff-building-assignments",
-    requireTrustedOrigin,
     validateBody(createStaffAssignmentSchema),
     createStaffAssignment
 )
 adminAccessRouter.delete(
     "/staff-building-assignments/:id",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     deleteStaffAssignment
 )

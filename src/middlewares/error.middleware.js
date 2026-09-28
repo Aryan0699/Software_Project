@@ -19,6 +19,16 @@ function normalizeError(error) {
         }
     }
 
+    if (error?.code === "P2003") {
+        return {
+            statusCode: 409,
+            code: "RELATED_RECORD_CONFLICT",
+            message:
+                "This operation conflicts with a related record. Update or remove the related data first.",
+            details: null,
+        }
+    }
+
     if (error?.code === "P2025") {
         return {
             statusCode: 404,

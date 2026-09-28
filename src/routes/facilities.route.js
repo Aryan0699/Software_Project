@@ -40,7 +40,7 @@ import {
 
 const facilitiesRouter = Router()
 
-facilitiesRouter.use(requireAuth)
+facilitiesRouter.use(requireAuth, requireTrustedOrigin)
 
 facilitiesRouter.get(
     "/departments",
@@ -50,14 +50,12 @@ facilitiesRouter.get(
 facilitiesRouter.post(
     "/departments",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateBody(createReferenceSchema),
     createDepartment
 )
 facilitiesRouter.patch(
     "/departments/:id",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateReferenceSchema),
     updateDepartment
@@ -71,14 +69,12 @@ facilitiesRouter.get(
 facilitiesRouter.post(
     "/room-types",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateBody(createReferenceSchema),
     createRoomType
 )
 facilitiesRouter.patch(
     "/room-types/:id",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateReferenceSchema),
     updateRoomType
@@ -92,14 +88,12 @@ facilitiesRouter.get(
 facilitiesRouter.post(
     "/buildings",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateBody(createBuildingSchema),
     createBuilding
 )
 facilitiesRouter.patch(
     "/buildings/:id",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateBuildingSchema),
     updateBuilding
@@ -109,14 +103,12 @@ facilitiesRouter.get("/rooms", validateQuery(listRoomsQuerySchema), listRooms)
 facilitiesRouter.post(
     "/rooms",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateBody(createRoomSchema),
     createRoom
 )
 facilitiesRouter.patch(
     "/rooms/:id",
     requireRole("ADMIN"),
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateRoomSchema),
     updateRoom
@@ -131,14 +123,12 @@ facilitiesRouter.get(
 facilitiesRouter.post(
     "/restrictions",
     requireRole("ADMIN", "STAFF"),
-    requireTrustedOrigin,
     validateBody(createRestrictionSchema),
     createRestriction
 )
 facilitiesRouter.patch(
     "/restrictions/:id/cancel",
     requireRole("ADMIN", "STAFF"),
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     cancelRestriction
 )

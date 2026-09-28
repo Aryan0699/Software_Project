@@ -6,7 +6,6 @@ This document defines the confirmed product functionality for the greenfield red
 
 It describes what the product must provide, who it serves, the rules it must enforce, and why each capability is required. It intentionally does not prescribe database tables, API shapes, programming languages, frameworks, or internal implementation techniques.
 
-
 ## 1. Product Objective
 
 URAS will provide one reliable place for the institution to:
@@ -542,13 +541,19 @@ Why: Recurring slot occupancy must be term-bound.
 
 ### AVAIL-04 Search Available Rooms
 
-Users will be able to search for rooms available during a requested date and time and filter by building, capacity, room type, accessibility, and features.
+Users will first discover suitable rooms for a selected date and filter by building, capacity, room type, accessibility, features, and room or building text. Choosing an exact time is deferred until the user opens a room.
 
 Why: Users should not have to test every room individually.
 
 ### AVAIL-05 Room Timeline
 
-Users will be able to inspect a selected room's daily timeline with free and occupied periods.
+Users will be able to inspect a selected room's daily timeline with free and occupied periods. The time selector appears only inside the expanded room so room discovery and time selection remain separate.
+
+The primary selector will show one continuous, proportional daily timeline. Academic classes, approved events, restrictions, pending requests, and free windows will occupy their actual start and end positions rather than being rounded into display cells. The visible operating window is deployment configuration, with an initial default of 08:00–22:00. A custom-time option will accept explicit start and end times.
+
+Users may drag across a free period to choose an exact continuous interval or click a free window to select the configured default duration. Confirmed occupancy and restrictions cannot be selected. Pending requests remain warnings and are selectable.
+
+Bookings must be at least 30 minutes long. A shorter free gap remains visible on the timeline but cannot be selected. The expanded room provides an explicit Timeline / Custom time toggle. Free time uses a neutral treatment, while selected, occupied, and pending states remain visibly labelled. Hover and keyboard focus expose the exact interval and relevant privacy-safe details. Once a valid interval is selected, the interface shows exact availability feedback and exposes the booking-request action.
 
 Why: A timeline helps users choose a nearby feasible time without repeated searches.
 

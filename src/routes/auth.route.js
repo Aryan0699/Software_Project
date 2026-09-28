@@ -38,41 +38,33 @@ const authLimiter = rateLimit({
     },
 })
 
+authRouter.use(requireTrustedOrigin)
+
 authRouter.post(
     "/register",
     authLimiter,
-    requireTrustedOrigin,
     validateBody(registerSchema),
     register
 )
-authRouter.post(
-    "/login",
-    authLimiter,
-    requireTrustedOrigin,
-    validateBody(loginSchema),
-    login
-)
+authRouter.post("/login", authLimiter, validateBody(loginSchema), login)
 authRouter.post(
     "/google",
     authLimiter,
-    requireTrustedOrigin,
     validateBody(googleLoginSchema),
     googleLogin
 )
 authRouter.get("/me", requireAuth, currentUser)
-authRouter.post("/logout", requireAuth, requireTrustedOrigin, logout)
-authRouter.post("/logout-all", requireAuth, requireTrustedOrigin, logoutAll)
+authRouter.post("/logout", requireAuth, logout)
+authRouter.post("/logout-all", requireAuth, logoutAll)
 authRouter.put(
     "/password",
     requireAuth,
-    requireTrustedOrigin,
     validateBody(setPasswordSchema),
     setPassword
 )
 authRouter.patch(
     "/profile",
     requireAuth,
-    requireTrustedOrigin,
     validateBody(updateProfileSchema),
     updateCurrentProfile
 )

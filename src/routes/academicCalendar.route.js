@@ -31,7 +31,7 @@ import {
 
 const academicCalendarRouter = Router()
 
-academicCalendarRouter.use(requireAuth)
+academicCalendarRouter.use(requireAuth, requireTrustedOrigin)
 
 academicCalendarRouter.get(
     "/terms",
@@ -48,52 +48,44 @@ academicCalendarRouter.use(requireRole("ADMIN"))
 
 academicCalendarRouter.post(
     "/terms",
-    requireTrustedOrigin,
     validateBody(createTermSchema),
     createTerm
 )
 academicCalendarRouter.patch(
     "/terms/:id",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateTermSchema),
     updateTerm
 )
 academicCalendarRouter.post(
     "/terms/:id/set-current",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     setCurrentTerm
 )
 academicCalendarRouter.post(
     "/terms/:id/close",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     closeTerm
 )
 
 academicCalendarRouter.post(
     "/exceptions/impact",
-    requireTrustedOrigin,
     validateBody(previewExceptionImpactSchema),
     previewExceptionImpact
 )
 academicCalendarRouter.post(
     "/exceptions",
-    requireTrustedOrigin,
     validateBody(createExceptionSchema),
     createException
 )
 academicCalendarRouter.patch(
     "/exceptions/:id",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     validateBody(updateExceptionSchema),
     updateException
 )
 academicCalendarRouter.patch(
     "/exceptions/:id/deactivate",
-    requireTrustedOrigin,
     validateParams(recordIdParamsSchema),
     deactivateException
 )

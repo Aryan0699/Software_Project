@@ -1,6 +1,7 @@
 import { prisma } from "../db/index.js"
 import ApiError from "../utils/ApiError.js"
 import { institutionNow, parseDateOnly } from "../utils/dateTime.js"
+import { pagination, pageOffset } from "../utils/pagination.js"
 import {
     acquireOccupancyLock,
     findIntervalConflicts,
@@ -69,19 +70,6 @@ const restrictionSelect = {
     },
     createdBy: { select: { id: true, name: true, email: true } },
     cancelledBy: { select: { id: true, name: true, email: true } },
-}
-
-function pagination(page, pageSize, total) {
-    return {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
-    }
-}
-
-function pageOffset(page, pageSize) {
-    return (page - 1) * pageSize
 }
 
 function normalizeNullable(value) {

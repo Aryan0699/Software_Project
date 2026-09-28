@@ -771,6 +771,7 @@ model BookingRequest {
   actions   BookingActionHistory[]
 
   @@index([roomId, bookingDate, status, startMinute, endMinute])
+  @@index([status,bookingDate])
   @@index([requesterUserId, createdAt])
   @@index([status, submittedAt])
   @@index([cancelledByUserId])
