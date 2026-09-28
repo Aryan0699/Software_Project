@@ -4,6 +4,7 @@ import {
     formatDateOnly,
     institutionNow,
 } from "../utils/dateTime.js"
+import { halfOpenOverlapWhere } from "../utils/timeInterval.js"
 
 const OCCUPANCY_LOCK_KEY = 864_001n
 
@@ -11,58 +12,78 @@ export async function acquireOccupancyLock(tx) {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(${OCCUPANCY_LOCK_KEY})::text AS acquired`
 }
 
-async function resolveAcademicDay(db, academicTermId, date) {
-    const exception = await db.calendarException.findFirst({
-        where: {
-            academicTermId,
-            isActive: true,
-            startDate: { lte: date },
-            endDate: { gte: date },
-        },
-        select: { exceptionType: true, targetDayOfWeek: true },
-    })
-
-    if (exception?.exceptionType === "NO_CLASSES") return null
-    return exception?.targetDayOfWeek || dayOfWeek(date)
-}
-
-export async function findIntervalConflicts(
-    db,
-    { roomId, date, startMinute, endMinute, includeRestrictions = true }
-) {
+export async function resolveAcademicDate(db, date) {
     const academicTerm = await db.academicTerm.findFirst({
         where: {
             status: "CURRENT",
             startDate: { lte: date },
             endDate: { gte: date },
         },
-        select: { id: true, termCode: true },
+        select: { id: true, termCode: true, name: true },
     })
 
-    let academic = []
-    if (academicTerm) {
-        const effectiveDay = await resolveAcademicDay(db, academicTerm.id, date)
-        if (effectiveDay) {
-            academic = await db.roomSlotOccupancy.findMany({
-                where: {
-                    roomId,
-                    academicTermId: academicTerm.id,
-                    dayOfWeek: effectiveDay,
-                    startMinute: { lt: endMinute },
-                    endMinute: { gt: startMinute },
-                    timetableBatch: { status: "PUBLISHED" },
-                },
-                select: {
-                    id: true,
-                    startMinute: true,
-                    endMinute: true,
-                    courseSlotAssignment: {
-                        select: { course: { select: { code: true } } },
-                    },
-                },
-                take: 10,
-            })
+    if (!academicTerm) {
+        return { academicTerm: null, mode: "OUTSIDE_TERM", dayOfWeek: null }
+    }
+
+    const exception = await db.calendarException.findFirst({
+        where: {
+            academicTermId: academicTerm.id,
+            isActive: true,
+            startDate: { lte: date },
+            endDate: { gte: date },
+        },
+        select: {
+            id: true,
+            name: true,
+            exceptionType: true,
+            targetDayOfWeek: true,
+        },
+    })
+
+    if (exception?.exceptionType === "NO_CLASSES") {
+        return {
+            academicTerm,
+            exception,
+            mode: "NO_CLASSES",
+            dayOfWeek: null,
         }
+    }
+    return {
+        academicTerm,
+        exception: exception || null,
+        mode: exception ? "FOLLOW_DAY" : "NORMAL_DAY",
+        dayOfWeek: exception?.targetDayOfWeek || dayOfWeek(date),
+    }
+}
+
+export async function findIntervalConflicts(
+    db,
+    { roomId, date, startMinute, endMinute, includeRestrictions = true }
+) {
+    const academicDate = await resolveAcademicDate(db, date)
+    const academicTerm = academicDate.academicTerm
+
+    let academic = []
+    if (academicTerm && academicDate.dayOfWeek) {
+        academic = await db.roomSlotOccupancy.findMany({
+            where: {
+                roomId,
+                academicTermId: academicTerm.id,
+                dayOfWeek: academicDate.dayOfWeek,
+                ...halfOpenOverlapWhere(startMinute, endMinute),
+                timetableBatch: { status: "PUBLISHED" },
+            },
+            select: {
+                id: true,
+                startMinute: true,
+                endMinute: true,
+                courseSlotAssignment: {
+                    select: { course: { select: { code: true } } },
+                },
+            },
+            take: 10,
+        })
     }
 
     const [bookings, restrictions] = await Promise.all([
@@ -71,8 +92,7 @@ export async function findIntervalConflicts(
                 roomId,
                 bookingDate: date,
                 status: "APPROVED",
-                startMinute: { lt: endMinute },
-                endMinute: { gt: startMinute },
+                ...halfOpenOverlapWhere(startMinute, endMinute),
             },
             select: {
                 id: true,
@@ -89,8 +109,7 @@ export async function findIntervalConflicts(
                       roomId,
                       restrictionDate: date,
                       status: "ACTIVE",
-                      startMinute: { lt: endMinute },
-                      endMinute: { gt: startMinute },
+                      ...halfOpenOverlapWhere(startMinute, endMinute),
                   },
                   select: {
                       id: true,

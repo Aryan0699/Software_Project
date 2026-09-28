@@ -61,6 +61,12 @@ npm --prefix frontend run dev
 
 Verify the API and database at `http://localhost:3000/api/v1/health/ready`.
 
+The room-availability timeline defaults to 08:00–22:00. Adjust
+`BOOKING_TIMELINE_START_MINUTE`, `BOOKING_TIMELINE_END_MINUTE`,
+`BOOKING_MIN_DURATION_MINUTES`, `BOOKING_SELECTION_STEP_MINUTES`, and
+`BOOKING_DEFAULT_DURATION_MINUTES` in `.env` when institutional booking
+hours or selection rules differ.
+
 Use `npm run prisma:migrate -- --name <migration_name>` only when creating a new migration during schema development. A fresh clone should use `npm run prisma:deploy` so it applies the migration history without creating a new migration.
 
 ## Useful checks

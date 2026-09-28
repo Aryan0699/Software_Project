@@ -11,6 +11,7 @@ import {
 } from "./middlewares/error.middleware.js"
 import adminAccessRouter from "./routes/adminAccess.route.js"
 import academicCalendarRouter from "./routes/academicCalendar.route.js"
+import availabilityRouter from "./routes/availability.route.js"
 import authRouter from "./routes/auth.route.js"
 import facilitiesRouter from "./routes/facilities.route.js"
 import healthRouter from "./routes/health.route.js"
@@ -73,6 +74,7 @@ app.use("/api/v1/auth", authRouter)
 app.use("/api/v1/admin", adminAccessRouter)
 app.use("/api/v1/facilities", facilitiesRouter)
 app.use("/api/v1/academic-calendar", academicCalendarRouter)
+app.use("/api/v1/availability", availabilityRouter)
 
 // since top down therefore if route not found or any error on top then shown over here
 app.use(notFoundHandler)
