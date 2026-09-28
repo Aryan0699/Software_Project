@@ -1,6 +1,7 @@
 import {
     Building2,
     CalendarDays,
+    CalendarSearch,
     ChevronDown,
     LayoutDashboard,
     LogOut,
@@ -25,6 +26,12 @@ function Navigation({ close }: { close?: () => void }) {
     const { user } = useAuth()
     const items = [
         { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+        {
+            to: "/availability",
+            label: "Find a room",
+            icon: CalendarSearch,
+            end: false,
+        },
         ...(user?.role === "ADMIN"
             ? [
                   {

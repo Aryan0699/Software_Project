@@ -6,6 +6,7 @@ import { AppShell } from "./components/AppShell"
 import { AccessPage } from "./pages/AccessPage"
 import { AccountPage } from "./pages/AccountPage"
 import { AcademicCalendarPage } from "./pages/AcademicCalendarPage"
+import { AvailabilityPage } from "./pages/AvailabilityPage"
 import { DashboardPage } from "./pages/DashboardPage"
 import { FacilitiesPage } from "./pages/FacilitiesPage"
 import { LoginPage } from "./pages/LoginPage"
@@ -46,6 +47,7 @@ function App() {
             <Route element={<ProtectedRoutes />}>
                 <Route element={<AppShell />}>
                     <Route index element={<DashboardPage />} />
+                    <Route path="availability" element={<AvailabilityPage />} />
                     <Route path="account" element={<AccountPage />} />
                     <Route
                         path="facilities"

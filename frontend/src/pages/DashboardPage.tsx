@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, ShieldCheck, UserRound } from "lucide-react"
+import { ArrowRight, Building2, CalendarSearch, ShieldCheck, UserRound } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useAuth } from "../auth/useAuth"
 
@@ -53,6 +53,21 @@ export function DashboardPage() {
       <section>
         <h2 className="text-base font-semibold text-slate-900">Quick actions</h2>
         <div className="mt-3 divide-y divide-slate-200 border-y border-slate-200 bg-white">
+          <Link
+            to="/availability"
+            className="flex min-h-16 items-center justify-between gap-4 px-4 hover:bg-slate-50 sm:px-5"
+          >
+            <div className="flex items-start gap-3">
+              <CalendarSearch className="mt-0.5 size-4 shrink-0 text-brand-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-900">Find an available room</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Search by date, time, capacity, and room requirements
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="size-4 shrink-0 text-slate-400" />
+          </Link>
           {user.role === "ADMIN" && (
             <Link
               to="/admin/access"
