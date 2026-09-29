@@ -1,7 +1,11 @@
 import { prisma } from "../db/index.js"
 import { env } from "../config/env.js"
 import ApiError from "../utils/ApiError.js"
-import { formatDateOnly, parseDateOnly } from "../utils/dateTime.js"
+import {
+    formatDateOnly,
+    institutionNow,
+    parseDateOnly,
+} from "../utils/dateTime.js"
 import { pagination } from "../utils/pagination.js"
 import {
     freeWindowsWithin,
@@ -87,6 +91,31 @@ function sortIntervals(items) {
             first.startMinute - second.startMinute ||
             first.endMinute - second.endMinute
     )
+}
+
+function bookingWindowForDate(date) {
+    const now = institutionNow()
+    if (date < now.dateValue) {
+        throw new ApiError(409, "Choose today or a future date", {
+            code: "BOOKING_DATE_IN_PAST",
+        })
+    }
+    const isToday = date.getTime() === now.dateValue.getTime()
+    const selectableStartMinute = isToday
+        ? Math.max(
+              env.BOOKING_TIMELINE_START_MINUTE,
+              Math.ceil((now.minute + 1) / env.BOOKING_SELECTION_STEP_MINUTES) *
+                  env.BOOKING_SELECTION_STEP_MINUTES
+          )
+        : env.BOOKING_TIMELINE_START_MINUTE
+    return {
+        isToday,
+        currentMinute: now.minute,
+        selectableStartMinute: Math.min(
+            selectableStartMinute,
+            env.BOOKING_TIMELINE_END_MINUTE
+        ),
+    }
 }
 
 async function evaluateRooms({ rooms, date, startMinute, endMinute, viewer }) {
@@ -288,6 +317,16 @@ async function evaluateRooms({ rooms, date, startMinute, endMinute, viewer }) {
 
 export async function searchRoomAvailability(query, viewer) {
     const date = parseDateOnly(query.date)
+    const bookingWindow = bookingWindowForDate(date)
+    if (
+        bookingWindow.isToday &&
+        query.startMinute !== undefined &&
+        query.startMinute <= bookingWindow.currentMinute
+    ) {
+        throw new ApiError(409, "Choose a booking time that has not started", {
+            code: "BOOKING_TIME_IN_PAST",
+        })
+    }
     const candidateRooms = await prisma.room.findMany({
         where: roomWhere(query),
         select: roomSelect,
@@ -393,6 +432,7 @@ export async function getRoomTimeline(roomId, dateValue, viewer) {
     }
 
     const date = parseDateOnly(dateValue)
+    const bookingWindow = bookingWindowForDate(date)
     const evaluated = await evaluateRooms({
         rooms: [room],
         date,
@@ -401,13 +441,28 @@ export async function getRoomTimeline(roomId, dateValue, viewer) {
         viewer,
     })
     const record = evaluated.records[0]
+    const blockingConflicts = [
+        ...record.blockingConflicts,
+        ...(bookingWindow.isToday &&
+        bookingWindow.selectableStartMinute > env.BOOKING_TIMELINE_START_MINUTE
+            ? [
+                  {
+                      source: "PAST_TIME",
+                      startMinute: env.BOOKING_TIMELINE_START_MINUTE,
+                      endMinute: bookingWindow.selectableStartMinute,
+                      label: "Time has already passed",
+                  },
+              ]
+            : []),
+    ]
     return {
         date: formatDateOnly(date),
         ...record,
+        blockingConflicts: sortIntervals(blockingConflicts),
         freeWindows: freeWindowsWithin(
             env.BOOKING_TIMELINE_START_MINUTE,
             env.BOOKING_TIMELINE_END_MINUTE,
-            record.blockingConflicts,
+            blockingConflicts,
             env.BOOKING_MIN_DURATION_MINUTES
         ),
         academicContext: evaluated.academicContext,
@@ -415,6 +470,8 @@ export async function getRoomTimeline(roomId, dateValue, viewer) {
 }
 
 export async function getAvailabilityTimelineConfig(dateValue) {
+    const date = parseDateOnly(dateValue)
+    const bookingWindow = bookingWindowForDate(date)
     return {
         date: dateValue,
         windowStartMinute: env.BOOKING_TIMELINE_START_MINUTE,
@@ -422,5 +479,6 @@ export async function getAvailabilityTimelineConfig(dateValue) {
         minimumDurationMinutes: env.BOOKING_MIN_DURATION_MINUTES,
         selectionStepMinutes: env.BOOKING_SELECTION_STEP_MINUTES,
         defaultDurationMinutes: env.BOOKING_DEFAULT_DURATION_MINUTES,
+        selectableStartMinute: bookingWindow.selectableStartMinute,
     }
 }

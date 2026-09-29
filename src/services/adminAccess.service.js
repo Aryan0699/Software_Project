@@ -338,57 +338,101 @@ export async function getDeanOffices() {
 }
 
 export async function assignDeanOffice({ office, userId, actorUserId }) {
-    return prisma.$transaction(async (tx) => {
-        const user = await tx.user.findUnique({
-            where: { id: userId },
-            select: {
-                id: true,
-                role: true,
-                isActive: true,
-                deanOfficeHeld: { select: { office: true } },
-            },
-        })
-        if (!user) {
-            throw new ApiError(404, "User was not found", {
-                code: "USER_NOT_FOUND",
-            })
-        }
-        if (!user.isActive || user.role !== "FACULTY") {
-            throw new ApiError(
-                409,
-                "A dean office can be assigned only to an active faculty user",
-                { code: "INVALID_DEAN_ASSIGNEE" }
+    return prisma.$transaction(
+        async (tx) => {
+            const previousAssignment = await tx.deanOfficeAssignment.findUnique(
+                {
+                    where: { office },
+                    select: { userId: true },
+                }
             )
-        }
-        if (user.deanOfficeHeld?.office === office) {
-            return tx.deanOfficeAssignment.findUnique({
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+                select: {
+                    id: true,
+                    role: true,
+                    isActive: true,
+                    deanOfficeHeld: { select: { office: true } },
+                },
+            })
+            if (!user) {
+                throw new ApiError(404, "User was not found", {
+                    code: "USER_NOT_FOUND",
+                })
+            }
+            if (!user.isActive || user.role !== "FACULTY") {
+                throw new ApiError(
+                    409,
+                    "A dean office can be assigned only to an active faculty user",
+                    { code: "INVALID_DEAN_ASSIGNEE" }
+                )
+            }
+            if (user.deanOfficeHeld?.office === office) {
+                return tx.deanOfficeAssignment.findUnique({
+                    where: { office },
+                    select: deanAssignmentSelect,
+                })
+            }
+            if (user.deanOfficeHeld) {
+                throw new ApiError(
+                    409,
+                    `This user already holds the ${user.deanOfficeHeld.office} office`,
+                    { code: "USER_ALREADY_HAS_DEAN_OFFICE" }
+                )
+            }
+
+            const assignment = await tx.deanOfficeAssignment.upsert({
                 where: { office },
+                update: {
+                    userId,
+                    assignedByUserId: actorUserId,
+                    assignedAt: new Date(),
+                },
+                create: {
+                    office,
+                    userId,
+                    assignedByUserId: actorUserId,
+                },
                 select: deanAssignmentSelect,
             })
-        }
-        if (user.deanOfficeHeld) {
-            throw new ApiError(
-                409,
-                `This user already holds the ${user.deanOfficeHeld.office} office`,
-                { code: "USER_ALREADY_HAS_DEAN_OFFICE" }
-            )
-        }
 
-        return tx.deanOfficeAssignment.upsert({
-            where: { office },
-            update: {
-                userId,
-                assignedByUserId: actorUserId,
-                assignedAt: new Date(),
-            },
-            create: {
-                office,
-                userId,
-                assignedByUserId: actorUserId,
-            },
-            select: deanAssignmentSelect,
-        })
-    })
+            if (previousAssignment && previousAssignment.userId !== userId) {
+                const pendingTasks = await tx.bookingApproval.findMany({
+                    where: {
+                        reviewerRole: office,
+                        status: "PENDING",
+                        bookingRequest: { status: "PENDING_DEANS" },
+                    },
+                    select: { id: true, bookingRequestId: true },
+                })
+                if (pendingTasks.length) {
+                    await tx.bookingApproval.updateMany({
+                        where: {
+                            id: { in: pendingTasks.map((task) => task.id) },
+                        },
+                        data: { reviewerUserId: userId },
+                    })
+                    await tx.bookingActionHistory.createMany({
+                        data: pendingTasks.map((task) => ({
+                            bookingRequestId: task.bookingRequestId,
+                            actionType: "NOTE_ADDED",
+                            performedByUserId: actorUserId,
+                            note: `${office} pending approval reassigned to the current office holder`,
+                            metadata: {
+                                reviewerRole: office,
+                                previousReviewerUserId:
+                                    previousAssignment.userId,
+                                reviewerUserId: userId,
+                            },
+                        })),
+                    })
+                }
+            }
+
+            return assignment
+        },
+        { maxWait: 5_000, timeout: 20_000 }
+    )
 }
 
 export async function listStaffAssignments({

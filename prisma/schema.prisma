@@ -139,6 +139,7 @@ enum BookingActionType {
   DEAN_REJECTED
   FINAL_APPROVED
   AUTO_REJECTED_CONFLICT
+  AUTO_REJECTED_EXPIRED
   CANCELLED
   ADMIN_CONFLICT_RELOCATED
   ADMIN_CONFLICT_RESCHEDULED
@@ -740,6 +741,7 @@ model RoomSlotOccupancy {
 model BookingRequest {
   id                    String           @id @default(cuid())
   requesterUserId       String
+  clientRequestId       String?
   requesterRoleSnapshot Role
   roomId                String
   bookingDate           DateTime         @db.Date
@@ -770,8 +772,9 @@ model BookingRequest {
   approvals BookingApproval[]
   actions   BookingActionHistory[]
 
+  @@unique([requesterUserId, clientRequestId])
   @@index([roomId, bookingDate, status, startMinute, endMinute])
-  @@index([status,bookingDate])
+  @@index([status, bookingDate])
   @@index([requesterUserId, createdAt])
   @@index([status, submittedAt])
   @@index([cancelledByUserId])

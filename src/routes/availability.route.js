@@ -4,7 +4,7 @@ import {
     getRoomTimeline,
     searchRoomAvailability,
 } from "../controllers/availability.controller.js"
-import { requireAuth } from "../middlewares/auth.middleware.js"
+import { requireAuth, requireRole } from "../middlewares/auth.middleware.js"
 import {
     validateParams,
     validateQuery,
@@ -18,7 +18,7 @@ import {
 
 const availabilityRouter = Router()
 
-availabilityRouter.use(requireAuth)
+availabilityRouter.use(requireAuth, requireRole("STUDENT", "FACULTY"))
 availabilityRouter.get(
     "/timeline-config",
     validateQuery(availabilityTimelineConfigQuerySchema),
