@@ -611,13 +611,15 @@ Why: Both groups have confirmed institutional use cases.
 
 ### BOOK-03 Request Information
 
-A request will capture the room, date, start time, end time, title, purpose, event type, expected participants, and relevant special requirements.
+A request will capture the room, date, start time, end time, title, purpose, event type, optional expected participants, and relevant special requirements.
+
+When expected participants are supplied and room capacity is known, the request must fit the room. A room with unconfigured capacity remains requestable with a clear warning that capacity suitability could not be verified.
 
 Why: Reviewers need enough context to judge legitimacy and room suitability.
 
 ### BOOK-04 Student Faculty Selection
 
-A student must select an active faculty verifier before submission.
+A student may select any active faculty member with a valid faculty profile as the verifier. Inactive faculty will not appear in the selector, and the server will recheck the selection at submission.
 
 Why: Student requests require faculty accountability before dean review.
 

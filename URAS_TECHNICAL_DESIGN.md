@@ -452,7 +452,7 @@ All endpoints are under `/api/v1`. Exact payload details will be defined with Zo
 | Calendar | `/academic-calendar/exceptions`, `/academic-calendar/exceptions/impact`, `/academic-calendar/exceptions/:id/deactivate` |
 | Availability | `/availability/rooms`, `/availability/rooms/:id`, `/availability/rooms/:id/timeline` |
 | Requests | `/booking-requests`, `/booking-requests/:id`, `/booking-requests/:id/cancel` |
-| Approvals | `/approvals/me`, `/booking-requests/:id/approvals/:role/decision` |
+| Approvals | `/approvals/me`, `/approvals/:approvalId/finalization-preview`, `/approvals/:approvalId/decision` |
 | Notifications | `/notifications`, `/notifications/unread-count`, `/notifications/:id/read` |
 | History | `/booking-history`, `/booking-history/export` |
 | Dashboards | `/dashboard` |
