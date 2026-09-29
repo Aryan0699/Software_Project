@@ -12,7 +12,7 @@ import type {
     AvailabilityTimelineConfig,
     RoomTimeline as RoomTimelineData,
 } from "../../lib/availabilityApi"
-import { minuteToTime, timeToMinute } from "../../lib/time"
+import { minuteToTime } from "../../lib/time"
 import { ContinuousTimeline } from "./ContinuousTimeline"
 
 type TimeMode = "GRID" | "CUSTOM"
@@ -23,7 +23,21 @@ const sourceLabels = {
     ACADEMIC_TIMETABLE: "Academic timetable",
     ROOM_RESTRICTION: "Room restriction",
     APPROVED_BOOKING: "Approved event",
+    PAST_TIME: "Time has passed",
     PENDING_REQUEST: "Pending request",
+}
+
+function timeOptionLabel(minute: number) {
+    return minute === 1440 ? "12:00 AM (end of day)" : minuteToTime(minute)
+}
+
+function minuteOptions(start: number, end: number, step: number) {
+    const options: number[] = []
+    for (let minute = start; minute <= end; minute += step) {
+        options.push(minute)
+    }
+    if (options.at(-1) !== end) options.push(end)
+    return options
 }
 
 function overlaps(
@@ -71,8 +85,8 @@ export function RoomTimeline({
         startMinute: number
         endMinute: number
     } | null>(null)
-    const [customStart, setCustomStart] = useState("09:00")
-    const [customEnd, setCustomEnd] = useState("10:00")
+    const [customStart, setCustomStart] = useState<number | null>(null)
+    const [customEnd, setCustomEnd] = useState<number | null>(null)
 
     if (loading) {
         return (
@@ -91,27 +105,27 @@ export function RoomTimeline({
     }
     if (!timeline || !config) return null
 
-    const customStartMinute = timeToMinute(customStart)
-    const customEndMinute = timeToMinute(customEnd)
-    const customDuration = customEndMinute - customStartMinute
-    const customOrderValid = customDuration > 0
+    const customDuration =
+        customStart === null || customEnd === null ? 0 : customEnd - customStart
+    const customOrderValid =
+        customStart !== null && customEnd !== null && customDuration > 0
     const customWindowValid =
         customOrderValid &&
-        customStartMinute >= config.windowStartMinute &&
-        customEndMinute <= config.windowEndMinute
+        customStart >= config.selectableStartMinute &&
+        customEnd <= config.windowEndMinute
     const customDurationValid =
         customWindowValid && customDuration >= config.minimumDurationMinutes
     const rangeStart =
         mode === "GRID"
             ? selection?.startMinute
             : customDurationValid
-              ? customStartMinute
+              ? customStart
               : null
     const rangeEnd =
         mode === "GRID"
             ? selection?.endMinute
             : customDurationValid
-              ? customEndMinute
+              ? customEnd
               : null
     const blockingConflict =
         rangeStart != null && rangeEnd != null
@@ -131,7 +145,44 @@ export function RoomTimeline({
     const selectMode = (nextMode: TimeMode) => {
         setMode(nextMode)
         setSelection(null)
+        if (nextMode === "CUSTOM") {
+            const start = config.selectableStartMinute
+            if (
+                start + config.minimumDurationMinutes <=
+                config.windowEndMinute
+            ) {
+                setCustomStart(start)
+                setCustomEnd(
+                    Math.min(
+                        config.windowEndMinute,
+                        start + config.defaultDurationMinutes
+                    )
+                )
+            } else {
+                setCustomStart(null)
+                setCustomEnd(null)
+            }
+        }
     }
+    const startOptions = minuteOptions(
+        config.selectableStartMinute,
+        Math.max(
+            config.selectableStartMinute,
+            config.windowEndMinute - config.minimumDurationMinutes
+        ),
+        config.selectionStepMinutes
+    ).filter(
+        (minute) =>
+            minute + config.minimumDurationMinutes <= config.windowEndMinute
+    )
+    const endOptions =
+        customStart === null
+            ? []
+            : minuteOptions(
+                  customStart + config.minimumDurationMinutes,
+                  config.windowEndMinute,
+                  config.selectionStepMinutes
+              )
 
     return (
         <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-5 sm:px-5">
@@ -304,33 +355,58 @@ export function RoomTimeline({
                 <div className="mt-4 grid max-w-md gap-3 sm:grid-cols-2">
                     <label>
                         <span className="field-label">Start time</span>
-                        <input
-                            className="field-input"
-                            type="time"
-                            min={minuteToTime(config.windowStartMinute)}
-                            max={minuteToTime(config.windowEndMinute)}
-                            step={config.selectionStepMinutes * 60}
-                            value={customStart}
-                            onChange={(event) =>
-                                setCustomStart(event.target.value)
-                            }
-                        />
+                        <select
+                            className="field-select"
+                            value={customStart ?? ""}
+                            onChange={(event) => {
+                                const nextStart = Number(event.target.value)
+                                setCustomStart(nextStart)
+                                setCustomEnd(
+                                    Math.min(
+                                        config.windowEndMinute,
+                                        nextStart +
+                                            config.defaultDurationMinutes
+                                    )
+                                )
+                            }}
+                            disabled={!startOptions.length}
+                        >
+                            {!startOptions.length ? (
+                                <option value="">No time remains today</option>
+                            ) : null}
+                            {startOptions.map((minute) => (
+                                <option key={minute} value={minute}>
+                                    {timeOptionLabel(minute)}
+                                </option>
+                            ))}
+                        </select>
                     </label>
                     <label>
                         <span className="field-label">End time</span>
-                        <input
-                            className="field-input"
-                            type="time"
-                            min={minuteToTime(config.windowStartMinute)}
-                            max={minuteToTime(config.windowEndMinute)}
-                            step={config.selectionStepMinutes * 60}
-                            value={customEnd}
+                        <select
+                            className="field-select"
+                            value={customEnd ?? ""}
                             onChange={(event) =>
-                                setCustomEnd(event.target.value)
+                                setCustomEnd(Number(event.target.value))
                             }
-                        />
+                            disabled={!endOptions.length}
+                        >
+                            {!endOptions.length ? (
+                                <option value="">Select a start time</option>
+                            ) : null}
+                            {endOptions.map((minute) => (
+                                <option key={minute} value={minute}>
+                                    {timeOptionLabel(minute)}
+                                </option>
+                            ))}
+                        </select>
                     </label>
-                    {!customOrderValid ? (
+                    {!startOptions.length ? (
+                        <p className="text-xs text-slate-600 sm:col-span-2">
+                            No bookable time remains within today's configured
+                            operating hours.
+                        </p>
+                    ) : !customOrderValid ? (
                         <p
                             className="text-xs text-red-700 sm:col-span-2"
                             role="alert"

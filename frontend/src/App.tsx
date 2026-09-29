@@ -6,7 +6,11 @@ import { AppShell } from "./components/AppShell"
 import { AccessPage } from "./pages/AccessPage"
 import { AccountPage } from "./pages/AccountPage"
 import { AcademicCalendarPage } from "./pages/AcademicCalendarPage"
+import { ApprovalsPage } from "./pages/ApprovalsPage"
 import { AvailabilityPage } from "./pages/AvailabilityPage"
+import { BookingCreatePage } from "./pages/BookingCreatePage"
+import { BookingDetailPage } from "./pages/BookingDetailPage"
+import { BookingsPage } from "./pages/BookingsPage"
 import { DashboardPage } from "./pages/DashboardPage"
 import { FacilitiesPage } from "./pages/FacilitiesPage"
 import { LoginPage } from "./pages/LoginPage"
@@ -40,6 +44,20 @@ function FacilitiesOnly({ children }: { children: ReactNode }) {
     )
 }
 
+function RequesterOnly({ children }: { children: ReactNode }) {
+    const { user } = useAuth()
+    return user?.role === "STUDENT" || user?.role === "FACULTY" ? (
+        children
+    ) : (
+        <Navigate to="/" replace />
+    )
+}
+
+function FacultyOnly({ children }: { children: ReactNode }) {
+    const { user } = useAuth()
+    return user?.role === "FACULTY" ? children : <Navigate to="/" replace />
+}
+
 function App() {
     return (
         <Routes>
@@ -47,7 +65,35 @@ function App() {
             <Route element={<ProtectedRoutes />}>
                 <Route element={<AppShell />}>
                     <Route index element={<DashboardPage />} />
-                    <Route path="availability" element={<AvailabilityPage />} />
+                    <Route
+                        path="availability"
+                        element={
+                            <RequesterOnly>
+                                <AvailabilityPage />
+                            </RequesterOnly>
+                        }
+                    />
+                    <Route path="bookings" element={<BookingsPage />} />
+                    <Route
+                        path="bookings/new"
+                        element={
+                            <RequesterOnly>
+                                <BookingCreatePage />
+                            </RequesterOnly>
+                        }
+                    />
+                    <Route
+                        path="bookings/:id"
+                        element={<BookingDetailPage />}
+                    />
+                    <Route
+                        path="approvals"
+                        element={
+                            <FacultyOnly>
+                                <ApprovalsPage />
+                            </FacultyOnly>
+                        }
+                    />
                     <Route path="account" element={<AccountPage />} />
                     <Route
                         path="facilities"

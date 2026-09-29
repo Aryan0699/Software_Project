@@ -3,23 +3,20 @@ import {
     Accessibility,
     AlertTriangle,
     Building2,
-    CheckCircle2,
     ChevronDown,
     ChevronUp,
     DoorOpen,
     Loader2,
     Search,
     UsersRound,
-    X,
 } from "lucide-react"
 import { useState, type FormEvent } from "react"
+import { useNavigate } from "react-router-dom"
 import {
     availabilityApi,
     type AvailabilitySearchParams,
-    type RoomAvailabilityRecord,
 } from "../lib/availabilityApi"
 import { facilitiesApi } from "../lib/api"
-import { minuteToTime } from "../lib/time"
 import { PaginationBar } from "./access/shared"
 import { RoomTimeline } from "./availability/RoomTimeline"
 
@@ -31,13 +28,6 @@ type SearchDraft = {
     minCapacity: string
     isAccessible: boolean
     features: string
-}
-
-type RequestSelection = {
-    record: RoomAvailabilityRecord
-    date: string
-    startMinute: number
-    endMinute: number
 }
 
 function institutionDate() {
@@ -77,88 +67,14 @@ function toCriteria(draft: SearchDraft, page = 1): AvailabilitySearchParams {
     }
 }
 
-function RequestSelectionDialog({
-    selection,
-    onClose,
-}: {
-    selection: RequestSelection
-    onClose: () => void
-}) {
-    return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4"
-            role="presentation"
-            onMouseDown={(event) => {
-                if (event.target === event.currentTarget) onClose()
-            }}
-        >
-            <div
-                className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="request-selection-title"
-            >
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <h2
-                            id="request-selection-title"
-                            className="text-lg font-semibold text-slate-900"
-                        >
-                            Room and time selected
-                        </h2>
-                        <p className="mt-1 text-sm text-slate-500">
-                            This selection is ready for the booking request
-                            form.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
-                        onClick={onClose}
-                        aria-label="Close"
-                    >
-                        <X className="size-5" />
-                    </button>
-                </div>
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
-                    <p className="font-semibold text-slate-900">
-                        {selection.record.room.fullCode}
-                    </p>
-                    <p className="mt-1 text-slate-600">
-                        {selection.record.room.building.name}
-                    </p>
-                    <p className="mt-3 font-medium text-slate-800">
-                        {selection.date} · {minuteToTime(selection.startMinute)}
-                        –{minuteToTime(selection.endMinute)}
-                    </p>
-                </div>
-                <div className="mt-4 flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-                    Room availability has been checked for this interval.
-                </div>
-                <div className="mt-5 flex justify-end">
-                    <button
-                        type="button"
-                        className="button-secondary"
-                        onClick={onClose}
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
 export function AvailabilityPage() {
+    const navigate = useNavigate()
     const [draft, setDraft] = useState<SearchDraft>(initialDraft)
     const [criteria, setCriteria] = useState<AvailabilitySearchParams>(() =>
         toCriteria(initialDraft)
     )
     const [hasSearched, setHasSearched] = useState(false)
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null)
-    const [requestSelection, setRequestSelection] =
-        useState<RequestSelection | null>(null)
 
     const optionsQuery = useQuery({
         queryKey: ["availability-options"],
@@ -184,18 +100,19 @@ export function AvailabilityPage() {
         queryKey: ["availability-timeline-config", criteria.date],
         queryFn: () => availabilityApi.timelineConfig(criteria.date),
         enabled: Boolean(expandedRoomId),
+        refetchInterval: expandedRoomId ? 60_000 : false,
     })
 
     const timelineQuery = useQuery({
         queryKey: ["room-timeline", expandedRoomId, criteria.date],
         queryFn: () => availabilityApi.timeline(expandedRoomId!, criteria.date),
         enabled: Boolean(expandedRoomId),
+        refetchInterval: expandedRoomId ? 60_000 : false,
     })
 
     const submit = (event: FormEvent) => {
         event.preventDefault()
         setExpandedRoomId(null)
-        setRequestSelection(null)
         setCriteria(toCriteria(draft))
         setHasSearched(true)
     }
@@ -205,10 +122,10 @@ export function AvailabilityPage() {
     return (
         <div className="space-y-6">
             <header>
-                <h1 className="page-title">Find a room</h1>
+                <h1 className="page-title">Book a room</h1>
                 <p className="page-subtitle">
-                    Find a suitable room, then inspect its day and choose a
-                    time.
+                    Choose a suitable room and an available time to submit a
+                    booking request.
                 </p>
             </header>
 
@@ -223,6 +140,7 @@ export function AvailabilityPage() {
                             className="field-input"
                             type="date"
                             required
+                            min={institutionDate()}
                             value={draft.date}
                             onChange={(event) => {
                                 setHasSearched(false)
@@ -508,12 +426,23 @@ export function AvailabilityPage() {
                                                     startMinute,
                                                     endMinute
                                                 ) =>
-                                                    setRequestSelection({
-                                                        record,
-                                                        date: criteria.date,
-                                                        startMinute,
-                                                        endMinute,
-                                                    })
+                                                    navigate(
+                                                        `/bookings/new?${new URLSearchParams(
+                                                            {
+                                                                roomId: record
+                                                                    .room.id,
+                                                                date: criteria.date,
+                                                                startMinute:
+                                                                    String(
+                                                                        startMinute
+                                                                    ),
+                                                                endMinute:
+                                                                    String(
+                                                                        endMinute
+                                                                    ),
+                                                            }
+                                                        ).toString()}`
+                                                    )
                                                 }
                                             />
                                         ) : null}
@@ -533,13 +462,6 @@ export function AvailabilityPage() {
                         />
                     </div>
                 </section>
-            ) : null}
-
-            {requestSelection ? (
-                <RequestSelectionDialog
-                    selection={requestSelection}
-                    onClose={() => setRequestSelection(null)}
-                />
             ) : null}
         </div>
     )

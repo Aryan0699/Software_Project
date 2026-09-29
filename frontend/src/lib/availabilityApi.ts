@@ -14,6 +14,7 @@ export type AvailabilitySource =
     | "ACADEMIC_TIMETABLE"
     | "ROOM_RESTRICTION"
     | "APPROVED_BOOKING"
+    | "PAST_TIME"
     | "PENDING_REQUEST"
 
 export type AvailabilityInterval = {
@@ -84,6 +85,7 @@ export type AvailabilityTimelineConfig = {
     minimumDurationMinutes: number
     selectionStepMinutes: number
     defaultDurationMinutes: number
+    selectableStartMinute: number
 }
 
 export type AvailabilitySearchParams = {

@@ -20,6 +20,7 @@ const sourceLabels = {
     ACADEMIC_TIMETABLE: "Academic timetable",
     ROOM_RESTRICTION: "Room restriction",
     APPROVED_BOOKING: "Approved event",
+    PAST_TIME: "Time has passed",
     PENDING_REQUEST: "Pending request",
 }
 
@@ -64,6 +65,9 @@ function buildSegments(
 
 function segmentClassName(segment: TimelineSegment, tooShort: boolean) {
     if (segment.state === "BLOCKED") {
+        if (segment.interval?.source === "PAST_TIME") {
+            return "cursor-not-allowed bg-slate-200"
+        }
         return "cursor-not-allowed bg-red-300 hover:bg-red-400"
     }
     return tooShort

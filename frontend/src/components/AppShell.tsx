@@ -3,6 +3,8 @@ import {
     CalendarDays,
     CalendarSearch,
     ChevronDown,
+    ClipboardCheck,
+    ClipboardList,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -26,12 +28,45 @@ function Navigation({ close }: { close?: () => void }) {
     const { user } = useAuth()
     const items = [
         { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-        {
-            to: "/availability",
-            label: "Find a room",
-            icon: CalendarSearch,
-            end: false,
-        },
+        ...(user?.role === "STUDENT" || user?.role === "FACULTY"
+            ? [
+                  {
+                      to: "/availability",
+                      label: "Book a room",
+                      icon: CalendarSearch,
+                      end: false,
+                  },
+                  {
+                      to: "/bookings",
+                      label:
+                          user.role === "STUDENT"
+                              ? "My Requests"
+                              : "Booking History",
+                      icon: ClipboardList,
+                      end: false,
+                  },
+              ]
+            : []),
+        ...(user?.role === "ADMIN" || user?.role === "STAFF"
+            ? [
+                  {
+                      to: "/bookings",
+                      label: "Booking History",
+                      icon: ClipboardList,
+                      end: false,
+                  },
+              ]
+            : []),
+        ...(user?.role === "FACULTY"
+            ? [
+                  {
+                      to: "/approvals",
+                      label: "Review Queue",
+                      icon: ClipboardCheck,
+                      end: false,
+                  },
+              ]
+            : []),
         ...(user?.role === "ADMIN"
             ? [
                   {
