@@ -158,18 +158,18 @@ The API must not place role authorization solely in frontend route guards.
 
 ### 5.2 Authorization Matrix
 
-| Capability | Student | Faculty | Dean office holder | Staff | Admin |
+| Capability | Student | Faculty | Institutional approver | Staff | Admin |
 | --- | --- | --- | --- | --- | --- |
 | Check availability | Yes | Yes | Yes | Yes | Yes |
 | Create event request | Own | Own | Own as faculty | No unless separately faculty | Optional administrative view only |
 | Faculty verification | No | Assigned requests | If assigned as faculty | No | No bypass |
-| Dean decision | No | Only if office holder | Assigned office tasks | No | No bypass |
+| Institutional decision | No | Only if listed | Assigned institutional tasks | No | No bypass |
 | View booking history | Own | Own and assigned student requests | All booking history | Assigned buildings | All |
 | Resolve timetable/calendar event conflicts | No | No | View history | View affected room schedules | All |
 | Manage room restrictions | No | No | View | Assigned buildings | All buildings |
 | Manage terms, grids, imports | No | No | View where useful | View operational results | All |
 
-Dean authority is evaluated from `DeanOfficeAssignment`, not from a `DEAN` base-role enum.
+Institutional authority is evaluated from active `InstitutionalApprover` membership, not from a separate base-role enum. Every member remains a faculty user.
 
 ## 6. Date, Time, and Overlap Rules
 
@@ -304,14 +304,14 @@ Publication has academic priority. A conflict does not permanently block publica
 ```mermaid
 stateDiagram-v2
   [*] --> PENDING_FACULTY: student submits
-  [*] --> PENDING_DEANS: faculty submits
-  PENDING_FACULTY --> PENDING_DEANS: faculty approves
+  [*] --> PENDING_INSTITUTIONAL: faculty submits
+  PENDING_FACULTY --> PENDING_INSTITUTIONAL: faculty approves
   PENDING_FACULTY --> REJECTED: faculty rejects
-  PENDING_DEANS --> REJECTED: any dean rejects
-  PENDING_DEANS --> APPROVED: all three approve and room is free
-  PENDING_DEANS --> REJECTED: final check loses conflict race
+  PENDING_INSTITUTIONAL --> REJECTED: any institutional reviewer rejects
+  PENDING_INSTITUTIONAL --> APPROVED: every assigned reviewer approves and room is free
+  PENDING_INSTITUTIONAL --> REJECTED: final check loses conflict race
   PENDING_FACULTY --> CANCELLED: requester cancels
-  PENDING_DEANS --> CANCELLED: requester cancels
+  PENDING_INSTITUTIONAL --> CANCELLED: requester cancels
   APPROVED --> CANCELLED: requester cancels future event
   APPROVED --> CANCELLED: admin resolves timetable/calendar conflict by cancellation
 ```
@@ -322,25 +322,25 @@ Terminal requests are not reopened in Phase 1.
 
 ### 12.1 Faculty Decision
 
-The transaction verifies the assigned pending faculty approval and active reviewer. Approval changes the faculty task, creates all three dean tasks from current office assignments, updates request status, writes history, and creates notifications.
+The transaction verifies the assigned pending faculty approval and active reviewer. Approval changes the faculty task, creates one institutional task for every active list member, updates request status, writes history, and creates notifications.
 
-If any office assignment is missing or inactive, no partial dean workflow is created.
+If the active institutional list is empty, no partial workflow is created.
 
-### 12.2 Dean Rejection
+### 12.2 Institutional Rejection
 
-The transaction updates the acting dean task to `REJECTED`, changes the request to `REJECTED`, closes remaining pending approvals, writes history, and notifies involved users.
+The transaction updates the acting institutional task to `REJECTED`, changes the request to `REJECTED`, closes remaining pending approvals, writes history, and notifies involved users.
 
-### 12.3 Dean Approval Before the Final Vote
+### 12.3 Institutional Approval Before the Final Vote
 
-The transaction updates only that dean's task, appends history, and notifies the requester of progress. The request remains `PENDING_DEANS`.
+The transaction updates only that reviewer's task, appends history, and notifies the requester of progress. The request remains `PENDING_INSTITUTIONAL`.
 
-### 12.4 Final Dean Approval
+### 12.4 Final Institutional Approval
 
 The final transition:
 
 1. Acquires the system occupancy advisory lock.
 2. Locks or conditionally updates the request version.
-3. Confirms the dean task is still pending.
+3. Confirms the institutional task is still pending.
 4. Re-runs complete availability.
 5. Updates the final task and request to `APPROVED`.
 6. Appends history and notifications.
@@ -498,7 +498,7 @@ The mature frontend is a behavior and interaction reference, not an API contract
 
 ### 20.2 Required Changes
 
-- Replace staff approval UI with faculty plus DOSA, ADOSA, and DOAA progress.
+- Show faculty verification followed by the dynamic institutional approver list.
 - Add term management and current-term status.
 - Add dynamic slot-system management and draft grid revisions.
 - Replace commit-session screens with Preview, Resolve, Impact, and Publish.
@@ -507,7 +507,7 @@ The mature frontend is a behavior and interaction reference, not an API contract
 - Add approved-event cancellation with required reason.
 - Add booking history filters and CSV download.
 - Add administrator audit log.
-- Update status labels for `PENDING_DEANS` and administrative booking changes.
+- Use the `PENDING_INSTITUTIONAL` status label and dynamic reviewer titles.
 
 React Query keys will be feature-scoped. Mutations invalidate only affected summaries, lists, timelines, and notification counts.
 
@@ -517,7 +517,7 @@ React Query keys will be feature-scoped. Mutations invalidate only affected summ
 - Use `RoomSlotOccupancy` for recurring timetable reads.
 - Batch availability by room IDs instead of issuing one query per room.
 - Paginate all operational and history lists.
-- Stream CSV exports rather than loading unbounded history into memory.
+- Generate CSV from the authorized filtered result; move to cursor streaming if measured history volume requires it.
 - Parse uploads with file and row limits.
 - Use short transactions and perform spreadsheet parsing before publication transactions.
 - Measure query plans before adding caches.

@@ -67,17 +67,17 @@ Why: Students need direct access without bypassing institutional accountability.
 
 A faculty member can inspect availability, create a one-off room request, review assigned student requests, approve or reject student requests, and monitor requests they created or verified.
 
-Faculty-created requests bypass faculty verification and move directly to dean approval.
+Faculty-created requests bypass faculty verification and move directly to institutional approval.
 
 Why: Faculty can both request rooms and establish academic accountability for student requests.
 
-### 3.3 Dean Approvers
+### 3.3 Institutional Approvers
 
-The three required dean approvers are DOSA, ADOSA, and DOAA. Each receives an independent approval task for every request that reaches the dean stage.
+Administrators maintain a list of required institutional approvers. Every active member is an active faculty user with a display title such as DOSA, ADOSA, or DOAA. Each receives an independent approval task when a request reaches the institutional stage.
 
-All three approvals are required. They may decide in any order and in parallel. Any one rejection immediately rejects the complete request.
+Every assigned approval is required. Reviewers may decide in any order and in parallel. Any one rejection immediately rejects the complete request. Membership changes affect stages created afterward; approval tasks already created remain the historical workflow for that request.
 
-Why: The digital workflow must preserve the stakeholder-approved three-office authorization process.
+Why: The digital workflow preserves unanimous institutional authorization while allowing another required authority to be added without changing workflow code.
 
 ### 3.4 LHC or Building Staff
 
@@ -117,13 +117,13 @@ Administrators will be able to assign and update recognized institutional roles.
 
 Why: Historical records must remain understandable after a person leaves or changes responsibility.
 
-### ID-04 Dean Office Assignment
+### ID-04 Institutional Approver Assignment
 
-The system will identify the active user responsible for each required dean office: DOSA, ADOSA, and DOAA.
+Administrators can add active faculty members to the institutional approver list and assign each a clear title.
 
-Each office will have one active assignee, and the same person cannot hold more than one of the three offices at the same time.
+The same person can appear only once in the active list. Existing entries are deactivated rather than deleted so historical context remains available.
 
-The system will prevent a request from entering dean approval if any required office has no active approver, and will clearly tell the administrator what is missing.
+The system will prevent a request from entering institutional approval when the list has no active approver and will clearly tell the administrator what is missing.
 
 Why: A request must not become permanently stuck in an incomplete approval workflow.
 
@@ -673,31 +673,31 @@ Why: Approved details form part of the authorization decision.
 
 A student request will first be assigned to the selected faculty verifier.
 
-Faculty approval forwards the request to the three required dean offices. Faculty rejection ends the request.
+Faculty approval forwards the request to the active institutional approver list. Faculty rejection ends the request.
 
 Why: This implements the confirmed student accountability chain.
 
-### APPROVAL-02 Three Required Dean Reviews
+### APPROVAL-02 Required Institutional Reviews
 
-Every request entering dean review will create independent pending tasks for DOSA, ADOSA, and DOAA.
+Every request entering institutional review will create one independent pending task for every active list member, including the member’s title at assignment time.
 
 Why: The system must know both completed decisions and reviewers who have not yet acted.
 
 ### APPROVAL-03 Parallel Decisions
 
-The three deans may approve in any order and in parallel.
+Institutional approvers may approve in any order and in parallel.
 
 Why: The workflow should not impose an unnecessary sequential delay.
 
 ### APPROVAL-04 Unanimous Approval
 
-A request will reach final approval only after all three required deans approve.
+A request will reach final approval only after every assigned institutional approver approves.
 
 Why: This is the confirmed stakeholder rule.
 
 ### APPROVAL-05 Immediate Rejection
 
-Any dean rejection immediately rejects the complete request, records the reason, closes remaining pending dean tasks, and notifies the requester and involved faculty.
+Any institutional rejection immediately rejects the complete request, records the reason, closes remaining pending tasks, and notifies the requester and involved faculty.
 
 Why: Continuing to collect approvals after a decisive rejection wastes time and creates ambiguity.
 
@@ -811,8 +811,8 @@ Notifications will cover at least:
 
 - New faculty verification task.
 - Faculty approval or rejection.
-- New dean approval task.
-- Dean approval progress.
+- New institutional approval task.
+- Institutional approval progress.
 - Final approval or rejection.
 - Automatic conflict rejection.
 - Request cancellation.
@@ -884,7 +884,7 @@ Why: An editable audit trail cannot provide accountability.
 Booking history visibility will follow role and operational scope:
 
 - Administrators can view all booking history.
-- DOSA, ADOSA, and DOAA can view all booking requests, decisions, cancellations, timetable conflicts, relocations, and reschedules, but not unrelated sensitive security or configuration records.
+- Active institutional approvers can view all booking requests, decisions, cancellations, timetable conflicts, relocations, and reschedules, but not unrelated sensitive security or configuration records.
 - Staff can view full booking history for rooms in their assigned buildings.
 - Faculty can view their own requests and student requests assigned to them.
 - Students can view only their own requests.
@@ -893,7 +893,7 @@ Why: Decision-makers and room operators need sufficient context without exposing
 
 ### AUDIT-08 History Filters and Download
 
-The booking history interface will provide quick date filters for the last 7 days and last 30 days, a custom date range, and filters for status, room, building, actor, and action type where permitted.
+The booking history interface will provide quick date filters for the last 7 days and last 30 days, a custom date range, and filters for status, room, building, and requester where permitted.
 
 Authorized users will be able to download the filtered result as CSV. The download will enforce the same role and building scope as the on-screen results.
 
@@ -919,9 +919,9 @@ Faculty will see their room requests, student requests awaiting verification, up
 
 Why: Faculty are both requesters and reviewers.
 
-### DASH-03 Dean Dashboard
+### DASH-03 Institutional Approver Dashboard
 
-Each dean will see their pending approval tasks, competing requests, urgent items, recent decisions, and unread notifications.
+Each institutional approver will see their pending approval tasks, competing requests, urgent items, recent decisions, and unread notifications.
 
 Why: Approval work must be quickly scannable and actionable.
 
