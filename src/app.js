@@ -17,6 +17,7 @@ import authRouter from "./routes/auth.route.js"
 import bookingRouter from "./routes/booking.route.js"
 import facilitiesRouter from "./routes/facilities.route.js"
 import healthRouter from "./routes/health.route.js"
+import notificationRouter from "./routes/notification.route.js"
 import ApiResponse from "./utils/ApiResponse.js"
 import logger from "./utils/logger.js"
 
@@ -79,6 +80,7 @@ app.use("/api/v1/academic-calendar", academicCalendarRouter)
 app.use("/api/v1/availability", availabilityRouter)
 app.use("/api/v1/booking-requests", bookingRouter)
 app.use("/api/v1/approvals", approvalRouter)
+app.use("/api/v1/notifications", notificationRouter)
 
 // since top down therefore if route not found or any error on top then shown over here
 app.use(notFoundHandler)

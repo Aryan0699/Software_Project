@@ -1,6 +1,10 @@
 import { Router } from "express"
 import {
+    cancelBookingRequest,
     createBookingRequest,
+    exportBookingRequests,
+    getBookingDashboard,
+    getBookingFilterOptions,
     getBookingRequest,
     listBookingRequests,
     listFacultyVerifiers,
@@ -14,6 +18,7 @@ import {
 } from "../middlewares/validate.middleware.js"
 import {
     bookingRequestParamsSchema,
+    cancelBookingRequestSchema,
     createBookingRequestSchema,
     facultyVerifierQuerySchema,
     listBookingRequestsQuerySchema,
@@ -28,10 +33,24 @@ bookingRouter.get(
     validateQuery(facultyVerifierQuerySchema),
     listFacultyVerifiers
 )
+bookingRouter.get("/filter-options", getBookingFilterOptions)
+bookingRouter.get("/dashboard", getBookingDashboard)
+bookingRouter.get(
+    "/export",
+    validateQuery(listBookingRequestsQuerySchema),
+    exportBookingRequests
+)
 bookingRouter.get(
     "/",
     validateQuery(listBookingRequestsQuerySchema),
     listBookingRequests
+)
+bookingRouter.post(
+    "/:id/cancel",
+    requireRole("STUDENT", "FACULTY"),
+    validateParams(bookingRequestParamsSchema),
+    validateBody(cancelBookingRequestSchema),
+    cancelBookingRequest
 )
 bookingRouter.post(
     "/",

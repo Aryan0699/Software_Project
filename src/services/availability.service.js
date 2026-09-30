@@ -186,7 +186,11 @@ async function evaluateRooms({ rooms, date, startMinute, endMinute, viewer }) {
                     roomId: { in: roomIds },
                     bookingDate: date,
                     status: {
-                        in: ["APPROVED", "PENDING_FACULTY", "PENDING_DEANS"],
+                        in: [
+                            "APPROVED",
+                            "PENDING_FACULTY",
+                            "PENDING_INSTITUTIONAL",
+                        ],
                     },
                     ...overlap,
                 },

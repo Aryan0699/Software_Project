@@ -1,4 +1,3 @@
-import { DEAN_APPROVAL_ROLES } from "../config/bookingWorkflow.js"
 import { env } from "../config/env.js"
 import { prisma } from "../db/index.js"
 import ApiError from "../utils/ApiError.js"
@@ -11,7 +10,7 @@ import {
     bookingRecordInclude,
     bookingSummarySelect,
     findPendingCompetitors,
-    getActiveOfficeAssignments,
+    getActiveInstitutionalApprovers,
     serializeBookingRequest,
     serializeBookingSummary,
 } from "./bookingRequests.service.js"
@@ -20,6 +19,7 @@ import {
     expireStartedBookingRequests,
     rejectExpiredBooking,
 } from "./bookingExpiry.service.js"
+import { createNotifications } from "./notification.service.js"
 
 const AUTO_REJECTION_REASON = "Room was allocated to another request."
 
@@ -38,7 +38,8 @@ const approvalQueueInclude = {
 function serializeApprovalTask(task) {
     return {
         id: task.id,
-        reviewerRole: task.reviewerRole,
+        reviewerKind: task.reviewerKind,
+        reviewerLabel: task.reviewerLabel,
         status: task.status,
         decisionNote: task.decisionNote,
         assignedAt: task.assignedAt,
@@ -52,7 +53,8 @@ function serializeApprovalTask(task) {
 function serializeApprovalQueueTask(task) {
     return {
         id: task.id,
-        reviewerRole: task.reviewerRole,
+        reviewerKind: task.reviewerKind,
+        reviewerLabel: task.reviewerLabel,
         status: task.status,
         decisionNote: task.decisionNote,
         assignedAt: task.assignedAt,
@@ -80,18 +82,18 @@ function requireAssignedTask(task, viewer) {
     }
 }
 
-function isInstitutionalRole(role) {
-    return DEAN_APPROVAL_ROLES.includes(role)
+function isInstitutionalKind(kind) {
+    return kind === "INSTITUTIONAL"
 }
 
 function wouldFinalize(task) {
-    if (!isInstitutionalRole(task.reviewerRole)) return false
-    const deanTasks = task.bookingRequest.approvals.filter((approval) =>
-        isInstitutionalRole(approval.reviewerRole)
+    if (!isInstitutionalKind(task.reviewerKind)) return false
+    const institutionalTasks = task.bookingRequest.approvals.filter((approval) =>
+        isInstitutionalKind(approval.reviewerKind)
     )
     return (
-        deanTasks.length === DEAN_APPROVAL_ROLES.length &&
-        deanTasks.every(
+        institutionalTasks.length > 0 &&
+        institutionalTasks.every(
             (approval) =>
                 approval.id === task.id || approval.status === "APPROVED"
         )
@@ -245,20 +247,48 @@ async function rejectByReviewer(tx, task, input, viewer) {
         data: {
             bookingRequestId: task.bookingRequestId,
             actionType:
-                task.reviewerRole === "FACULTY"
+                task.reviewerKind === "FACULTY"
                     ? "FACULTY_REJECTED"
-                    : "DEAN_REJECTED",
+                    : "INSTITUTIONAL_REJECTED",
             performedByUserId: viewer.id,
             previousStatus: task.bookingRequest.status,
             newStatus: "REJECTED",
             note: input.note,
-            metadata: { reviewerRole: task.reviewerRole },
+            metadata: { reviewerKind: task.reviewerKind },
         },
     })
+    const facultyTask = task.bookingRequest.approvals.find(
+        (approval) => approval.reviewerKind === "FACULTY"
+    )
+    await createNotifications(tx, [
+        {
+            recipientId: task.bookingRequest.requesterUserId,
+            type:
+                task.reviewerKind === "FACULTY"
+                    ? "FACULTY_REJECTED"
+                    : "BOOKING_REJECTED",
+            title: "Room request rejected",
+            message: input.note,
+            resourceType: "BOOKING_REQUEST",
+            resourceId: task.bookingRequestId,
+        },
+        ...(task.reviewerKind === "INSTITUTIONAL" && facultyTask
+            ? [
+                  {
+                      recipientId: facultyTask.reviewerUserId,
+                      type: "BOOKING_REJECTED",
+                      title: "Student room request rejected",
+                      message: input.note,
+                      resourceType: "BOOKING_REQUEST",
+                      resourceId: task.bookingRequestId,
+                  },
+              ]
+            : []),
+    ])
 }
 
 async function approveFaculty(tx, task, input, viewer) {
-    const offices = await getActiveOfficeAssignments(tx)
+    const approvers = await getActiveInstitutionalApprovers(tx)
     const now = new Date()
     await tx.bookingApproval.update({
         where: { id: task.id },
@@ -269,15 +299,16 @@ async function approveFaculty(tx, task, input, viewer) {
         },
     })
     await tx.bookingApproval.createMany({
-        data: offices.map((assignment) => ({
+        data: approvers.map((assignment) => ({
             bookingRequestId: task.bookingRequestId,
-            reviewerRole: assignment.office,
+            reviewerKind: "INSTITUTIONAL",
+            reviewerLabel: assignment.title,
             reviewerUserId: assignment.userId,
         })),
     })
     await tx.bookingRequest.update({
         where: { id: task.bookingRequestId },
-        data: { status: "PENDING_DEANS", version: { increment: 1 } },
+        data: { status: "PENDING_INSTITUTIONAL", version: { increment: 1 } },
     })
     await tx.bookingActionHistory.createMany({
         data: [
@@ -286,23 +317,41 @@ async function approveFaculty(tx, task, input, viewer) {
                 actionType: "FACULTY_APPROVED",
                 performedByUserId: viewer.id,
                 previousStatus: "PENDING_FACULTY",
-                newStatus: "PENDING_DEANS",
+                newStatus: "PENDING_INSTITUTIONAL",
                 note: input.note || null,
-                metadata: { reviewerRole: "FACULTY" },
+                metadata: { reviewerKind: "FACULTY" },
             },
             {
                 bookingRequestId: task.bookingRequestId,
-                actionType: "SENT_TO_DEANS",
+                actionType: "SENT_TO_INSTITUTIONAL_REVIEW",
                 performedByUserId: viewer.id,
                 previousStatus: "PENDING_FACULTY",
-                newStatus: "PENDING_DEANS",
+                newStatus: "PENDING_INSTITUTIONAL",
                 note: "Sent for institutional approval",
             },
         ],
     })
+    await createNotifications(tx, [
+        {
+            recipientId: task.bookingRequest.requesterUserId,
+            type: "FACULTY_APPROVED",
+            title: "Faculty verification completed",
+            message: `${task.bookingRequest.title} was sent for institutional approval.`,
+            resourceType: "BOOKING_REQUEST",
+            resourceId: task.bookingRequestId,
+        },
+        ...approvers.map((approver) => ({
+            recipientId: approver.userId,
+            type: "INSTITUTIONAL_REVIEW_REQUIRED",
+            title: "Room request needs your review",
+            message: `${task.bookingRequest.title} requires your decision.`,
+            resourceType: "BOOKING_REQUEST",
+            resourceId: task.bookingRequestId,
+        })),
+    ])
 }
 
-async function approveNonFinalDean(tx, task, input, viewer) {
+async function approveNonFinalInstitutional(tx, task, input, viewer) {
     await tx.bookingApproval.update({
         where: { id: task.id },
         data: {
@@ -318,14 +367,24 @@ async function approveNonFinalDean(tx, task, input, viewer) {
     await tx.bookingActionHistory.create({
         data: {
             bookingRequestId: task.bookingRequestId,
-            actionType: "DEAN_APPROVED",
+            actionType: "INSTITUTIONAL_APPROVED",
             performedByUserId: viewer.id,
-            previousStatus: "PENDING_DEANS",
-            newStatus: "PENDING_DEANS",
+            previousStatus: "PENDING_INSTITUTIONAL",
+            newStatus: "PENDING_INSTITUTIONAL",
             note: input.note || null,
-            metadata: { reviewerRole: task.reviewerRole },
+            metadata: { reviewerKind: task.reviewerKind },
         },
     })
+    await createNotifications(tx, [
+        {
+            recipientId: task.bookingRequest.requesterUserId,
+            type: "INSTITUTIONAL_APPROVAL_PROGRESS",
+            title: "Approval progress updated",
+            message: `${task.reviewerLabel} approved ${task.bookingRequest.title}.`,
+            resourceType: "BOOKING_REQUEST",
+            resourceId: task.bookingRequestId,
+        },
+    ])
 }
 
 function finalSuitabilityLost(request) {
@@ -375,18 +434,28 @@ async function rejectForLostAvailability(tx, task, viewer, reason) {
             bookingRequestId: task.bookingRequestId,
             actionType: "AUTO_REJECTED_CONFLICT",
             performedByUserId: viewer.id,
-            previousStatus: "PENDING_DEANS",
+            previousStatus: "PENDING_INSTITUTIONAL",
             newStatus: "REJECTED",
             note: reason,
             metadata: {
-                reviewerRole: task.reviewerRole,
+                reviewerKind: task.reviewerKind,
                 finalAvailabilityLost: true,
             },
         },
     })
+    await createNotifications(tx, [
+        {
+            recipientId: task.bookingRequest.requesterUserId,
+            type: "BOOKING_AUTO_REJECTED",
+            title: "Room request could not be finalized",
+            message: reason,
+            resourceType: "BOOKING_REQUEST",
+            resourceId: task.bookingRequestId,
+        },
+    ])
 }
 
-async function approveFinalDean(tx, task, input, viewer) {
+async function approveFinalInstitutional(tx, task, input, viewer) {
     await acquireOccupancyLock(tx)
     const current = await loadTask(tx, task.id)
     requireAssignedTask(current, viewer)
@@ -486,29 +555,54 @@ async function approveFinalDean(tx, task, input, viewer) {
         data: [
             {
                 bookingRequestId: current.bookingRequestId,
-                actionType: "DEAN_APPROVED",
+                actionType: "INSTITUTIONAL_APPROVED",
                 performedByUserId: viewer.id,
-                previousStatus: "PENDING_DEANS",
-                newStatus: "PENDING_DEANS",
+                previousStatus: "PENDING_INSTITUTIONAL",
+                newStatus: "PENDING_INSTITUTIONAL",
                 note: input.note || null,
-                metadata: { reviewerRole: current.reviewerRole },
+                metadata: { reviewerKind: current.reviewerKind },
             },
             {
                 bookingRequestId: current.bookingRequestId,
                 actionType: "FINAL_APPROVED",
                 performedByUserId: viewer.id,
-                previousStatus: "PENDING_DEANS",
+                previousStatus: "PENDING_INSTITUTIONAL",
                 newStatus: "APPROVED",
                 note: "All required approvals completed",
             },
         ],
     })
+    const facultyTask = current.bookingRequest.approvals.find(
+        (approval) => approval.reviewerKind === "FACULTY"
+    )
+    await createNotifications(tx, [
+        {
+            recipientId: current.bookingRequest.requesterUserId,
+            type: "BOOKING_APPROVED",
+            title: "Room request approved",
+            message: `${current.bookingRequest.title} has been approved.`,
+            resourceType: "BOOKING_REQUEST",
+            resourceId: current.bookingRequestId,
+        },
+        ...(facultyTask
+            ? [
+                  {
+                      recipientId: facultyTask.reviewerUserId,
+                      type: "BOOKING_APPROVED",
+                      title: "Student room request approved",
+                      message: `${current.bookingRequest.title} has completed institutional approval.`,
+                      resourceType: "BOOKING_REQUEST",
+                      resourceId: current.bookingRequestId,
+                  },
+              ]
+            : []),
+    ])
 
     for (const competitor of competitors) {
         const updated = await tx.bookingRequest.updateMany({
             where: {
                 id: competitor.id,
-                status: { in: ["PENDING_FACULTY", "PENDING_DEANS"] },
+                status: { in: ["PENDING_FACULTY", "PENDING_INSTITUTIONAL"] },
             },
             data: {
                 status: "REJECTED",
@@ -537,6 +631,36 @@ async function approveFinalDean(tx, task, input, viewer) {
                 },
             },
         })
+        const competitorFacultyTask = await tx.bookingApproval.findFirst({
+            where: {
+                bookingRequestId: competitor.id,
+                reviewerKind: "FACULTY",
+            },
+            select: { reviewerUserId: true },
+        })
+        await createNotifications(tx, [
+            {
+                recipientId: competitor.requester.id,
+                type: "BOOKING_AUTO_REJECTED",
+                title: "Room request was not allocated",
+                message: input.sharedConflictNote || AUTO_REJECTION_REASON,
+                resourceType: "BOOKING_REQUEST",
+                resourceId: competitor.id,
+            },
+            ...(competitorFacultyTask
+                ? [
+                      {
+                          recipientId: competitorFacultyTask.reviewerUserId,
+                          type: "BOOKING_AUTO_REJECTED",
+                          title: "Student room request was not allocated",
+                          message:
+                              input.sharedConflictNote || AUTO_REJECTION_REASON,
+                          resourceType: "BOOKING_REQUEST",
+                          resourceId: competitor.id,
+                      },
+                  ]
+                : []),
+        ])
     }
 }
 
@@ -578,19 +702,19 @@ export async function decideApproval(approvalId, input, viewer) {
                 await rejectByReviewer(tx, task, input, viewer)
                 return
             }
-            if (task.reviewerRole === "FACULTY") {
+            if (task.reviewerKind === "FACULTY") {
                 await approveFaculty(tx, task, input, viewer)
                 return
             }
-            if (!isInstitutionalRole(task.reviewerRole)) {
+            if (!isInstitutionalKind(task.reviewerKind)) {
                 throw new ApiError(409, "This approval role is not supported", {
                     code: "APPROVAL_ROLE_UNSUPPORTED",
                 })
             }
             if (wouldFinalize(task)) {
-                await approveFinalDean(tx, task, input, viewer)
+                await approveFinalInstitutional(tx, task, input, viewer)
             } else {
-                await approveNonFinalDean(tx, task, input, viewer)
+                await approveNonFinalInstitutional(tx, task, input, viewer)
             }
         },
         { maxWait: 5_000, timeout: 20_000 }

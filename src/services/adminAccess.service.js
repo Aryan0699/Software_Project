@@ -2,8 +2,6 @@ import { prisma } from "../db/index.js"
 import ApiError from "../utils/ApiError.js"
 import { pagination, pageOffset } from "../utils/pagination.js"
 
-const DEAN_OFFICES = ["DOSA", "ADOSA", "DOAA"]
-
 const approvalSelect = {
     id: true,
     email: true,
@@ -29,8 +27,8 @@ const userAccessSelect = {
     studentProfile: true,
     facultyProfile: true,
     staffProfile: true,
-    deanOfficeHeld: {
-        select: { office: true, assignedAt: true },
+    institutionalApprover: {
+        select: { id: true, title: true, isActive: true, assignedAt: true },
     },
     staffBuildings: {
         select: {
@@ -44,10 +42,12 @@ const userAccessSelect = {
     },
 }
 
-const deanAssignmentSelect = {
+const institutionalApproverSelect = {
     id: true,
-    office: true,
+    title: true,
+    isActive: true,
     assignedAt: true,
+    deactivatedAt: true,
     updatedAt: true,
     user: {
         select: {
@@ -255,7 +255,14 @@ export async function updateUserAccess({ id, changes, actorUserId }) {
                 id: true,
                 role: true,
                 isActive: true,
-                deanOfficeHeld: { select: { office: true } },
+                institutionalApprover: {
+                    select: { id: true, title: true, isActive: true },
+                },
+                bookingApprovals: {
+                    where: { status: "PENDING" },
+                    select: { id: true },
+                    take: 1,
+                },
                 _count: { select: { staffBuildings: true } },
             },
         })
@@ -279,11 +286,25 @@ export async function updateUserAccess({ id, changes, actorUserId }) {
             )
         }
 
-        if (user.deanOfficeHeld && (!nextIsActive || nextRole !== "FACULTY")) {
+        if (
+            user.institutionalApprover?.isActive &&
+            (!nextIsActive || nextRole !== "FACULTY")
+        ) {
             throw new ApiError(
                 409,
-                `Reassign the ${user.deanOfficeHeld.office} office before changing this user`,
-                { code: "USER_HAS_DEAN_OFFICE" }
+                "Deactivate this institutional approver membership before changing the account",
+                { code: "USER_IS_INSTITUTIONAL_APPROVER" }
+            )
+        }
+
+        if (
+            user.bookingApprovals.length > 0 &&
+            (!nextIsActive || nextRole !== "FACULTY")
+        ) {
+            throw new ApiError(
+                409,
+                "This faculty member still has pending booking decisions",
+                { code: "USER_HAS_PENDING_APPROVALS" }
             )
         }
 
@@ -322,117 +343,126 @@ export async function updateUserAccess({ id, changes, actorUserId }) {
     })
 }
 
-export async function getDeanOffices() {
-    const assignments = await prisma.deanOfficeAssignment.findMany({
-        select: deanAssignmentSelect,
-        orderBy: { office: "asc" },
+export function listInstitutionalApprovers() {
+    return prisma.institutionalApprover.findMany({
+        select: institutionalApproverSelect,
+        orderBy: [{ isActive: "desc" }, { assignedAt: "asc" }, { id: "asc" }],
     })
-    const byOffice = new Map(
-        assignments.map((assignment) => [assignment.office, assignment])
-    )
-
-    return DEAN_OFFICES.map((office) => ({
-        office,
-        assignment: byOffice.get(office) || null,
-    }))
 }
 
-export async function assignDeanOffice({ office, userId, actorUserId }) {
-    return prisma.$transaction(
-        async (tx) => {
-            const previousAssignment = await tx.deanOfficeAssignment.findUnique(
-                {
-                    where: { office },
-                    select: { userId: true },
-                }
-            )
-            const user = await tx.user.findUnique({
-                where: { id: userId },
-                select: {
-                    id: true,
-                    role: true,
-                    isActive: true,
-                    deanOfficeHeld: { select: { office: true } },
-                },
-            })
-            if (!user) {
-                throw new ApiError(404, "User was not found", {
-                    code: "USER_NOT_FOUND",
-                })
-            }
-            if (!user.isActive || user.role !== "FACULTY") {
-                throw new ApiError(
-                    409,
-                    "A dean office can be assigned only to an active faculty user",
-                    { code: "INVALID_DEAN_ASSIGNEE" }
-                )
-            }
-            if (user.deanOfficeHeld?.office === office) {
-                return tx.deanOfficeAssignment.findUnique({
-                    where: { office },
-                    select: deanAssignmentSelect,
-                })
-            }
-            if (user.deanOfficeHeld) {
-                throw new ApiError(
-                    409,
-                    `This user already holds the ${user.deanOfficeHeld.office} office`,
-                    { code: "USER_ALREADY_HAS_DEAN_OFFICE" }
-                )
-            }
-
-            const assignment = await tx.deanOfficeAssignment.upsert({
-                where: { office },
-                update: {
-                    userId,
-                    assignedByUserId: actorUserId,
-                    assignedAt: new Date(),
-                },
-                create: {
-                    office,
-                    userId,
-                    assignedByUserId: actorUserId,
-                },
-                select: deanAssignmentSelect,
-            })
-
-            if (previousAssignment && previousAssignment.userId !== userId) {
-                const pendingTasks = await tx.bookingApproval.findMany({
-                    where: {
-                        reviewerRole: office,
-                        status: "PENDING",
-                        bookingRequest: { status: "PENDING_DEANS" },
-                    },
-                    select: { id: true, bookingRequestId: true },
-                })
-                if (pendingTasks.length) {
-                    await tx.bookingApproval.updateMany({
-                        where: {
-                            id: { in: pendingTasks.map((task) => task.id) },
-                        },
-                        data: { reviewerUserId: userId },
-                    })
-                    await tx.bookingActionHistory.createMany({
-                        data: pendingTasks.map((task) => ({
-                            bookingRequestId: task.bookingRequestId,
-                            actionType: "NOTE_ADDED",
-                            performedByUserId: actorUserId,
-                            note: `${office} pending approval reassigned to the current office holder`,
-                            metadata: {
-                                reviewerRole: office,
-                                previousReviewerUserId:
-                                    previousAssignment.userId,
-                                reviewerUserId: userId,
-                            },
-                        })),
-                    })
-                }
-            }
-
-            return assignment
+export async function getInstitutionalApproverOptions() {
+    return prisma.user.findMany({
+        where: {
+            role: "FACULTY",
+            isActive: true,
+            facultyProfile: { isNot: null },
         },
-        { maxWait: 5_000, timeout: 20_000 }
-    )
+        select: { id: true, name: true, email: true },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+    })
+}
+
+export async function createInstitutionalApprover({
+    userId,
+    title,
+    actorUserId,
+}) {
+    return prisma.$transaction(async (tx) => {
+        const user = await tx.user.findFirst({
+            where: {
+                id: userId,
+                role: "FACULTY",
+                isActive: true,
+                facultyProfile: { isNot: null },
+            },
+            select: { id: true },
+        })
+        if (!user) {
+            throw new ApiError(
+                409,
+                "Only an active faculty member can be an institutional approver",
+                { code: "INVALID_INSTITUTIONAL_APPROVER" }
+            )
+        }
+        const existing = await tx.institutionalApprover.findUnique({
+            where: { userId },
+            select: { id: true },
+        })
+        if (existing) {
+            throw new ApiError(409, "This faculty member is already in the approver list", {
+                code: "INSTITUTIONAL_APPROVER_EXISTS",
+            })
+        }
+        const approver = await tx.institutionalApprover.create({
+            data: { userId, title, assignedByUserId: actorUserId },
+            select: institutionalApproverSelect,
+        })
+        await tx.administrativeAuditEvent.create({
+            data: {
+                actorUserId,
+                action: "ASSIGN",
+                entityType: "INSTITUTIONAL_APPROVER",
+                entityId: approver.id,
+                afterState: { userId, title, isActive: true },
+                changedFields: ["userId", "title", "isActive"],
+            },
+        })
+        return approver
+    })
+}
+
+export async function updateInstitutionalApprover({ id, changes, actorUserId }) {
+    return prisma.$transaction(async (tx) => {
+        const existing = await tx.institutionalApprover.findUnique({
+            where: { id },
+            select: { id: true, userId: true, title: true, isActive: true, user: { select: { isActive: true, role: true } } },
+        })
+        if (!existing) {
+            throw new ApiError(404, "Institutional approver was not found", {
+                code: "INSTITUTIONAL_APPROVER_NOT_FOUND",
+            })
+        }
+        if (changes.isActive === true && (!existing.user.isActive || existing.user.role !== "FACULTY")) {
+            throw new ApiError(409, "The faculty account must be active before this membership can be activated", {
+                code: "INVALID_INSTITUTIONAL_APPROVER",
+            })
+        }
+        const approver = await tx.institutionalApprover.update({
+            where: { id },
+            data: {
+                ...changes,
+                ...(changes.isActive === undefined
+                    ? {}
+                    : { deactivatedAt: changes.isActive ? null : new Date() }),
+            },
+            select: institutionalApproverSelect,
+        })
+        await tx.administrativeAuditEvent.create({
+            data: {
+                actorUserId,
+                action:
+                    changes.isActive === true
+                        ? "ACTIVATE"
+                        : changes.isActive === false
+                          ? "DEACTIVATE"
+                          : "UPDATE",
+                entityType: "INSTITUTIONAL_APPROVER",
+                entityId: id,
+                beforeState: {
+                    userId: existing.userId,
+                    title: existing.title,
+                    isActive: existing.isActive,
+                },
+                afterState: {
+                    userId: approver.user.id,
+                    title: approver.title,
+                    isActive: approver.isActive,
+                },
+                changedFields: Object.keys(changes),
+            },
+        })
+        return approver
+    })
 }
 
 export async function listStaffAssignments({

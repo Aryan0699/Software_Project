@@ -1,15 +1,17 @@
 import { Router } from "express"
 import {
-    assignDeanOffice,
+    createInstitutionalApprover,
     createApprovedUser,
     createStaffAssignment,
     deleteStaffAssignment,
-    getDeanOffices,
+    getInstitutionalApproverOptions,
+    listInstitutionalApprovers,
     getStaffAssignmentOptions,
     listApprovedUsers,
     listStaffAssignments,
     listUsers,
     updateApprovedUser,
+    updateInstitutionalApprover,
     updateUserAccess,
     updateUserProfile,
 } from "../controllers/adminAccess.controller.js"
@@ -21,15 +23,15 @@ import {
     validateQuery,
 } from "../middlewares/validate.middleware.js"
 import {
-    assignDeanOfficeSchema,
+    createInstitutionalApproverSchema,
     createApprovedUserSchema,
     createStaffAssignmentSchema,
-    deanOfficeParamsSchema,
     listApprovedUsersQuerySchema,
     listStaffAssignmentsQuerySchema,
     listUsersQuerySchema,
     recordIdParamsSchema,
     updateApprovedUserSchema,
+    updateInstitutionalApproverSchema,
     updateUserAccessSchema,
 } from "../schemas/adminAccess.schema.js"
 import { updateProfileSchema } from "../schemas/profile.schema.js"
@@ -69,12 +71,21 @@ adminAccessRouter.patch(
     updateUserProfile
 )
 
-adminAccessRouter.get("/dean-offices", getDeanOffices)
-adminAccessRouter.put(
-    "/dean-offices/:office",
-    validateParams(deanOfficeParamsSchema),
-    validateBody(assignDeanOfficeSchema),
-    assignDeanOffice
+adminAccessRouter.get("/institutional-approvers", listInstitutionalApprovers)
+adminAccessRouter.get(
+    "/institutional-approver-options",
+    getInstitutionalApproverOptions
+)
+adminAccessRouter.post(
+    "/institutional-approvers",
+    validateBody(createInstitutionalApproverSchema),
+    createInstitutionalApprover
+)
+adminAccessRouter.patch(
+    "/institutional-approvers/:id",
+    validateParams(recordIdParamsSchema),
+    validateBody(updateInstitutionalApproverSchema),
+    updateInstitutionalApprover
 )
 
 adminAccessRouter.get(

@@ -24,12 +24,6 @@ enum AcademicTermStatus {
   CLOSED
 }
 
-enum DeanOffice {
-  DOSA
-  ADOSA
-  DOAA
-}
-
 enum RoomStatus {
   ACTIVE
   INACTIVE
@@ -101,7 +95,7 @@ enum ComponentKind {
 
 enum BookingStatus {
   PENDING_FACULTY
-  PENDING_DEANS
+  PENDING_INSTITUTIONAL
   APPROVED
   REJECTED
   CANCELLED
@@ -116,11 +110,9 @@ enum BookingEventType {
   OTHER
 }
 
-enum BookingApprovalRole {
+enum BookingReviewerKind {
   FACULTY
-  DOSA
-  ADOSA
-  DOAA
+  INSTITUTIONAL
 }
 
 enum BookingApprovalStatus {
@@ -134,9 +126,9 @@ enum BookingActionType {
   CREATED
   FACULTY_APPROVED
   FACULTY_REJECTED
-  SENT_TO_DEANS
-  DEAN_APPROVED
-  DEAN_REJECTED
+  SENT_TO_INSTITUTIONAL_REVIEW
+  INSTITUTIONAL_APPROVED
+  INSTITUTIONAL_REJECTED
   FINAL_APPROVED
   AUTO_REJECTED_CONFLICT
   AUTO_REJECTED_EXPIRED
@@ -151,8 +143,8 @@ enum NotificationType {
   FACULTY_REVIEW_REQUIRED
   FACULTY_APPROVED
   FACULTY_REJECTED
-  DEAN_REVIEW_REQUIRED
-  DEAN_APPROVAL_PROGRESS
+  INSTITUTIONAL_REVIEW_REQUIRED
+  INSTITUTIONAL_APPROVAL_PROGRESS
   BOOKING_APPROVED
   BOOKING_REJECTED
   BOOKING_AUTO_REJECTED
@@ -193,7 +185,7 @@ enum AdministrativeEntityType {
   ROOM_RESTRICTION
   USER
   USER_ROLE
-  DEAN_OFFICE_ASSIGNMENT
+  INSTITUTIONAL_APPROVER
   STAFF_BUILDING_ASSIGNMENT
   TIMETABLE_IMPORT
   TIMETABLE_IMPORT_ROW
@@ -221,8 +213,8 @@ model User {
 
   approvedUsersInvited ApprovedUser[] @relation("ApprovedUserInviter")
 
-  deanOfficeHeld       DeanOfficeAssignment?     @relation("DeanOfficeHolder")
-  deanAssignmentsMade  DeanOfficeAssignment[]    @relation("DeanOfficeAssigner")
+  institutionalApprover            InstitutionalApprover?  @relation("InstitutionalApproverUser")
+  institutionalApproverAssignments InstitutionalApprover[] @relation("InstitutionalApproverAssigner")
   staffBuildings       BuildingStaffAssignment[] @relation("AssignedStaff")
   staffAssignmentsMade BuildingStaffAssignment[] @relation("StaffAssignmentCreator")
 
@@ -317,17 +309,20 @@ model StaffProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model DeanOfficeAssignment {
-  id               String     @id @default(cuid())
-  office           DeanOffice @unique
-  userId           String     @unique
+model InstitutionalApprover {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  title            String
+  isActive         Boolean   @default(true)
   assignedByUserId String?
-  assignedAt       DateTime   @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime   @updatedAt @db.Timestamptz(3)
+  assignedAt       DateTime  @default(now()) @db.Timestamptz(3)
+  deactivatedAt    DateTime? @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
 
-  user       User  @relation("DeanOfficeHolder", fields: [userId], references: [id], onDelete: Restrict)
-  assignedBy User? @relation("DeanOfficeAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  user       User  @relation("InstitutionalApproverUser", fields: [userId], references: [id], onDelete: Restrict)
+  assignedBy User? @relation("InstitutionalApproverAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
 
+  @@index([isActive, assignedAt])
   @@index([assignedByUserId])
 }
 
@@ -783,7 +778,8 @@ model BookingRequest {
 model BookingApproval {
   id               String                @id @default(cuid())
   bookingRequestId String
-  reviewerRole     BookingApprovalRole
+  reviewerKind     BookingReviewerKind
+  reviewerLabel    String
   reviewerUserId   String
   status           BookingApprovalStatus @default(PENDING)
   decisionNote     String?
@@ -795,7 +791,7 @@ model BookingApproval {
   bookingRequest BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Restrict)
   reviewer       User           @relation(fields: [reviewerUserId], references: [id], onDelete: Restrict)
 
-  @@unique([bookingRequestId, reviewerRole])
+  @@unique([bookingRequestId, reviewerKind, reviewerUserId])
   @@index([reviewerUserId, status, assignedAt])
   @@index([bookingRequestId, status])
 }

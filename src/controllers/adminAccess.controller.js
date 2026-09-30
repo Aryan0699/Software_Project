@@ -1,14 +1,16 @@
 import {
-    assignDeanOffice as assignDeanOfficeService,
+    createInstitutionalApprover as createInstitutionalApproverService,
     createApprovedUser as createApprovedUserService,
     createStaffAssignment as createStaffAssignmentService,
     deleteStaffAssignment as deleteStaffAssignmentService,
-    getDeanOffices as getDeanOfficesService,
+    getInstitutionalApproverOptions as getInstitutionalApproverOptionsService,
+    listInstitutionalApprovers as listInstitutionalApproversService,
     getStaffAssignmentOptions as getStaffAssignmentOptionsService,
     listApprovedUsers as listApprovedUsersService,
     listStaffAssignments as listStaffAssignmentsService,
     listUsers as listUsersService,
     updateApprovedUser as updateApprovedUserService,
+    updateInstitutionalApprover as updateInstitutionalApproverService,
     updateUserAccess as updateUserAccessService,
 } from "../services/adminAccess.service.js"
 import ApiResponse from "../utils/ApiResponse.js"
@@ -61,22 +63,35 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     res.json(new ApiResponse(200, "User profile updated", { user }))
 })
 
-export const getDeanOffices = asyncHandler(async (_req, res) => {
-    const offices = await getDeanOfficesService()
-    res.json(new ApiResponse(200, "Dean office assignments", { offices }))
+export const listInstitutionalApprovers = asyncHandler(async (_req, res) => {
+    const approvers = await listInstitutionalApproversService()
+    res.json(new ApiResponse(200, "Institutional approvers", { approvers }))
 })
 
-export const assignDeanOffice = asyncHandler(async (req, res) => {
-    const assignment = await assignDeanOfficeService({
-        office: req.validatedParams.office,
-        userId: req.validatedBody.userId,
+export const getInstitutionalApproverOptions = asyncHandler(async (_req, res) => {
+    const faculty = await getInstitutionalApproverOptionsService()
+    res.json(new ApiResponse(200, "Institutional approver options", { faculty }))
+})
+
+export const createInstitutionalApprover = asyncHandler(async (req, res) => {
+    const approver = await createInstitutionalApproverService({
+        ...req.validatedBody,
         actorUserId: req.user.id,
     })
-    res.json(
-        new ApiResponse(200, "Dean office assignment updated", {
-            assignment,
+    res.status(201).json(
+        new ApiResponse(201, "Institutional approver added", {
+            approver,
         })
     )
+})
+
+export const updateInstitutionalApprover = asyncHandler(async (req, res) => {
+    const approver = await updateInstitutionalApproverService({
+        id: req.validatedParams.id,
+        changes: req.validatedBody,
+        actorUserId: req.user.id,
+    })
+    res.json(new ApiResponse(200, "Institutional approver updated", { approver }))
 })
 
 export const listStaffAssignments = asyncHandler(async (req, res) => {

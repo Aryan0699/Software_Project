@@ -1,10 +1,11 @@
 import { prisma } from "../db/index.js"
 import { institutionNow } from "../utils/dateTime.js"
+import { createNotifications } from "./notification.service.js"
 
 export const BOOKING_EXPIRED_REASON =
     "The requested start time passed before all required approvals were completed."
 
-const pendingStatuses = ["PENDING_FACULTY", "PENDING_DEANS"]
+const pendingStatuses = ["PENDING_FACULTY", "PENDING_INSTITUTIONAL"]
 
 export function bookingHasStarted(request, now = institutionNow()) {
     return (
@@ -32,6 +33,10 @@ export async function rejectExpiredBooking(
     })
     if (!updated.count) return false
 
+    const reviewers = await db.bookingApproval.findMany({
+        where: { bookingRequestId: request.id },
+        select: { reviewerUserId: true },
+    })
     await db.bookingApproval.updateMany({
         where: { bookingRequestId: request.id, status: "PENDING" },
         data: { status: "CLOSED", closedAt: rejectedAt },
@@ -46,8 +51,8 @@ export async function rejectExpiredBooking(
             metadata: { reason: "REQUEST_START_TIME_PASSED" },
         },
     })
-    await db.notification.create({
-        data: {
+    await createNotifications(db, [
+        {
             recipientId: request.requesterUserId,
             type: "BOOKING_AUTO_REJECTED",
             title: "Room request expired",
@@ -55,7 +60,15 @@ export async function rejectExpiredBooking(
             resourceType: "BOOKING_REQUEST",
             resourceId: request.id,
         },
-    })
+        ...reviewers.map((reviewer) => ({
+            recipientId: reviewer.reviewerUserId,
+            type: "BOOKING_AUTO_REJECTED",
+            title: "Room request expired",
+            message: BOOKING_EXPIRED_REASON,
+            resourceType: "BOOKING_REQUEST",
+            resourceId: request.id,
+        })),
+    ])
     return true
 }
 

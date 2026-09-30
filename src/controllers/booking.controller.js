@@ -1,5 +1,9 @@
 import {
+    cancelBookingRequest as cancelBookingRequestService,
     createBookingRequest as createBookingRequestService,
+    exportBookingRequests as exportBookingRequestsService,
+    getBookingDashboard as getBookingDashboardService,
+    getBookingFilterOptions as getBookingFilterOptionsService,
     getBookingRequest as getBookingRequestService,
     listBookingRequests as listBookingRequestsService,
     listFacultyVerifiers as listFacultyVerifiersService,
@@ -47,6 +51,35 @@ export const getBookingRequest = asyncHandler(async (req, res) => {
         req.user
     )
     res.json(new ApiResponse(200, "Booking request", { request }))
+})
+
+export const getBookingFilterOptions = asyncHandler(async (req, res) => {
+    const options = await getBookingFilterOptionsService(req.user)
+    res.json(new ApiResponse(200, "Booking filter options", { options }))
+})
+
+export const exportBookingRequests = asyncHandler(async (req, res) => {
+    const csv = await exportBookingRequestsService(req.validatedQuery, req.user)
+    res.setHeader("Content-Type", "text/csv; charset=utf-8")
+    res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="uras-bookings-${new Date().toISOString().slice(0, 10)}.csv"`
+    )
+    res.send(`\uFEFF${csv}`)
+})
+
+export const getBookingDashboard = asyncHandler(async (req, res) => {
+    const dashboard = await getBookingDashboardService(req.user)
+    res.json(new ApiResponse(200, "Booking dashboard", { dashboard }))
+})
+
+export const cancelBookingRequest = asyncHandler(async (req, res) => {
+    const request = await cancelBookingRequestService(
+        req.validatedParams.id,
+        req.validatedBody.reason,
+        req.user
+    )
+    res.json(new ApiResponse(200, "Booking request cancelled", { request }))
 })
 
 export const listMyApprovals = asyncHandler(async (req, res) => {

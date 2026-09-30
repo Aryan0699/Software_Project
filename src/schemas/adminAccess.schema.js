@@ -1,7 +1,6 @@
 import { z } from "zod"
 
 const roles = ["STUDENT", "FACULTY", "STAFF", "ADMIN"]
-const deanOffices = ["DOSA", "ADOSA", "DOAA"]
 
 const recordId = z.string().trim().min(1).max(64)
 const email = z.string().trim().toLowerCase().email().max(320)
@@ -19,12 +18,6 @@ const paginationFields = {
 export const recordIdParamsSchema = z
     .object({
         id: recordId,
-    })
-    .strict()
-
-export const deanOfficeParamsSchema = z
-    .object({
-        office: z.enum(deanOffices),
     })
     .strict()
 
@@ -73,11 +66,22 @@ export const updateUserAccessSchema = z
         message: "At least one field must be provided",
     })
 
-export const assignDeanOfficeSchema = z
+export const createInstitutionalApproverSchema = z
     .object({
         userId: recordId,
+        title: z.string().trim().min(2).max(100),
     })
     .strict()
+
+export const updateInstitutionalApproverSchema = z
+    .object({
+        title: z.string().trim().min(2).max(100).optional(),
+        isActive: z.boolean().optional(),
+    })
+    .strict()
+    .refine((value) => Object.keys(value).length > 0, {
+        message: "At least one field must be provided",
+    })
 
 export const listStaffAssignmentsQuerySchema = z
     .object({

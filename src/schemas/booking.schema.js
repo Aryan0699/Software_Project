@@ -28,7 +28,32 @@ export const facultyVerifierQuerySchema = z
     .strict()
 
 export const listBookingRequestsQuerySchema = z
-    .object({ ...paginationFields })
+    .object({
+        ...paginationFields,
+        status: z
+            .enum([
+                "PENDING_FACULTY",
+                "PENDING_INSTITUTIONAL",
+                "APPROVED",
+                "REJECTED",
+                "CANCELLED",
+            ])
+            .optional(),
+        search: z.string().trim().max(100).optional(),
+        dateFrom: isoDate.optional(),
+        dateTo: isoDate.optional(),
+        buildingId: recordId.optional(),
+        roomId: recordId.optional(),
+        requester: z.string().trim().max(100).optional(),
+    })
+    .strict()
+    .refine(
+        (value) => !value.dateFrom || !value.dateTo || value.dateFrom <= value.dateTo,
+        { path: ["dateTo"], message: "End date must be on or after start date" }
+    )
+
+export const cancelBookingRequestSchema = z
+    .object({ reason: z.string().trim().min(3).max(1000) })
     .strict()
 
 export const createBookingRequestSchema = z
