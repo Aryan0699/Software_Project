@@ -20,7 +20,6 @@ import { useToast } from "../components/toastContext"
 import { ApiClientError } from "../lib/api"
 import {
     bookingApi,
-    type ApprovalRole,
     type FinalizationPreview,
     type WorkflowTask,
 } from "../lib/bookingApi"
@@ -35,14 +34,31 @@ const actionLabels: Record<string, string> = {
     CREATED: "Request submitted",
     FACULTY_APPROVED: "Faculty approved",
     FACULTY_REJECTED: "Faculty rejected",
-    SENT_TO_DEANS: "Sent for institutional approval",
-    DEAN_APPROVED: "Institutional approval recorded",
-    DEAN_REJECTED: "Institutional reviewer rejected",
+    SENT_TO_INSTITUTIONAL_REVIEW: "Sent for institutional approval",
+    INSTITUTIONAL_APPROVED: "Institutional approval recorded",
+    INSTITUTIONAL_REJECTED: "Institutional reviewer rejected",
     FINAL_APPROVED: "Room request approved",
     AUTO_REJECTED_CONFLICT:
         "Request rejected after another request secured the room",
     AUTO_REJECTED_EXPIRED: "Request rejected because its start time passed",
+    CANCELLED: "Request cancelled",
     NOTE_ADDED: "Workflow note",
+}
+
+function bookingHasNotStarted(bookingDate: string, startMinute: number) {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    }).formatToParts(new Date())
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+    const today = `${values.year}-${values.month}-${values.day}`
+    const minute = Number(values.hour) * 60 + Number(values.minute)
+    return bookingDate > today || (bookingDate === today && startMinute > minute)
 }
 
 function taskIcon(task: WorkflowTask) {
@@ -57,10 +73,6 @@ function taskIcon(task: WorkflowTask) {
     return <Circle className="size-4 text-slate-300" />
 }
 
-function roleLabel(role: ApprovalRole) {
-    return role === "FACULTY" ? "Faculty verifier" : role
-}
-
 export function BookingDetailPage() {
     const { id = "" } = useParams()
     const { user } = useAuth()
@@ -73,6 +85,9 @@ export function BookingDetailPage() {
     const [sharedConflictNote, setSharedConflictNote] = useState("")
     const [preview, setPreview] = useState<FinalizationPreview | null>(null)
     const [decisionError, setDecisionError] = useState("")
+    const [cancelOpen, setCancelOpen] = useState(false)
+    const [cancelReason, setCancelReason] = useState("")
+    const [cancelError, setCancelError] = useState("")
 
     const query = useQuery({
         queryKey: ["booking-request", id],
@@ -157,6 +172,23 @@ export function BookingDetailPage() {
         },
     })
 
+    const cancelMutation = useMutation({
+        mutationFn: () => bookingApi.cancel(id, cancelReason.trim()),
+        onSuccess: async () => {
+            setCancelOpen(false)
+            setCancelReason("")
+            setCancelError("")
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["booking-request", id] }),
+                queryClient.invalidateQueries({ queryKey: ["my-booking-requests"] }),
+                queryClient.invalidateQueries({ queryKey: ["approval-queue"] }),
+                queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+            ])
+            showToast("success", "Booking request cancelled")
+        },
+        onError: (error) => setCancelError(error.message),
+    })
+
     const beginApprove = () => {
         if (!activeTask) return
         setDecisionNote("")
@@ -201,6 +233,11 @@ export function BookingDetailPage() {
     }
 
     const reviewerView = Boolean(activeTask)
+    const canCancel =
+        request.requesterUserId === user?.id &&
+        ["PENDING_FACULTY", "PENDING_INSTITUTIONAL", "APPROVED"].includes(
+            request.status
+        ) && bookingHasNotStarted(request.bookingDate, request.startMinute)
 
     return (
         <div className="mx-auto max-w-4xl space-y-5">
@@ -320,6 +357,13 @@ export function BookingDetailPage() {
                         </div>
                     ) : null}
                 </div>
+                {canCancel ? (
+                    <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
+                        <button type="button" className="button-danger" onClick={() => setCancelOpen(true)}>
+                            Cancel request
+                        </button>
+                    </div>
+                ) : null}
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -333,9 +377,14 @@ export function BookingDetailPage() {
                                 {stage.label}
                             </p>
                             <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                                {!stage.tasks.length ? (
+                                    <p className="text-sm text-slate-500 sm:col-span-3">
+                                        Begins after faculty verification.
+                                    </p>
+                                ) : null}
                                 {stage.tasks.map((task) => (
                                     <div
-                                        key={task.role}
+                                        key={task.approvalId || `${stage.key}-${task.kind}-${task.label}`}
                                         className={`flex items-start gap-2 rounded-md border p-3 ${task.approvalId && task.reviewer?.id === user?.id && task.status === "PENDING" ? "border-brand-300 bg-brand-50" : "border-slate-200"}`}
                                     >
                                         <span className="mt-0.5">
@@ -474,7 +523,7 @@ export function BookingDetailPage() {
                 open={decisionMode !== null}
                 title={
                     decisionMode === "REJECT"
-                        ? `Reject as ${activeTask ? roleLabel(activeTask.reviewerRole) : "reviewer"}`
+                        ? `Reject as ${activeTask?.reviewerLabel || "reviewer"}`
                         : "Approve request"
                 }
                 description={
@@ -606,6 +655,42 @@ export function BookingDetailPage() {
                                     preview.competitors.length > 0
                                   ? "Approve and reject others"
                                   : "Approve request"}
+                        </button>
+                    </div>
+                </form>
+            </FormDialog>
+
+            <FormDialog
+                open={cancelOpen}
+                title={request.status === "APPROVED" ? "Cancel approved booking" : "Withdraw request"}
+                description={
+                    request.status === "APPROVED"
+                        ? "The room will become available immediately."
+                        : "Pending approval tasks will be closed."
+                }
+                onClose={() => !cancelMutation.isPending && setCancelOpen(false)}
+            >
+                <form
+                    className="space-y-4"
+                    onSubmit={(event) => {
+                        event.preventDefault()
+                        if (cancelReason.trim().length < 3) {
+                            setCancelError("Enter a cancellation reason")
+                            return
+                        }
+                        cancelMutation.mutate()
+                    }}
+                >
+                    <label>
+                        <span className="field-label">Cancellation reason</span>
+                        <textarea className="field-input min-h-24 resize-y" value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} minLength={3} maxLength={1000} required placeholder="Explain why this request is being cancelled" />
+                    </label>
+                    {cancelError ? <p className="text-sm text-red-700">{cancelError}</p> : null}
+                    <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+                        <button type="button" className="button-secondary" onClick={() => setCancelOpen(false)} disabled={cancelMutation.isPending}>Keep request</button>
+                        <button type="submit" className="button-danger" disabled={cancelMutation.isPending || cancelReason.trim().length < 3}>
+                            {cancelMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
+                            Cancel request
                         </button>
                     </div>
                 </form>

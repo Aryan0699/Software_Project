@@ -1,16 +1,16 @@
 import { Building2, Landmark, ShieldCheck, Users } from "lucide-react"
 import { useState } from "react"
 import { ApprovedUsersPanel } from "./access/ApprovedUsersPanel"
-import { DeanOfficesPanel } from "./access/DeanOfficesPanel"
+import { InstitutionalApproversPanel } from "./access/InstitutionalApproversPanel"
 import { StaffAssignmentsPanel } from "./access/StaffAssignmentsPanel"
 import { UsersPanel } from "./access/UsersPanel"
 
-type Tab = "users" | "approved" | "deans" | "staff"
+type Tab = "users" | "approved" | "approvers" | "staff"
 
 const tabs = [
   { id: "users" as const, label: "Users", icon: Users },
   { id: "approved" as const, label: "Registration access", icon: ShieldCheck },
-  { id: "deans" as const, label: "Dean offices", icon: Landmark },
+  { id: "approvers" as const, label: "Institutional approvers", icon: Landmark },
   { id: "staff" as const, label: "Building staff", icon: Building2 },
 ]
 
@@ -48,7 +48,7 @@ export function AccessPage() {
       <div role="tabpanel">
         {tab === "users" && <UsersPanel />}
         {tab === "approved" && <ApprovedUsersPanel />}
-        {tab === "deans" && <DeanOfficesPanel />}
+        {tab === "approvers" && <InstitutionalApproversPanel />}
         {tab === "staff" && <StaffAssignmentsPanel />}
       </div>
     </div>

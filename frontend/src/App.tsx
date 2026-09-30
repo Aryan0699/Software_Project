@@ -14,6 +14,7 @@ import { BookingsPage } from "./pages/BookingsPage"
 import { DashboardPage } from "./pages/DashboardPage"
 import { FacilitiesPage } from "./pages/FacilitiesPage"
 import { LoginPage } from "./pages/LoginPage"
+import { NotificationsPage } from "./pages/NotificationsPage"
 
 function ProtectedRoutes() {
     const { user, loading } = useAuth()
@@ -95,6 +96,7 @@ function App() {
                         }
                     />
                     <Route path="account" element={<AccountPage />} />
+                    <Route path="notifications" element={<NotificationsPage />} />
                     <Route
                         path="facilities"
                         element={

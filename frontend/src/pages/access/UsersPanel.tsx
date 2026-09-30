@@ -209,7 +209,7 @@ export function UsersPanel() {
                 <td><RoleBadge role={user.role} /></td>
                 <td>
                   <p className="text-xs text-slate-600">
-                    {user.deanOfficeHeld?.office ||
+                    {user.institutionalApprover?.title ||
                       (user.staffBuildings.length
                         ? `${user.staffBuildings.length} building${user.staffBuildings.length === 1 ? "" : "s"}`
                         : "None")}

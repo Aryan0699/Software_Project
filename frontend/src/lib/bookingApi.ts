@@ -1,8 +1,8 @@
-import { queryString, request, type Pagination, type Role } from "./api"
+import { download, queryString, request, type Pagination, type Role } from "./api"
 
 export type BookingStatus =
     | "PENDING_FACULTY"
-    | "PENDING_DEANS"
+    | "PENDING_INSTITUTIONAL"
     | "APPROVED"
     | "REJECTED"
     | "CANCELLED"
@@ -15,7 +15,7 @@ export type BookingEventType =
     | "SEMINAR"
     | "OTHER"
 
-export type ApprovalRole = "FACULTY" | "DOSA" | "ADOSA" | "DOAA"
+export type ReviewerKind = "FACULTY" | "INSTITUTIONAL"
 export type ApprovalStatus =
     | "NOT_STARTED"
     | "PENDING"
@@ -45,7 +45,8 @@ export type BookingRoom = {
 export type BookingApproval = {
     id: string
     bookingRequestId: string
-    reviewerRole: ApprovalRole
+    reviewerKind: ReviewerKind
+    reviewerLabel: string
     reviewerUserId: string
     status: Exclude<ApprovalStatus, "NOT_STARTED">
     decisionNote: string | null
@@ -56,7 +57,7 @@ export type BookingApproval = {
 }
 
 export type WorkflowTask = {
-    role: ApprovalRole
+    kind: ReviewerKind
     label: string
     status: ApprovalStatus
     approvalId: string | null
@@ -97,6 +98,9 @@ export type BookingRequest = {
     submittedAt: string
     approvedAt: string | null
     rejectedAt: string | null
+    cancelledAt: string | null
+    cancelledByUserId: string | null
+    cancellationReason: string | null
     version: number
     requester: BookingPerson
     room: BookingRoom
@@ -142,7 +146,8 @@ export type FacultyVerifier = {
 
 export type ApprovalQueueItem = {
     id: string
-    reviewerRole: ApprovalRole
+    reviewerKind: ReviewerKind
+    reviewerLabel: string
     status: Exclude<ApprovalStatus, "NOT_STARTED">
     decisionNote: string | null
     assignedAt: string
@@ -184,6 +189,34 @@ export type CreateBookingInput = {
     acknowledgePendingCompetition: boolean
 }
 
+export type BookingListFilters = {
+    status?: BookingStatus
+    search?: string
+    dateFrom?: string
+    dateTo?: string
+    buildingId?: string
+    roomId?: string
+    requester?: string
+}
+
+export type BookingFilterOptions = {
+    buildings: Array<{ id: string; code: string; name: string }>
+    rooms: Array<{
+        id: string
+        fullCode: string
+        building: { id: string; code: string; name: string }
+    }>
+    requesters: BookingPerson[]
+}
+
+export type BookingDashboard = {
+    counts: Partial<Record<BookingStatus, number>>
+    upcoming: BookingRequestSummary[]
+    pendingReviewCount: number
+    unreadCount: number
+    activeApproverCount: number
+}
+
 export const bookingApi = {
     facultyVerifiers(
         values: { search?: string; page?: number; pageSize?: number } = {}
@@ -198,7 +231,7 @@ export const bookingApi = {
             body: JSON.stringify(input),
         })
     },
-    list(values: { page?: number; pageSize?: number } = {}) {
+    list(values: BookingListFilters & { page?: number; pageSize?: number } = {}) {
         return request<{
             records: BookingRequestSummary[]
             pagination: Pagination
@@ -206,6 +239,28 @@ export const bookingApi = {
     },
     get(id: string) {
         return request<{ request: BookingRequest }>(`/booking-requests/${id}`)
+    },
+    filterOptions() {
+        return request<{ options: BookingFilterOptions }>(
+            "/booking-requests/filter-options"
+        )
+    },
+    dashboard() {
+        return request<{ dashboard: BookingDashboard }>(
+            "/booking-requests/dashboard"
+        )
+    },
+    cancel(id: string, reason: string) {
+        return request<{ request: BookingRequest }>(
+            `/booking-requests/${id}/cancel`,
+            { method: "POST", body: JSON.stringify({ reason }) }
+        )
+    },
+    export(filters: BookingListFilters) {
+        return download(
+            `/booking-requests/export${queryString(filters)}`,
+            `uras-bookings-${new Date().toISOString().slice(0, 10)}.csv`
+        )
     },
     approvals(values: {
         view: "pending" | "completed"

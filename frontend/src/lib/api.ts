@@ -1,5 +1,4 @@
 export type Role = "STUDENT" | "FACULTY" | "STAFF" | "ADMIN"
-export type DeanOffice = "DOSA" | "ADOSA" | "DOAA"
 export type RoomStatus = "ACTIVE" | "INACTIVE"
 export type RestrictionStatus = "ACTIVE" | "CANCELLED"
 export type AcademicTermStatus = "PLANNED" | "CURRENT" | "CLOSED"
@@ -62,7 +61,12 @@ export type CurrentUser = BasicUser & {
     studentProfile?: StudentProfile | null
     facultyProfile?: FacultyProfile | null
     staffProfile?: StaffProfile | null
-    deanOfficeHeld?: { office: DeanOffice; assignedAt: string } | null
+    institutionalApprover?: {
+        id: string
+        title: string
+        isActive: boolean
+        assignedAt: string
+    } | null
     staffBuildings?: Array<{
         assignedAt: string
         building: { id: string; code: string; name: string; isActive: boolean }
@@ -96,16 +100,15 @@ export type AdminUser = CurrentUser & {
     }>
 }
 
-export type DeanOfficeEntry = {
-    office: DeanOffice
-    assignment: {
-        id: string
-        office: DeanOffice
-        assignedAt: string
-        updatedAt: string
-        user: BasicUser
-        assignedBy: Pick<BasicUser, "id" | "name" | "email"> | null
-    } | null
+export type InstitutionalApprover = {
+    id: string
+    title: string
+    isActive: boolean
+    assignedAt: string
+    deactivatedAt: string | null
+    updatedAt: string
+    user: BasicUser
+    assignedBy: Pick<BasicUser, "id" | "name" | "email"> | null
 }
 
 export type StaffAssignment = {
@@ -276,6 +279,25 @@ const API_URL = (
     import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"
 ).replace(/\/$/, "")
 
+export async function download(path: string, filename: string) {
+    const response = await fetch(`${API_URL}${path}`, { credentials: "include" })
+    if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as ApiErrorEnvelope | null
+        throw new ApiClientError(
+            response.status,
+            payload?.error?.code || "REQUEST_FAILED",
+            payload?.error?.message || "The download could not be completed",
+            payload?.error?.details
+        )
+    }
+    const url = URL.createObjectURL(await response.blob())
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = filename
+    anchor.click()
+    URL.revokeObjectURL(url)
+}
+
 export async function request<T>(
     path: string,
     init: RequestInit = {}
@@ -439,13 +461,29 @@ export const adminAccessApi = {
             body: JSON.stringify(changes),
         })
     },
-    getDeanOffices() {
-        return request<{ offices: DeanOfficeEntry[] }>("/admin/dean-offices")
+    listInstitutionalApprovers() {
+        return request<{ approvers: InstitutionalApprover[] }>(
+            "/admin/institutional-approvers"
+        )
     },
-    assignDeanOffice(office: DeanOffice, userId: string) {
-        return request<{ assignment: DeanOfficeEntry["assignment"] }>(
-            `/admin/dean-offices/${office}`,
-            { method: "PUT", body: JSON.stringify({ userId }) }
+    getInstitutionalApproverOptions() {
+        return request<{
+            faculty: Array<Pick<BasicUser, "id" | "name" | "email">>
+        }>("/admin/institutional-approver-options")
+    },
+    createInstitutionalApprover(userId: string, title: string) {
+        return request<{ approver: InstitutionalApprover }>(
+            "/admin/institutional-approvers",
+            { method: "POST", body: JSON.stringify({ userId, title }) }
+        )
+    },
+    updateInstitutionalApprover(
+        id: string,
+        changes: { title?: string; isActive?: boolean }
+    ) {
+        return request<{ approver: InstitutionalApprover }>(
+            `/admin/institutional-approvers/${id}`,
+            { method: "PATCH", body: JSON.stringify(changes) }
         )
     },
     listStaffAssignments(values: { page?: number; pageSize?: number } = {}) {

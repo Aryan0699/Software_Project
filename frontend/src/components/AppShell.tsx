@@ -16,6 +16,7 @@ import {
 import { useState } from "react"
 import { NavLink, Outlet, useNavigate } from "react-router-dom"
 import { useAuth } from "../auth/useAuth"
+import { NotificationBell } from "./NotificationBell"
 
 const roleNames = {
     ADMIN: "Administrator",
@@ -169,7 +170,7 @@ function Sidebar({ mobile, close }: { mobile?: boolean; close?: () => void }) {
                     </p>
                     <p className="truncate text-xs text-slate-500">
                         {user
-                            ? `${roleNames[user.role]}${user.deanOfficeHeld ? ` · ${user.deanOfficeHeld.office}` : ""}`
+                            ? `${roleNames[user.role]}${user.institutionalApprover ? ` · ${user.institutionalApprover.title}` : ""}`
                             : ""}
                     </p>
                 </div>
@@ -231,10 +232,12 @@ export function AppShell() {
                         </div>
                     </div>
 
-                    <NavLink
-                        to="/account"
-                        className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"
-                    >
+                    <div className="flex items-center gap-2">
+                        <NotificationBell />
+                        <NavLink
+                            to="/account"
+                            className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"
+                        >
                         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-white">
                             {user?.name
                                 .split(" ")
@@ -249,12 +252,13 @@ export function AppShell() {
                             </p>
                             <p className="text-xs text-slate-500">
                                 {user
-                                    ? `${roleNames[user.role]}${user.deanOfficeHeld ? ` · ${user.deanOfficeHeld.office}` : ""}`
+                                    ? `${roleNames[user.role]}${user.institutionalApprover ? ` · ${user.institutionalApprover.title}` : ""}`
                                     : ""}
                             </p>
                         </div>
                         <ChevronDown className="hidden size-4 text-slate-400 sm:block" />
-                    </NavLink>
+                        </NavLink>
+                    </div>
                 </header>
 
                 <main className="min-h-0 flex-1 overflow-y-auto">

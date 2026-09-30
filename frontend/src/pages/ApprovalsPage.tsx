@@ -6,13 +6,6 @@ import { bookingApi } from "../lib/bookingApi"
 import { PaginationBar } from "./access/shared"
 import { bookingTime, readableBookingDate } from "./booking/shared"
 
-const roleLabels = {
-    FACULTY: "Faculty verifier",
-    DOSA: "DOSA",
-    ADOSA: "ADOSA",
-    DOAA: "DOAA",
-}
-
 export function ApprovalsPage() {
     const [view, setView] = useState<"pending" | "completed">("pending")
     const [page, setPage] = useState(1)
@@ -117,7 +110,7 @@ export function ApprovalsPage() {
                                             {task.request.title}
                                         </h2>
                                         <span className="status-badge border-sky-200 bg-sky-50 text-sky-700">
-                                            {roleLabels[task.reviewerRole]}
+                                            {task.reviewerLabel}
                                         </span>
                                     </div>
                                     <p className="mt-1 text-sm text-slate-600">
