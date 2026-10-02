@@ -16,6 +16,7 @@ import { FacilitiesPage } from "./pages/FacilitiesPage"
 import { LoginPage } from "./pages/LoginPage"
 import { NotificationsPage } from "./pages/NotificationsPage"
 import { SlotSystemsPage } from "./pages/SlotSystemsPage"
+import { TimetableImportsPage } from "./pages/TimetableImportsPage"
 
 function ProtectedRoutes() {
     const { user, loading } = useAuth()
@@ -130,6 +131,14 @@ function App() {
                         element={
                             <AdminOnly>
                                 <SlotSystemsPage />
+                            </AdminOnly>
+                        }
+                    />
+                    <Route
+                        path="admin/timetables/imports"
+                        element={
+                            <AdminOnly>
+                                <TimetableImportsPage />
                             </AdminOnly>
                         }
                     />

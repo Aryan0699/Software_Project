@@ -23,6 +23,10 @@ function deployToVerificationSchema() {
                 env: {
                     ...process.env,
                     DATABASE_URL: verificationUrl.toString(),
+                    // The hosted development pool can retain Prisma's
+                    // session advisory lock after the child exits. Every
+                    // verification run uses its own isolated schema.
+                    PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK: "1",
                 },
                 stdio: "inherit",
             }

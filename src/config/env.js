@@ -58,6 +58,18 @@ const envSchema = z
             .min(30)
             .max(1440)
             .default(60),
+        TIMETABLE_IMPORT_MAX_BYTES: z.coerce
+            .number()
+            .int()
+            .min(1024)
+            .max(25 * 1024 * 1024)
+            .default(5 * 1024 * 1024),
+        TIMETABLE_IMPORT_MAX_ROWS: z.coerce
+            .number()
+            .int()
+            .min(1)
+            .max(20000)
+            .default(5000),
     })
     .superRefine((values, context) => {
         if (

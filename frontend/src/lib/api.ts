@@ -93,6 +93,147 @@ export type SlotGrid = {
     }>
 }
 
+export type ImportRowStatus =
+    | "READY"
+    | "MISSING_REQUIRED_FIELD"
+    | "UNRESOLVED_SLOT"
+    | "UNRESOLVED_ROOM"
+    | "DUPLICATE_ROW"
+
+export type TimetableBatch = {
+    id: string
+    academicTermId: string
+    slotSystemId: string
+    slotGridVersionId: string
+    fileName: string
+    status: "PREVIEWED" | "PUBLISHED" | "SUPERSEDED" | "CANCELLED" | "FAILED"
+    totalRows: number
+    validRows: number
+    errorRows: number
+    skippedRows: number
+    revisionNumber: number | null
+    createdAt: string
+    publishedAt: string | null
+    academicTerm: {
+        id: string
+        termCode: string
+        name: string
+        status: AcademicTermStatus
+    }
+    slotSystem: { id: string; code: string; name: string }
+    slotGridVersion: {
+        id: string
+        versionNumber: number
+        status: SlotGridStatus
+        slots: Array<{ id: string; code: string; slotKind: SlotKind }>
+    }
+    createdBy: Pick<BasicUser, "id" | "name" | "email"> | null
+}
+
+export type TimetableImportRow = {
+    id: string
+    rowIndex: number
+    rowHash: string | null
+    rawRow: Record<string, string> | null
+    auxiliaryData: Record<string, string> | null
+    rawCourseCode: string | null
+    rawSlot: string | null
+    rawClassroom: string | null
+    rawInstructor: string | null
+    initialClassification: ImportRowStatus
+    adminDecision: "PENDING" | "RESOLVE" | "SKIP"
+    isResolved: boolean
+    issues: string[] | null
+    resolutionNote: string | null
+    resolvedSlot: { id: string; code: string; slotKind: SlotKind } | null
+    resolvedRoom: {
+        id: string
+        fullCode: string
+        displayName: string | null
+        building: { code: string; name: string }
+    } | null
+    resolvedBy: Pick<BasicUser, "id" | "name" | "email"> | null
+    resolvedAt: string | null
+    allocationConflicts: Array<{
+        otherRow: {
+            id: string
+            rowIndex: number
+            courseCode: string | null
+            courseName: string | null
+            slotCode: string
+            roomCode: string
+        }
+        occurrences: Array<{
+            dayOfWeek: DayOfWeek
+            startMinute: number
+            endMinute: number
+        }>
+    }>
+}
+
+export type TimetableReviewSummary = {
+    ready: number
+    attention: number
+    skipped: number
+    allocationConflicts: number
+}
+
+export type TimetableOptions = {
+    terms: Array<{
+        id: string
+        termCode: string
+        name: string
+        status: AcademicTermStatus
+    }>
+    systems: Array<{
+        id: string
+        code: string
+        name: string
+        gridVersions: Array<{
+            id: string
+            versionNumber: number
+            lockedAt: string
+        }>
+    }>
+    rooms: Array<{
+        id: string
+        fullCode: string
+        displayName: string | null
+        roomNumber: string
+        building: { code: string; name: string }
+    }>
+}
+
+export type PublicationPreview = {
+    batch: TimetableBatch
+    currentPublication: {
+        id: string
+        revisionNumber: number
+        publishedAt: string
+        fileName: string
+    } | null
+    internalConflicts: unknown[]
+    bookingConflicts: Array<{
+        id: string
+        title: string
+        date: string
+        roomCode: string
+        startMinute: number
+        endMinute: number
+        courses: string[]
+    }>
+    restrictionConflicts: Array<{
+        id: string
+        reason: string
+        date: string
+        roomCode: string
+        startMinute: number
+        endMinute: number
+    }>
+    canPublish: boolean
+    allocationOccurrences: number
+}
+
 export type Department = {
     id: string
     code: string
@@ -978,6 +1119,95 @@ export const slotSystemApi = {
     discard(id: string) {
         return request<{ grid: SlotGrid }>(
             `/slot-systems/grid-versions/${id}/discard`,
+            { method: "POST" }
+        )
+    },
+}
+
+export const timetableApi = {
+    options() {
+        return request<TimetableOptions>("/timetables/options")
+    },
+    listImports() {
+        return request<{ imports: TimetableBatch[] }>("/timetables/imports")
+    },
+    getImport(id: string) {
+        return request<{ batch: TimetableBatch }>(`/timetables/imports/${id}`)
+    },
+    rows(
+        id: string,
+        values: {
+            view?: "ALL" | "READY" | "ATTENTION" | "SKIPPED"
+            page?: number
+            pageSize?: number
+        }
+    ) {
+        return request<{
+            records: TimetableImportRow[]
+            pagination: Pagination
+            summary: TimetableReviewSummary
+        }>(`/timetables/imports/${id}/rows${queryString(values)}`)
+    },
+    upload(data: {
+        academicTermId: string
+        slotSystemId: string
+        slotGridVersionId: string
+        workbook: File
+    }) {
+        const body = new FormData()
+        body.set("academicTermId", data.academicTermId)
+        body.set("slotSystemId", data.slotSystemId)
+        body.set("slotGridVersionId", data.slotGridVersionId)
+        body.set("workbook", data.workbook)
+        return request<{
+            batch: TimetableBatch
+            duplicateImport: {
+                id: string
+                status: string
+                createdAt: string
+            } | null
+        }>("/timetables/imports", { method: "POST", body })
+    },
+    resolveRow(
+        batchId: string,
+        rowId: string,
+        data: {
+            resolvedSlotId?: string
+            resolvedRoomId?: string
+            resolutionNote?: string
+        }
+    ) {
+        return request<{ batch: TimetableBatch }>(
+            `/timetables/imports/${batchId}/rows/${rowId}`,
+            { method: "PATCH", body: JSON.stringify(data) }
+        )
+    },
+    rowAction(
+        batchId: string,
+        rowId: string,
+        action: "SKIP" | "KEEP_DUPLICATE" | "KEEP_ALLOCATION"
+    ) {
+        return request<{ batch: TimetableBatch }>(
+            `/timetables/imports/${batchId}/rows/${rowId}/action`,
+            { method: "POST", body: JSON.stringify({ action }) }
+        )
+    },
+    cancel(id: string) {
+        return request<{ batch: TimetableBatch }>(
+            `/timetables/imports/${id}/cancel`,
+            {
+                method: "POST",
+            }
+        )
+    },
+    publicationPreview(id: string) {
+        return request<PublicationPreview>(
+            `/timetables/imports/${id}/publication-preview`
+        )
+    },
+    publish(id: string) {
+        return request<{ batch: TimetableBatch }>(
+            `/timetables/imports/${id}/publish`,
             { method: "POST" }
         )
     },

@@ -1,6 +1,17 @@
 import logger from "../utils/logger.js"
 
 function normalizeError(error) {
+    if (error?.name === "MulterError") {
+        return {
+            statusCode: 400,
+            code: error.code || "UPLOAD_REJECTED",
+            message:
+                error.code === "LIMIT_FILE_SIZE"
+                    ? "The workbook is larger than the allowed upload limit"
+                    : "The workbook upload was rejected",
+            details: null,
+        }
+    }
     if (error?.type === "entity.parse.failed") {
         return {
             statusCode: 400,
