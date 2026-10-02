@@ -71,10 +71,9 @@ enum ImportBatchStatus {
 }
 
 enum ImportRowStatus {
-  VALID
+  READY
   UNRESOLVED_SLOT
   UNRESOLVED_ROOM
-  CONFLICTING_MAPPING
   DUPLICATE_ROW
   MISSING_REQUIRED_FIELD
 }
@@ -213,10 +212,10 @@ model User {
 
   approvedUsersInvited ApprovedUser[] @relation("ApprovedUserInviter")
 
-  institutionalApprover            InstitutionalApprover?  @relation("InstitutionalApproverUser")
-  institutionalApproverAssignments InstitutionalApprover[] @relation("InstitutionalApproverAssigner")
-  staffBuildings       BuildingStaffAssignment[] @relation("AssignedStaff")
-  staffAssignmentsMade BuildingStaffAssignment[] @relation("StaffAssignmentCreator")
+  institutionalApprover            InstitutionalApprover?    @relation("InstitutionalApproverUser")
+  institutionalApproverAssignments InstitutionalApprover[]   @relation("InstitutionalApproverAssigner")
+  staffBuildings                   BuildingStaffAssignment[] @relation("AssignedStaff")
+  staffAssignmentsMade             BuildingStaffAssignment[] @relation("StaffAssignmentCreator")
 
   gridVersionsCreated       SlotGridVersion[]      @relation("SlotGridCreator")
   calendarCreated           CalendarException[]    @relation("CalendarExceptionCreator")
@@ -496,6 +495,8 @@ model SlotGridVersion {
   slotSystemId     String
   versionNumber    Int
   status           SlotGridStatus @default(DRAFT)
+  dayStartMinute   Int            @default(480)
+  dayEndMinute     Int            @default(1130)
   basedOnVersionId String?
   createdByUserId  String?
   createdAt        DateTime       @default(now()) @db.Timestamptz(3)

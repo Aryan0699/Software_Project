@@ -18,21 +18,6 @@ const bootstrapSchema = z
     })
     .strict()
 
-const defaultSlotSystems = [
-    {
-        code: "FIRST_YEAR",
-        name: "First Year",
-        description: "Default slot system for first-year teaching",
-        applicableFor: "First-year academic timetable",
-    },
-    {
-        code: "SECOND_YEAR_ONWARD",
-        name: "Second Year Onward",
-        description: "Default slot system for second-year and later teaching",
-        applicableFor: "Second-year-onward academic timetable",
-    },
-]
-
 const defaultRoomTypes = [
     { code: "CLASSROOM", name: "Classroom" },
     { code: "LECTURE_HALL", name: "Lecture Hall" },
@@ -41,14 +26,6 @@ const defaultRoomTypes = [
 ]
 
 async function seedReferenceDefaults() {
-    for (const slotSystem of defaultSlotSystems) {
-        await prisma.slotSystem.upsert({
-            where: { code: slotSystem.code },
-            update: { ...slotSystem, isActive: true },
-            create: slotSystem,
-        })
-    }
-
     for (const roomType of defaultRoomTypes) {
         await prisma.roomType.upsert({
             where: { code: roomType.code },

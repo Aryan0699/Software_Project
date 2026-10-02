@@ -15,6 +15,7 @@ import { DashboardPage } from "./pages/DashboardPage"
 import { FacilitiesPage } from "./pages/FacilitiesPage"
 import { LoginPage } from "./pages/LoginPage"
 import { NotificationsPage } from "./pages/NotificationsPage"
+import { SlotSystemsPage } from "./pages/SlotSystemsPage"
 
 function ProtectedRoutes() {
     const { user, loading } = useAuth()
@@ -96,7 +97,10 @@ function App() {
                         }
                     />
                     <Route path="account" element={<AccountPage />} />
-                    <Route path="notifications" element={<NotificationsPage />} />
+                    <Route
+                        path="notifications"
+                        element={<NotificationsPage />}
+                    />
                     <Route
                         path="facilities"
                         element={
@@ -118,6 +122,14 @@ function App() {
                         element={
                             <AdminOnly>
                                 <AcademicCalendarPage />
+                            </AdminOnly>
+                        }
+                    />
+                    <Route
+                        path="admin/timetables"
+                        element={
+                            <AdminOnly>
+                                <SlotSystemsPage />
                             </AdminOnly>
                         }
                     />

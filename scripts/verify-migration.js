@@ -50,5 +50,9 @@ try {
     await cleanupClient.$executeRawUnsafe(
         `DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`
     )
+    // The hosted development pool may reuse this PostgreSQL session. Restore
+    // its default after removing the disposable schema so later Prisma CLI
+    // commands never inherit a search path that no longer exists.
+    await cleanupClient.$executeRawUnsafe(`SET search_path TO public`)
     await cleanupClient.$disconnect()
 }

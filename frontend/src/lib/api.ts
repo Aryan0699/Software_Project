@@ -12,6 +12,87 @@ export type DayOfWeek =
     | "FRIDAY"
     | "SATURDAY"
 
+export type SlotKind = "LECTURE" | "LAB" | "TUTORIAL" | "SPECIAL"
+export type SlotGridStatus = "DRAFT" | "LOCKED" | "DISCARDED"
+
+export type SlotOccurrence = {
+    id: string
+    slotId: string
+    dayOfWeek: DayOfWeek
+    startMinute: number
+    endMinute: number
+}
+
+export type SlotDefinition = {
+    id: string
+    slotGridVersionId: string
+    code: string
+    slotKind: SlotKind
+    occurrences: SlotOccurrence[]
+}
+
+export type SlotGridSummary = {
+    id: string
+    versionNumber: number
+    status: SlotGridStatus
+    dayStartMinute: number
+    dayEndMinute: number
+    createdAt: string
+    lockedAt: string | null
+    basedOnVersionId: string | null
+    isPublished: boolean
+    _count: { slots: number }
+}
+
+export type SlotSystem = {
+    id: string
+    code: string
+    name: string
+    description: string | null
+    applicableFor: string | null
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+    gridVersions: SlotGridSummary[]
+}
+
+export type SlotGrid = {
+    id: string
+    slotSystemId: string
+    versionNumber: number
+    status: SlotGridStatus
+    dayStartMinute: number
+    dayEndMinute: number
+    basedOnVersionId: string | null
+    createdAt: string
+    lockedAt: string | null
+    discardedAt: string | null
+    slotSystem: Pick<SlotSystem, "id" | "code" | "name" | "isActive">
+    basedOn: Pick<SlotGridSummary, "id" | "versionNumber" | "status"> | null
+    slots: SlotDefinition[]
+    isPublished: boolean
+    publications: Array<{
+        id: string
+        revisionNumber: number | null
+        academicTerm: { id: string; termCode: string; name: string }
+    }>
+    overlapWarnings: Array<{
+        dayOfWeek: DayOfWeek
+        first: {
+            slotId: string
+            slotCode: string
+            startMinute: number
+            endMinute: number
+        }
+        second: {
+            slotId: string
+            slotCode: string
+            startMinute: number
+            endMinute: number
+        }
+    }>
+}
+
 export type Department = {
     id: string
     code: string
@@ -280,9 +361,13 @@ const API_URL = (
 ).replace(/\/$/, "")
 
 export async function download(path: string, filename: string) {
-    const response = await fetch(`${API_URL}${path}`, { credentials: "include" })
+    const response = await fetch(`${API_URL}${path}`, {
+        credentials: "include",
+    })
     if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as ApiErrorEnvelope | null
+        const payload = (await response
+            .json()
+            .catch(() => null)) as ApiErrorEnvelope | null
         throw new ApiClientError(
             response.status,
             payload?.error?.code || "REQUEST_FAILED",
@@ -306,7 +391,9 @@ export async function request<T>(
         ...init,
         credentials: "include",
         headers: {
-            ...(init.body ? { "Content-Type": "application/json" } : {}),
+            ...(init.body && !(init.body instanceof FormData)
+                ? { "Content-Type": "application/json" }
+                : {}),
             ...init.headers,
         },
     })
@@ -799,6 +886,99 @@ export const academicCalendarApi = {
         return request<{ calendarException: CalendarException }>(
             `/academic-calendar/exceptions/${id}/deactivate`,
             { method: "PATCH" }
+        )
+    },
+}
+
+export const slotSystemApi = {
+    list() {
+        return request<{ slotSystems: SlotSystem[] }>("/slot-systems")
+    },
+    create(data: {
+        code: string
+        name: string
+        description?: string | null
+        applicableFor?: string | null
+    }) {
+        return request<{ slotSystem: SlotSystem }>("/slot-systems", {
+            method: "POST",
+            body: JSON.stringify(data),
+        })
+    },
+    getGrid(id: string) {
+        return request<{ grid: SlotGrid }>(`/slot-systems/grid-versions/${id}`)
+    },
+    createDraft(
+        systemId: string,
+        data: {
+            sourceGridVersionId?: string
+            dayStartMinute: number
+            dayEndMinute: number
+        }
+    ) {
+        return request<{ grid: SlotGrid }>(`/slot-systems/${systemId}/drafts`, {
+            method: "POST",
+            body: JSON.stringify(data),
+        })
+    },
+    updateRange(
+        id: string,
+        data: { dayStartMinute: number; dayEndMinute: number }
+    ) {
+        return request<{ grid: SlotGrid }>(
+            `/slot-systems/grid-versions/${id}/range`,
+            {
+                method: "PATCH",
+                body: JSON.stringify(data),
+            }
+        )
+    },
+    createSlot(id: string, data: { code: string; slotKind: SlotKind }) {
+        return request<{ grid: SlotGrid }>(
+            `/slot-systems/grid-versions/${id}/slots`,
+            {
+                method: "POST",
+                body: JSON.stringify(data),
+            }
+        )
+    },
+    updateSlot(
+        id: string,
+        slotId: string,
+        data: { code: string; slotKind: SlotKind }
+    ) {
+        return request<{ grid: SlotGrid }>(
+            `/slot-systems/grid-versions/${id}/slots/${slotId}`,
+            { method: "PATCH", body: JSON.stringify(data) }
+        )
+    },
+    deleteSlot(id: string, slotId: string) {
+        return request<{ grid: SlotGrid }>(
+            `/slot-systems/grid-versions/${id}/slots/${slotId}`,
+            { method: "DELETE" }
+        )
+    },
+    toggleCell(
+        id: string,
+        data: { slotId: string; dayOfWeek: DayOfWeek; startMinute: number }
+    ) {
+        return request<{ grid: SlotGrid }>(
+            `/slot-systems/grid-versions/${id}/cells/toggle`,
+            { method: "POST", body: JSON.stringify(data) }
+        )
+    },
+    lock(id: string) {
+        return request<{ grid: SlotGrid }>(
+            `/slot-systems/grid-versions/${id}/lock`,
+            {
+                method: "POST",
+            }
+        )
+    },
+    discard(id: string) {
+        return request<{ grid: SlotGrid }>(
+            `/slot-systems/grid-versions/${id}/discard`,
+            { method: "POST" }
         )
     },
 }

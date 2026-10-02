@@ -9,6 +9,7 @@ import {
     LogOut,
     Menu,
     ShieldCheck,
+    TableProperties,
     Warehouse,
     UserRound,
     X,
@@ -80,6 +81,12 @@ function Navigation({ close }: { close?: () => void }) {
                       to: "/admin/calendar",
                       label: "Academic calendar",
                       icon: CalendarDays,
+                      end: false,
+                  },
+                  {
+                      to: "/admin/timetables",
+                      label: "Timetables",
+                      icon: TableProperties,
                       end: false,
                   },
               ]
@@ -238,25 +245,25 @@ export function AppShell() {
                             to="/account"
                             className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"
                         >
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-white">
-                            {user?.name
-                                .split(" ")
-                                .slice(0, 2)
-                                .map((part) => part[0])
-                                .join("")
-                                .toUpperCase()}
-                        </div>
-                        <div className="hidden min-w-0 text-left sm:block">
-                            <p className="max-w-40 truncate text-sm font-medium text-slate-900">
-                                {user?.name}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                                {user
-                                    ? `${roleNames[user.role]}${user.institutionalApprover ? ` · ${user.institutionalApprover.title}` : ""}`
-                                    : ""}
-                            </p>
-                        </div>
-                        <ChevronDown className="hidden size-4 text-slate-400 sm:block" />
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-white">
+                                {user?.name
+                                    .split(" ")
+                                    .slice(0, 2)
+                                    .map((part) => part[0])
+                                    .join("")
+                                    .toUpperCase()}
+                            </div>
+                            <div className="hidden min-w-0 text-left sm:block">
+                                <p className="max-w-40 truncate text-sm font-medium text-slate-900">
+                                    {user?.name}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                    {user
+                                        ? `${roleNames[user.role]}${user.institutionalApprover ? ` · ${user.institutionalApprover.title}` : ""}`
+                                        : ""}
+                                </p>
+                            </div>
+                            <ChevronDown className="hidden size-4 text-slate-400 sm:block" />
                         </NavLink>
                     </div>
                 </header>
