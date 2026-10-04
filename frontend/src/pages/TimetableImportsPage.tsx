@@ -275,10 +275,7 @@ export function TimetableImportsPage() {
                                       ? `All ${batch.totalRows}`
                                       : item === "READY"
                                         ? `Ready ${reviewSummary.ready}`
-                                        : item === "SKIPPED"
-                                          ? `Skipped ${reviewSummary.skipped}`
-                                          : item.charAt(0) +
-                                            item.slice(1).toLowerCase()}
+                                        : `Skipped ${reviewSummary.skipped}`}
                             </button>
                         )
                     )}
