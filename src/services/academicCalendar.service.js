@@ -1,6 +1,10 @@
 import { prisma } from "../db/index.js"
 import ApiError from "../utils/ApiError.js"
-import { dayOfWeek, formatDateOnly, parseDateOnly } from "../utils/dateTime.js"
+import {
+    effectiveAcademicDay,
+    formatDateOnly,
+    parseDateOnly,
+} from "../utils/dateTime.js"
 import { pagination, pageOffset } from "../utils/pagination.js"
 import { acquireOccupancyLock } from "./occupancy.service.js"
 
@@ -187,17 +191,6 @@ export function updateTerm(id, changes) {
     })
 }
 
-function effectiveDay(date, candidate, otherExceptions) {
-    const exception =
-        candidate && candidate.startDate <= date && candidate.endDate >= date
-            ? candidate
-            : otherExceptions.find(
-                  (item) => item.startDate <= date && item.endDate >= date
-              )
-    if (exception?.exceptionType === "NO_CLASSES") return null
-    return exception?.targetDayOfWeek || dayOfWeek(date)
-}
-
 async function findApprovedBookingImpacts(
     db,
     { term, startDate, endDate, candidate = null, excludeExceptionId = null }
@@ -248,7 +241,10 @@ async function findApprovedBookingImpacts(
     const bookingDays = new Map(
         bookings.map((booking) => [
             booking.id,
-            effectiveDay(booking.bookingDate, candidate, otherExceptions),
+            effectiveAcademicDay(
+                booking.bookingDate,
+                candidate ? [candidate, ...otherExceptions] : otherExceptions
+            ),
         ])
     )
     const days = [...new Set([...bookingDays.values()].filter(Boolean))]

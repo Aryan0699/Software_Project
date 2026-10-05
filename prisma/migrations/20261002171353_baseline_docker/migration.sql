@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "BookingApproval_bookingRequestId_reviewerKind_reviewerUserId_ke" RENAME TO "BookingApproval_bookingRequestId_reviewerKind_reviewerUserI_key";

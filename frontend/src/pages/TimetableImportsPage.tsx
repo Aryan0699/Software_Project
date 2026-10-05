@@ -21,11 +21,13 @@ import {
     type PublicationPreview,
     type TimetableBatch,
     type TimetableImportRow,
+    type TimetablePublicationImpact,
 } from "../lib/api"
 import { PaginationBar } from "./access/shared"
 import { minuteToTime } from "../lib/time"
 
 type View = "ALL" | "READY" | "ATTENTION" | "SKIPPED"
+type IssueView = "ALL" | "INTERNAL" | "PUBLISHED"
 
 const statusLabels: Record<
     TimetableImportRow["initialClassification"],
@@ -35,7 +37,17 @@ const statusLabels: Record<
     MISSING_REQUIRED_FIELD: "Missing required field",
     UNRESOLVED_SLOT: "Unknown slot",
     UNRESOLVED_ROOM: "Unknown room",
-    DUPLICATE_ROW: "Duplicate",
+    DUPLICATE_ROW: "Duplicate row",
+}
+
+function rowIssueLabel(row: TimetableImportRow) {
+    if (row.initialClassification !== "MISSING_REQUIRED_FIELD") {
+        return statusLabels[row.initialClassification]
+    }
+    if (!row.rawCourseCode) return "Missing course code"
+    if (!row.rawSlot) return "Missing slot"
+    if (!row.rawClassroom) return "Missing classroom"
+    return statusLabels[row.initialClassification]
 }
 
 export function TimetableImportsPage() {
@@ -47,6 +59,7 @@ export function TimetableImportsPage() {
     const [workbook, setWorkbook] = useState<File | null>(null)
     const [batchId, setBatchId] = useState("")
     const [view, setView] = useState<View>("ALL")
+    const [issueView, setIssueView] = useState<IssueView>("ALL")
     const [page, setPage] = useState(1)
     const [expandedRowId, setExpandedRowId] = useState("")
     const [resolution, setResolution] = useState({ slotId: "", roomId: "" })
@@ -80,8 +93,19 @@ export function TimetableImportsPage() {
     })
     const batch = batchQuery.data?.batch
     const rowsQuery = useQuery({
-        queryKey: ["timetable-rows", batchId, view, page],
-        queryFn: () => timetableApi.rows(batchId, { view, page, pageSize: 50 }),
+        queryKey: ["timetable-rows", batchId, view, issueView, page],
+        queryFn: () =>
+            timetableApi.rows(batchId, {
+                view,
+                issue: view === "ATTENTION" ? issueView : "ALL",
+                page,
+                pageSize: 50,
+            }),
+        enabled: Boolean(batchId),
+    })
+    const impactQuery = useQuery({
+        queryKey: ["timetable-publication-impact", batchId],
+        queryFn: () => timetableApi.publicationImpact(batchId),
         enabled: Boolean(batchId),
     })
     const publicationQuery = useQuery({
@@ -94,6 +118,9 @@ export function TimetableImportsPage() {
         await Promise.all([
             client.invalidateQueries({ queryKey: ["timetable-imports"] }),
             client.invalidateQueries({ queryKey: ["timetable-rows", batchId] }),
+            client.invalidateQueries({
+                queryKey: ["timetable-publication-impact", batchId],
+            }),
         ])
         if (nextBatch) {
             client.setQueryData(["timetable-import", nextBatch.id], {
@@ -137,8 +164,19 @@ export function TimetableImportsPage() {
                       resolvedRoomId: resolution.roomId || undefined,
                   })
                 : timetableApi.rowAction(batchId, input.row.id, input.action),
-        onSuccess: async ({ batch: nextBatch }) => {
-            showToast("success", "Row updated")
+        onSuccess: async ({ batch: nextBatch, review }) => {
+            const hasConflict = Boolean(
+                review.internalConflicts.length ||
+                review.publishedConflicts.length ||
+                review.bookingConflicts.length ||
+                review.restrictionConflicts.length
+            )
+            showToast(
+                hasConflict ? "info" : "success",
+                hasConflict
+                    ? "Row saved. Review the conflict found for its new room and slot."
+                    : "Row updated"
+            )
             setExpandedRowId("")
             await refresh(nextBatch)
         },
@@ -205,6 +243,7 @@ export function TimetableImportsPage() {
             attention: batch.errorRows,
             skipped: batch.skippedRows,
             allocationConflicts: 0,
+            publishedConflicts: 0,
         }
         return (
             <div className="space-y-5">
@@ -266,6 +305,9 @@ export function TimetableImportsPage() {
                                 }
                                 onClick={() => {
                                     setView(item)
+                                    if (item !== "ATTENTION") {
+                                        setIssueView("ALL")
+                                    }
                                     setPage(1)
                                 }}
                             >
@@ -280,6 +322,37 @@ export function TimetableImportsPage() {
                         )
                     )}
                 </div>
+
+                {view === "ATTENTION" ? (
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="mr-1 font-medium text-slate-600">
+                            Issue filters:
+                        </span>
+                        {(
+                            [
+                                ["ALL", "All issues"],
+                                ["INTERNAL", "Within this import"],
+                                ["PUBLISHED", "Published timetable"],
+                            ] as Array<[IssueView, string]>
+                        ).map(([value, label]) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={
+                                    issueView === value
+                                        ? "button-primary"
+                                        : "button-secondary"
+                                }
+                                onClick={() => {
+                                    setIssueView(value)
+                                    setPage(1)
+                                }}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                ) : null}
 
                 <div className="table-shell overflow-x-auto">
                     <table className="data-table min-w-[760px]">
@@ -337,13 +410,43 @@ export function TimetableImportsPage() {
                     />
                 </div>
 
-                {reviewSummary.attention === 0 ? (
-                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                <PublicationImpactPanel
+                    loading={impactQuery.isLoading}
+                    impact={impactQuery.data}
+                    onReviewPublished={() => {
+                        setView("ATTENTION")
+                        setIssueView("PUBLISHED")
+                        setPage(1)
+                    }}
+                />
+
+                {rowsQuery.data && batch.errorRows === 0 ? (
+                    <div
+                        className={`flex flex-wrap items-center justify-between gap-4 rounded-md border p-4 ${
+                            reviewSummary.attention
+                                ? "border-amber-200 bg-amber-50"
+                                : "border-emerald-200 bg-emerald-50"
+                        }`}
+                    >
                         <div>
-                            <p className="font-semibold text-emerald-800">
-                                All rows are resolved
+                            <p
+                                className={`font-semibold ${
+                                    reviewSummary.attention
+                                        ? "text-amber-900"
+                                        : "text-emerald-800"
+                                }`}
+                            >
+                                {reviewSummary.attention
+                                    ? `${reviewSummary.attention} rows still have timetable conflicts`
+                                    : "All rows are resolved"}
                             </p>
-                            <p className="text-sm text-emerald-700">
+                            <p
+                                className={`text-sm ${
+                                    reviewSummary.attention
+                                        ? "text-amber-800"
+                                        : "text-emerald-700"
+                                }`}
+                            >
                                 {reviewSummary.ready} allocations are ready and{" "}
                                 {reviewSummary.skipped} rows will be skipped.
                             </p>
@@ -353,7 +456,9 @@ export function TimetableImportsPage() {
                             className="button-primary"
                             onClick={() => setPublishOpen(true)}
                         >
-                            Review publication
+                            {reviewSummary.attention
+                                ? "Review conflicts"
+                                : "Review publication"}
                         </button>
                     </div>
                 ) : null}
@@ -561,6 +666,179 @@ export function TimetableImportsPage() {
     )
 }
 
+function PublicationCheckRow({
+    label,
+    count,
+}: {
+    label: string
+    count: number
+}) {
+    return (
+        <div className="flex items-center justify-between gap-4 py-2 text-sm">
+            <span>{label}</span>
+            {count ? (
+                <span className="inline-flex items-center gap-1 font-medium text-amber-700">
+                    <AlertTriangle className="size-4" /> {count} conflict
+                    {count === 1 ? "" : "s"}
+                </span>
+            ) : (
+                <span className="inline-flex items-center gap-1 text-emerald-700">
+                    <CheckCircle2 className="size-4" /> No conflicts
+                </span>
+            )}
+        </div>
+    )
+}
+
+function PublicationImpactPanel({
+    loading,
+    impact,
+    onReviewPublished,
+}: {
+    loading: boolean
+    impact?: TimetablePublicationImpact
+    onReviewPublished: () => void
+}) {
+    if (loading) {
+        return (
+            <section className="rounded-md border bg-white p-4">
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Loader2 className="size-4 animate-spin" /> Checking
+                    publication impact…
+                </div>
+            </section>
+        )
+    }
+    if (!impact) {
+        return (
+            <section className="rounded-md border bg-white p-4">
+                <p className="font-semibold">Publication impact</p>
+                <p className="mt-1 text-sm text-red-600">
+                    Publication impact could not be checked.
+                </p>
+            </section>
+        )
+    }
+    if (!impact.hasImpact) {
+        return (
+            <section className="rounded-md border bg-white p-4">
+                <p className="font-semibold">Publication impact</p>
+                <p className="mt-2 inline-flex items-center gap-2 text-sm text-emerald-700">
+                    <CheckCircle2 className="size-4" /> No external conflicts
+                </p>
+            </section>
+        )
+    }
+    return (
+        <section className="rounded-md border border-amber-200 bg-amber-50/40 p-4">
+            <div>
+                <p className="font-semibold text-slate-900">
+                    Publication impact
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                    Review the affected timetable rows and live room usage
+                    before publishing.
+                </p>
+            </div>
+            <div className="mt-3 divide-y rounded-md border border-amber-200 bg-white px-4">
+                <PublicationCheckRow
+                    label="Published timetable"
+                    count={impact.publishedConflicts.length}
+                />
+                <PublicationCheckRow
+                    label="Approved bookings"
+                    count={impact.bookingConflicts.length}
+                />
+                <PublicationCheckRow
+                    label="Room restrictions"
+                    count={impact.restrictionConflicts.length}
+                />
+            </div>
+            {impact.publishedConflicts.length ? (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-200 bg-white p-3 text-sm">
+                    <div>
+                        <p className="font-medium">
+                            {impact.publishedConflicts.length} published
+                            timetable conflict
+                            {impact.publishedConflicts.length === 1 ? "" : "s"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                            Change the candidate slot or room, or skip the
+                            affected row.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        className="button-secondary"
+                        onClick={onReviewPublished}
+                    >
+                        Review affected rows
+                    </button>
+                </div>
+            ) : null}
+            {impact.bookingConflicts.length ? (
+                <details
+                    className="mt-3 rounded-md border border-amber-200 bg-white p-3"
+                    open
+                >
+                    <summary className="cursor-pointer text-sm font-medium">
+                        Approved bookings · {impact.bookingConflicts.length}{" "}
+                        affected
+                    </summary>
+                    <ul className="mt-3 space-y-2">
+                        {impact.bookingConflicts.map((item) => (
+                            <li
+                                key={item.id}
+                                className="rounded-md bg-slate-50 p-3"
+                            >
+                                <p className="text-sm font-medium">
+                                    {item.title} · {item.roomCode}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    {item.date} ·{" "}
+                                    {minuteToTime(item.startMinute)}–
+                                    {minuteToTime(item.endMinute)} · Conflicts
+                                    with {item.courses.join(", ")}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Requested by {item.requester.displayName}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </details>
+            ) : null}
+            {impact.restrictionConflicts.length ? (
+                <details
+                    className="mt-3 rounded-md border border-amber-200 bg-white p-3"
+                    open
+                >
+                    <summary className="cursor-pointer text-sm font-medium">
+                        Room restrictions · {impact.restrictionConflicts.length}
+                    </summary>
+                    <ul className="mt-3 space-y-2">
+                        {impact.restrictionConflicts.map((item) => (
+                            <li
+                                key={item.id}
+                                className="rounded-md bg-slate-50 p-3"
+                            >
+                                <p className="text-sm font-medium">
+                                    {item.roomCode} · {item.reason}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    {item.date} ·{" "}
+                                    {minuteToTime(item.startMinute)}–
+                                    {minuteToTime(item.endMinute)}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </details>
+            ) : null}
+        </section>
+    )
+}
+
 function PublicationDialog({
     batch,
     loading,
@@ -615,30 +893,108 @@ function PublicationDialog({
                                     : "First publication for this term and slot system"}
                             </p>
                         </div>
-                        {preview.canPublish ? (
-                            <div className="inline-alert border-emerald-200 bg-emerald-50 text-emerald-700">
-                                <CheckCircle2 className="size-4" /> No blocking
-                                validation issues or approved-event conflicts.
+                        <div className="rounded-md border bg-white px-4 py-2">
+                            <p className="border-b py-2 text-sm font-semibold">
+                                Publication checks
+                            </p>
+                            <PublicationCheckRow
+                                label="Internal timetable"
+                                count={preview.internalConflicts.length}
+                            />
+                            <PublicationCheckRow
+                                label="Published timetables"
+                                count={preview.publishedConflicts.length}
+                            />
+                            <PublicationCheckRow
+                                label="Approved bookings"
+                                count={preview.bookingConflicts.length}
+                            />
+                            <PublicationCheckRow
+                                label="Room restrictions"
+                                count={preview.restrictionConflicts.length}
+                            />
+                        </div>
+                        {preview.internalConflicts.length ? (
+                            <div>
+                                <p className="text-sm font-semibold">
+                                    Conflicts within this import
+                                </p>
+                                <ul className="mt-2 space-y-2 text-sm">
+                                    {preview.internalConflicts.map((item) => (
+                                        <li
+                                            key={`${item.firstRow.id}-${item.secondRow.id}`}
+                                            className="rounded-md border p-3"
+                                        >
+                                            <p className="font-medium">
+                                                Rows {item.firstRow.rowIndex}{" "}
+                                                and {item.secondRow.rowIndex} ·{" "}
+                                                {item.firstRow.roomCode}
+                                            </p>
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                {item.firstRow.courseCode} and{" "}
+                                                {item.secondRow.courseCode}
+                                            </p>
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                {item.occurrences
+                                                    .map(
+                                                        (occurrence) =>
+                                                            `${occurrence.dayOfWeek.slice(0, 3)} ${minuteToTime(occurrence.startMinute)}–${minuteToTime(occurrence.endMinute)}`
+                                                    )
+                                                    .join(", ")}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                        ) : (
-                            <div className="inline-alert border-amber-200 bg-amber-50 text-amber-800">
-                                <AlertTriangle className="size-4" />
-                                <div>
-                                    <p className="font-medium">
-                                        Publication needs attention
-                                    </p>
-                                    <p className="mt-1 text-xs">
-                                        {preview.bookingConflicts.length}{" "}
-                                        approved events,{" "}
-                                        {preview.restrictionConflicts.length}{" "}
-                                        restrictions, and{" "}
-                                        {preview.internalConflicts.length}{" "}
-                                        academic overlaps block this
-                                        publication.
-                                    </p>
-                                </div>
+                        ) : null}
+                        {preview.publishedConflicts.length ? (
+                            <div>
+                                <p className="text-sm font-semibold">
+                                    Conflicts with published timetables
+                                </p>
+                                <ul className="mt-2 space-y-2 text-sm">
+                                    {preview.publishedConflicts.map(
+                                        (item, index) => (
+                                            <li
+                                                key={`${item.candidateRow.id}-${item.publishedTimetable.batchId}-${index}`}
+                                                className="rounded-md border p-3"
+                                            >
+                                                <p className="font-medium">
+                                                    Row{" "}
+                                                    {item.candidateRow.rowIndex}{" "}
+                                                    ·{" "}
+                                                    {
+                                                        item.candidateRow
+                                                            .courseCode
+                                                    }{" "}
+                                                    · {item.roomCode}
+                                                </p>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    Conflicts with{" "}
+                                                    {
+                                                        item.publishedTimetable
+                                                            .slotSystemName
+                                                    }{" "}
+                                                    revision{" "}
+                                                    {item.publishedTimetable
+                                                        .revisionNumber || "—"}
+                                                    {" · "}
+                                                    {item.publishedCourse.code}
+                                                </p>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    {item.occurrences
+                                                        .map(
+                                                            (occurrence) =>
+                                                                `${occurrence.dayOfWeek.slice(0, 3)} ${minuteToTime(occurrence.startMinute)}–${minuteToTime(occurrence.endMinute)}`
+                                                        )
+                                                        .join(", ")}
+                                                </p>
+                                            </li>
+                                        )
+                                    )}
+                                </ul>
                             </div>
-                        )}
+                        ) : null}
                         {preview.bookingConflicts.length ? (
                             <div>
                                 <p className="text-sm font-semibold">
@@ -660,14 +1016,45 @@ function PublicationDialog({
                                                 · conflicts with{" "}
                                                 {item.courses.join(", ")}
                                             </p>
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                Requested by{" "}
+                                                {item.requester.displayName}
+                                            </p>
                                         </li>
                                     ))}
                                 </ul>
-                                <p className="mt-2 text-xs text-slate-500">
-                                    Relocate, reschedule, and cancel controls
-                                    will be added in the conflict-resolution
-                                    iteration.
+                            </div>
+                        ) : null}
+                        {preview.restrictionConflicts.length ? (
+                            <div>
+                                <p className="text-sm font-semibold">
+                                    Conflicting room restrictions
                                 </p>
+                                <ul className="mt-2 space-y-2 text-sm">
+                                    {preview.restrictionConflicts.map(
+                                        (item) => (
+                                            <li
+                                                key={item.id}
+                                                className="rounded-md border p-3"
+                                            >
+                                                <p className="font-medium">
+                                                    {item.roomCode} ·{" "}
+                                                    {item.reason}
+                                                </p>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    {item.date} ·{" "}
+                                                    {minuteToTime(
+                                                        item.startMinute
+                                                    )}
+                                                    –
+                                                    {minuteToTime(
+                                                        item.endMinute
+                                                    )}
+                                                </p>
+                                            </li>
+                                        )
+                                    )}
+                                </ul>
                             </div>
                         ) : null}
                         <div className="flex justify-end gap-2">
@@ -723,9 +1110,10 @@ function RowWithResolution({
     ) => void
 }) {
     const hasAllocationConflict = Boolean(row.allocationConflicts?.length)
-    const ready =
-        row.isResolved && row.adminDecision !== "SKIP" && !hasAllocationConflict
-    const canOpen = !row.isResolved || hasAllocationConflict
+    const hasPublishedConflict = Boolean(row.publishedConflicts?.length)
+    const hasConflict = hasAllocationConflict || hasPublishedConflict
+    const ready = row.isResolved && row.adminDecision !== "SKIP" && !hasConflict
+    const canOpen = !row.isResolved || hasConflict
     return (
         <>
             <tr
@@ -741,19 +1129,28 @@ function RowWithResolution({
                         <span className="status-badge border-slate-200 bg-slate-100 text-slate-600">
                             Skipped
                         </span>
-                    ) : hasAllocationConflict ? (
-                        <span className="inline-flex items-center gap-1 text-amber-700">
-                            <AlertTriangle className="size-4" /> Room conflict
-                        </span>
                     ) : ready ? (
                         <span className="inline-flex items-center gap-1 text-emerald-700">
                             <CheckCircle2 className="size-4" /> Ready
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1 text-amber-700">
-                            <AlertTriangle className="size-4" />{" "}
-                            {statusLabels[row.initialClassification]}
-                        </span>
+                        <div className="flex flex-col items-start gap-1.5">
+                            {!row.isResolved ? (
+                                <span className="status-badge border-amber-200 bg-amber-50 text-amber-800">
+                                    {rowIssueLabel(row)}
+                                </span>
+                            ) : null}
+                            {hasAllocationConflict ? (
+                                <span className="status-badge border-amber-200 bg-amber-50 text-amber-800">
+                                    Conflict within this import
+                                </span>
+                            ) : null}
+                            {hasPublishedConflict ? (
+                                <span className="status-badge border-amber-200 bg-amber-50 text-amber-800">
+                                    Conflict with published timetable
+                                </span>
+                            ) : null}
+                        </div>
                     )}
                 </td>
             </tr>
@@ -766,16 +1163,84 @@ function RowWithResolution({
                         >
                             <div>
                                 <p className="font-semibold text-slate-900">
-                                    {hasAllocationConflict
-                                        ? `Resolve room conflict for row ${row.rowIndex}`
-                                        : `Resolve row ${row.rowIndex}`}
+                                    Resolve row {row.rowIndex}
                                 </p>
                                 <p className="mt-1 text-sm text-amber-700">
-                                    {hasAllocationConflict
-                                        ? "Another course uses this classroom during an overlapping slot occurrence."
-                                        : row.issues?.join(". ")}
+                                    {hasPublishedConflict &&
+                                    hasAllocationConflict
+                                        ? "This row conflicts with this import and another published timetable. Choose another slot or room, or skip this row."
+                                        : hasPublishedConflict
+                                          ? "This room and time overlap another published timetable. Choose another slot or room, or skip this row."
+                                          : hasAllocationConflict
+                                            ? "Another row in this workbook uses this classroom during an overlapping slot occurrence."
+                                            : row.issues?.join(". ")}
                                 </p>
                             </div>
+                            {hasPublishedConflict ? (
+                                <div className="space-y-2">
+                                    {row.publishedConflicts.map(
+                                        (conflict, index) => (
+                                            <div
+                                                key={`${conflict.publishedTimetable.batchId}-${conflict.publishedCourse.code}-${index}`}
+                                                className="rounded-md border border-amber-200 bg-white p-3"
+                                            >
+                                                <p className="text-sm font-medium text-slate-900">
+                                                    {
+                                                        conflict
+                                                            .publishedTimetable
+                                                            .slotSystemName
+                                                    }{" "}
+                                                    · Revision{" "}
+                                                    {conflict.publishedTimetable
+                                                        .revisionNumber || "—"}
+                                                </p>
+                                                <p className="mt-1 text-xs text-slate-600">
+                                                    {conflict.publishedCourse
+                                                        .code || "Course"}
+                                                    {conflict.publishedCourse
+                                                        .name
+                                                        ? ` · ${conflict.publishedCourse.name}`
+                                                        : ""}
+                                                    {" · "}
+                                                    {conflict.roomCode}
+                                                </p>
+                                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                                    {conflict.occurrences.map(
+                                                        (occurrence) => (
+                                                            <span
+                                                                key={`${occurrence.dayOfWeek}-${occurrence.startMinute}-${occurrence.endMinute}`}
+                                                                className="status-badge border-amber-200 bg-amber-50 text-amber-800"
+                                                            >
+                                                                {occurrence.dayOfWeek
+                                                                    .slice(0, 3)
+                                                                    .toLowerCase()
+                                                                    .replace(
+                                                                        /^./,
+                                                                        (
+                                                                            value
+                                                                        ) =>
+                                                                            value.toUpperCase()
+                                                                    )}{" "}
+                                                                {minuteToTime(
+                                                                    occurrence.startMinute
+                                                                )}
+                                                                –
+                                                                {minuteToTime(
+                                                                    occurrence.endMinute
+                                                                )}
+                                                            </span>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+                                    <p className="text-xs text-slate-500">
+                                        The published timetable remains
+                                        unchanged. Edit this row or skip it.
+                                    </p>
+                                </div>
+                            ) : null}
                             {hasAllocationConflict ? (
                                 <div className="space-y-2">
                                     {row.allocationConflicts.map(
@@ -831,13 +1296,17 @@ function RowWithResolution({
                                             </div>
                                         )
                                     )}
-                                    <p className="text-xs text-slate-500">
-                                        Keeping this allocation will skip every
-                                        row listed above. The original workbook
-                                        rows remain in this import history.
-                                    </p>
+                                    {!hasPublishedConflict ? (
+                                        <p className="text-xs text-slate-500">
+                                            Keeping this allocation will skip
+                                            every row listed above. The original
+                                            workbook rows remain in this import
+                                            history.
+                                        </p>
+                                    ) : null}
                                 </div>
-                            ) : row.rawCourseCode ? (
+                            ) : null}
+                            {row.rawCourseCode ? (
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <label>
                                         <span className="field-label">
@@ -934,17 +1403,34 @@ function RowWithResolution({
                                 >
                                     Skip row
                                 </button>
-                                {hasAllocationConflict ? (
-                                    <button
-                                        type="button"
-                                        className="button-primary"
-                                        disabled={busy}
-                                        onClick={() =>
-                                            onAction("KEEP_ALLOCATION")
-                                        }
-                                    >
-                                        Keep this allocation
-                                    </button>
+                                {hasConflict ? (
+                                    <>
+                                        {hasAllocationConflict &&
+                                        !hasPublishedConflict ? (
+                                            <button
+                                                type="button"
+                                                className="button-secondary"
+                                                disabled={busy}
+                                                onClick={() =>
+                                                    onAction("KEEP_ALLOCATION")
+                                                }
+                                            >
+                                                Keep this allocation
+                                            </button>
+                                        ) : null}
+                                        <button
+                                            type="button"
+                                            className="button-primary"
+                                            disabled={
+                                                busy ||
+                                                !resolution.slotId ||
+                                                !resolution.roomId
+                                            }
+                                            onClick={() => onAction("RESOLVE")}
+                                        >
+                                            Save new slot or room
+                                        </button>
+                                    </>
                                 ) : row.initialClassification ===
                                   "DUPLICATE_ROW" ? (
                                     <button

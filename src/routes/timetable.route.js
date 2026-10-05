@@ -8,6 +8,7 @@ import {
     downloadTemplate,
     getImport,
     getImportOptions,
+    getPublicationImpact,
     listImportRows,
     listImports,
     previewPublication,
@@ -56,6 +57,11 @@ timetableRouter.get(
     validateParams(importParamsSchema),
     validateQuery(listRowsQuerySchema),
     listImportRows
+)
+timetableRouter.get(
+    "/imports/:id/publication-impact",
+    validateParams(importParamsSchema),
+    getPublicationImpact
 )
 timetableRouter.patch(
     "/imports/:id/rows/:rowId",

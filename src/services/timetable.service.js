@@ -4,7 +4,7 @@ import { prisma } from "../db/index.js"
 import { env } from "../config/env.js"
 import ApiError from "../utils/ApiError.js"
 import { pagination, pageOffset } from "../utils/pagination.js"
-import { dayOfWeek, formatDateOnly } from "../utils/dateTime.js"
+import { effectiveAcademicDay, formatDateOnly } from "../utils/dateTime.js"
 import { acquireOccupancyLock } from "./occupancy.service.js"
 
 const TEMPLATE_HEADERS = [
@@ -435,12 +435,12 @@ export async function getImport(id) {
     return batchOrThrow(prisma, id)
 }
 
-export async function listImportRows(id, { view, page, pageSize }) {
+export async function listImportRows(id, { view, issue, page, pageSize }) {
     const batch = await batchOrThrow(prisma, id)
-    const schedule = await candidateSchedule(prisma, id)
-    const conflictPairs = summarizeInternalConflicts(
-        internalConflicts(schedule)
-    )
+    const conflictReview = await computeTimetableConflicts(prisma, id, {
+        includeOperational: false,
+    })
+    const conflictPairs = conflictReview.internalConflicts
     const conflictsByRow = new Map()
     for (const conflict of conflictPairs) {
         const addConflict = (row, otherRow) => {
@@ -454,7 +454,25 @@ export async function listImportRows(id, { view, page, pageSize }) {
         addConflict(conflict.firstRow, conflict.secondRow)
         addConflict(conflict.secondRow, conflict.firstRow)
     }
-    const conflictRowIds = [...conflictsByRow.keys()]
+    const publishedConflictsByRow = new Map()
+    for (const conflict of conflictReview.publishedConflicts) {
+        const current =
+            publishedConflictsByRow.get(conflict.candidateRow.id) || []
+        current.push(conflict)
+        publishedConflictsByRow.set(conflict.candidateRow.id, current)
+    }
+    const conflictRowIds = [
+        ...new Set([
+            ...conflictsByRow.keys(),
+            ...publishedConflictsByRow.keys(),
+        ]),
+    ]
+    const issueConflictRowIds =
+        issue === "INTERNAL"
+            ? [...conflictsByRow.keys()]
+            : issue === "PUBLISHED"
+              ? [...publishedConflictsByRow.keys()]
+              : conflictRowIds
     const where = {
         batchId: id,
         ...(view === "READY"
@@ -467,14 +485,16 @@ export async function listImportRows(id, { view, page, pageSize }) {
               }
             : {}),
         ...(view === "ATTENTION"
-            ? {
-                  OR: [
-                      { isResolved: false },
-                      ...(conflictRowIds.length
-                          ? [{ id: { in: conflictRowIds } }]
-                          : []),
-                  ],
-              }
+            ? issue === "ALL"
+                ? {
+                      OR: [
+                          { isResolved: false },
+                          ...(conflictRowIds.length
+                              ? [{ id: { in: conflictRowIds } }]
+                              : []),
+                      ],
+                  }
+                : { id: { in: issueConflictRowIds } }
             : {}),
         ...(view === "SKIPPED" ? { adminDecision: "SKIP" } : {}),
     }
@@ -492,6 +512,7 @@ export async function listImportRows(id, { view, page, pageSize }) {
         records: records.map((row) => ({
             ...row,
             allocationConflicts: conflictsByRow.get(row.id) || [],
+            publishedConflicts: publishedConflictsByRow.get(row.id) || [],
         })),
         pagination: pagination(page, pageSize, total),
         summary: {
@@ -499,6 +520,7 @@ export async function listImportRows(id, { view, page, pageSize }) {
             attention: batch.errorRows + conflictRowIds.length,
             skipped: batch.skippedRows,
             allocationConflicts: conflictPairs.length,
+            publishedConflicts: conflictReview.publishedConflicts.length,
         },
     }
 }
@@ -552,7 +574,14 @@ export async function resolveImportRow(batchId, rowId, input, userId) {
                     resolutionNote: input.resolutionNote || null,
                 },
             })
-            return refreshCounts(tx, batchId)
+            const updatedBatch = await refreshCounts(tx, batchId)
+            const review = await computeTimetableConflicts(tx, batchId, {
+                focusRowId: rowId,
+            })
+            return {
+                batch: updatedBatch,
+                review: conflictResponse(review),
+            }
         },
         { timeout: 30000 }
     )
@@ -673,7 +702,14 @@ export async function actOnImportRow(batchId, rowId, action, userId) {
                     },
                 })
             }
-            return refreshCounts(tx, batchId)
+            const updatedBatch = await refreshCounts(tx, batchId)
+            const review = await computeTimetableConflicts(tx, batchId, {
+                focusRowId: rowId,
+            })
+            return {
+                batch: updatedBatch,
+                review: conflictResponse(review),
+            }
         },
         { timeout: 30000 }
     )
@@ -720,7 +756,7 @@ async function candidateSchedule(db, batchId) {
     )
 }
 
-function internalConflicts(schedule) {
+function internalConflicts(schedule, focusRowId = null) {
     const conflicts = []
     const groups = new Map()
     for (const item of schedule) {
@@ -745,7 +781,12 @@ function internalConflicts(schedule) {
             ) {
                 const right = group[rightIndex]
                 if (right.startMinute >= left.endMinute) break
-                if (left.rowId !== right.rowId) {
+                if (
+                    left.rowId !== right.rowId &&
+                    (!focusRowId ||
+                        left.rowId === focusRowId ||
+                        right.rowId === focusRowId)
+                ) {
                     conflicts.push({ left, right })
                 }
             }
@@ -803,98 +844,219 @@ function summarizeInternalConflicts(conflicts) {
     return [...pairs.values()]
 }
 
-function effectiveDay(date, exceptions) {
-    const exception = exceptions.find(
-        (item) => item.startDate <= date && item.endDate >= date
-    )
-    if (exception?.exceptionType === "NO_CLASSES") return null
-    return exception?.targetDayOfWeek || dayOfWeek(date)
+function summarizePublishedConflicts(candidateSchedule, occupancies) {
+    const occupancyByRoomDay = new Map()
+    for (const occupancy of occupancies) {
+        const key = `${occupancy.roomId}|${occupancy.dayOfWeek}`
+        const group = occupancyByRoomDay.get(key) || []
+        group.push(occupancy)
+        occupancyByRoomDay.set(key, group)
+    }
+
+    const summaries = new Map()
+    for (const candidate of candidateSchedule) {
+        const matches =
+            occupancyByRoomDay.get(
+                `${candidate.roomId}|${candidate.dayOfWeek}`
+            ) || []
+        for (const published of matches) {
+            if (
+                candidate.startMinute >= published.endMinute ||
+                candidate.endMinute <= published.startMinute
+            ) {
+                continue
+            }
+            const key = `${candidate.rowId}|${published.courseSlotAssignment.id}|${published.roomId}`
+            const summary = summaries.get(key) || {
+                candidateRow: {
+                    id: candidate.rowId,
+                    rowIndex: candidate.rowIndex,
+                    courseCode: candidate.courseCode,
+                    courseName: candidate.courseName,
+                    slotCode: candidate.slotCode,
+                    roomCode: candidate.roomCode,
+                },
+                publishedTimetable: {
+                    batchId: published.timetableBatch.id,
+                    slotSystemName: published.timetableBatch.slotSystem.name,
+                    revisionNumber: published.timetableBatch.revisionNumber,
+                },
+                publishedCourse: {
+                    code:
+                        published.courseSlotAssignment.course.code ||
+                        published.courseSlotAssignment.rawCourseCode,
+                    name: published.courseSlotAssignment.course.name,
+                },
+                roomCode: candidate.roomCode,
+                occurrences: [],
+            }
+            const occurrence = {
+                dayOfWeek: candidate.dayOfWeek,
+                startMinute: Math.max(
+                    candidate.startMinute,
+                    published.startMinute
+                ),
+                endMinute: Math.min(candidate.endMinute, published.endMinute),
+            }
+            if (
+                !summary.occurrences.some(
+                    (item) =>
+                        item.dayOfWeek === occurrence.dayOfWeek &&
+                        item.startMinute === occurrence.startMinute &&
+                        item.endMinute === occurrence.endMinute
+                )
+            ) {
+                summary.occurrences.push(occurrence)
+            }
+            summaries.set(key, summary)
+        }
+    }
+    return [...summaries.values()]
 }
 
-async function publicationPreview(db, batchId) {
-    const batch = await batchOrThrow(db, batchId)
-    requirePreview(batch)
-    if (batch.errorRows > 0) {
-        throw new ApiError(409, "Resolve or skip every row before publishing", {
-            code: "IMPORT_ROWS_UNRESOLVED",
-        })
-    }
-    const schedule = await candidateSchedule(db, batchId)
-    const overlaps = internalConflicts(schedule)
-    const [currentPublication, exceptions, bookings, restrictions] =
-        await Promise.all([
-            db.timetableImportBatch.findFirst({
-                where: {
-                    academicTermId: batch.academicTermId,
-                    slotSystemId: batch.slotSystemId,
-                    status: "PUBLISHED",
-                },
+async function findPublishedConflicts(db, batch, schedule) {
+    if (!schedule.length) return []
+    const occupancies = await db.roomSlotOccupancy.findMany({
+        where: {
+            academicTermId: batch.academicTermId,
+            roomId: { in: [...new Set(schedule.map((item) => item.roomId))] },
+            dayOfWeek: {
+                in: [...new Set(schedule.map((item) => item.dayOfWeek))],
+            },
+            timetableBatch: {
+                status: "PUBLISHED",
+                slotSystemId: { not: batch.slotSystemId },
+            },
+        },
+        select: {
+            roomId: true,
+            dayOfWeek: true,
+            startMinute: true,
+            endMinute: true,
+            timetableBatch: {
                 select: {
                     id: true,
                     revisionNumber: true,
-                    publishedAt: true,
-                    fileName: true,
+                    slotSystem: { select: { name: true } },
                 },
-            }),
-            db.calendarException.findMany({
-                where: { academicTermId: batch.academicTermId, isActive: true },
-                select: {
-                    startDate: true,
-                    endDate: true,
-                    exceptionType: true,
-                    targetDayOfWeek: true,
-                },
-            }),
-            db.bookingRequest.findMany({
-                where: {
-                    status: "APPROVED",
-                    bookingDate: {
-                        gte: batch.academicTerm.startDate,
-                        lte: batch.academicTerm.endDate,
-                    },
-                },
+            },
+            courseSlotAssignment: {
                 select: {
                     id: true,
-                    title: true,
-                    bookingDate: true,
-                    roomId: true,
-                    startMinute: true,
-                    endMinute: true,
-                    room: { select: { fullCode: true } },
+                    rawCourseCode: true,
+                    course: { select: { code: true, name: true } },
                 },
-            }),
-            db.roomRestriction.findMany({
-                where: {
-                    status: "ACTIVE",
-                    restrictionDate: {
-                        gte: batch.academicTerm.startDate,
-                        lte: batch.academicTerm.endDate,
-                    },
-                },
-                select: {
-                    id: true,
-                    reason: true,
-                    restrictionDate: true,
-                    roomId: true,
-                    startMinute: true,
-                    endMinute: true,
-                    room: { select: { fullCode: true } },
-                },
-            }),
+            },
+        },
+    })
+    return summarizePublishedConflicts(schedule, occupancies)
+}
+
+function matchScheduleForDate(schedule, item, date, exceptions) {
+    const effectiveDay = effectiveAcademicDay(date, exceptions)
+    if (!effectiveDay) return []
+    return schedule.filter(
+        (entry) =>
+            entry.roomId === item.roomId &&
+            entry.dayOfWeek === effectiveDay &&
+            entry.startMinute < item.endMinute &&
+            entry.endMinute > item.startMinute
+    )
+}
+
+async function computeTimetableConflicts(
+    db,
+    batchId,
+    { focusRowId = null, includeOperational = true } = {}
+) {
+    const batch = await batchOrThrow(db, batchId)
+    const schedule = await candidateSchedule(db, batchId)
+    const focusedSchedule = focusRowId
+        ? schedule.filter((item) => item.rowId === focusRowId)
+        : schedule
+    const internal = summarizeInternalConflicts(
+        internalConflicts(schedule, focusRowId)
+    )
+    const operationalQueries = includeOperational
+        ? [
+              db.calendarException.findMany({
+                  where: {
+                      academicTermId: batch.academicTermId,
+                      isActive: true,
+                  },
+                  orderBy: [{ startDate: "asc" }, { id: "asc" }],
+                  select: {
+                      startDate: true,
+                      endDate: true,
+                      exceptionType: true,
+                      targetDayOfWeek: true,
+                  },
+              }),
+              db.bookingRequest.findMany({
+                  where: {
+                      status: "APPROVED",
+                      roomId: {
+                          in: [
+                              ...new Set(
+                                  focusedSchedule.map((item) => item.roomId)
+                              ),
+                          ],
+                      },
+                      bookingDate: {
+                          gte: batch.academicTerm.startDate,
+                          lte: batch.academicTerm.endDate,
+                      },
+                  },
+                  select: {
+                      id: true,
+                      title: true,
+                      bookingDate: true,
+                      roomId: true,
+                      startMinute: true,
+                      endMinute: true,
+                      requester: { select: { id: true, name: true } },
+                      room: { select: { fullCode: true } },
+                  },
+              }),
+              db.roomRestriction.findMany({
+                  where: {
+                      status: "ACTIVE",
+                      roomId: {
+                          in: [
+                              ...new Set(
+                                  focusedSchedule.map((item) => item.roomId)
+                              ),
+                          ],
+                      },
+                      restrictionDate: {
+                          gte: batch.academicTerm.startDate,
+                          lte: batch.academicTerm.endDate,
+                      },
+                  },
+                  select: {
+                      id: true,
+                      reason: true,
+                      restrictionDate: true,
+                      roomId: true,
+                      startMinute: true,
+                      endMinute: true,
+                      room: { select: { fullCode: true } },
+                  },
+              }),
+          ]
+        : [Promise.resolve([]), Promise.resolve([]), Promise.resolve([])]
+    const [publishedConflicts, [exceptions, bookings, restrictions]] =
+        await Promise.all([
+            findPublishedConflicts(db, batch, focusedSchedule),
+            Promise.all(operationalQueries),
         ])
-    const matchSchedule = (item, date) => {
-        const effective = effectiveDay(date, exceptions)
-        if (!effective) return []
-        return schedule.filter(
-            (entry) =>
-                entry.roomId === item.roomId &&
-                entry.dayOfWeek === effective &&
-                entry.startMinute < item.endMinute &&
-                entry.endMinute > item.startMinute
-        )
-    }
     const bookingConflicts = bookings.flatMap((booking) => {
-        const matches = matchSchedule(booking, booking.bookingDate)
+        const matches = matchScheduleForDate(
+            focusedSchedule,
+            booking,
+            booking.bookingDate,
+            exceptions
+        )
         return matches.length
             ? [
                   {
@@ -904,6 +1066,10 @@ async function publicationPreview(db, batchId) {
                       roomCode: booking.room.fullCode,
                       startMinute: booking.startMinute,
                       endMinute: booking.endMinute,
+                      requester: {
+                          id: booking.requester.id,
+                          displayName: booking.requester.name,
+                      },
                       courses: [
                           ...new Set(matches.map((item) => item.courseCode)),
                       ],
@@ -912,7 +1078,12 @@ async function publicationPreview(db, batchId) {
             : []
     })
     const restrictionConflicts = restrictions.flatMap((restriction) => {
-        const matches = matchSchedule(restriction, restriction.restrictionDate)
+        const matches = matchScheduleForDate(
+            focusedSchedule,
+            restriction,
+            restriction.restrictionDate,
+            exceptions
+        )
         return matches.length
             ? [
                   {
@@ -928,21 +1099,74 @@ async function publicationPreview(db, batchId) {
     })
     return {
         batch,
-        currentPublication,
         schedule,
-        internalConflicts: overlaps,
+        internalConflicts: internal,
+        publishedConflicts,
         bookingConflicts,
         restrictionConflicts,
         canPublish:
-            !overlaps.length &&
+            !internal.length &&
+            !publishedConflicts.length &&
             !bookingConflicts.length &&
             !restrictionConflicts.length,
     }
 }
 
+function conflictResponse(review) {
+    return {
+        internalConflicts: review.internalConflicts,
+        publishedConflicts: review.publishedConflicts,
+        bookingConflicts: review.bookingConflicts,
+        restrictionConflicts: review.restrictionConflicts,
+        hasConflicts: !review.canPublish,
+    }
+}
+
+async function publicationPreview(db, batchId) {
+    const batch = await batchOrThrow(db, batchId)
+    requirePreview(batch)
+    if (batch.errorRows > 0) {
+        throw new ApiError(409, "Resolve or skip every row before publishing", {
+            code: "IMPORT_ROWS_UNRESOLVED",
+        })
+    }
+    const [review, currentPublication] = await Promise.all([
+        computeTimetableConflicts(db, batchId),
+        db.timetableImportBatch.findFirst({
+            where: {
+                academicTermId: batch.academicTermId,
+                slotSystemId: batch.slotSystemId,
+                status: "PUBLISHED",
+            },
+            select: {
+                id: true,
+                revisionNumber: true,
+                publishedAt: true,
+                fileName: true,
+            },
+        }),
+    ])
+    return { ...review, currentPublication }
+}
+
 export async function previewPublication(id) {
     const { schedule, ...preview } = await publicationPreview(prisma, id)
     return { ...preview, allocationOccurrences: schedule.length }
+}
+
+export async function getPublicationImpact(id) {
+    const review = await computeTimetableConflicts(prisma, id)
+    requirePreview(review.batch)
+    return {
+        publishedConflicts: review.publishedConflicts,
+        bookingConflicts: review.bookingConflicts,
+        restrictionConflicts: review.restrictionConflicts,
+        hasImpact: Boolean(
+            review.publishedConflicts.length ||
+            review.bookingConflicts.length ||
+            review.restrictionConflicts.length
+        ),
+    }
 }
 
 function parsedStudentCount(rawRow) {
@@ -958,17 +1182,16 @@ export async function publishImport(id, userId) {
             if (!preview.canPublish) {
                 throw new ApiError(
                     409,
-                    preview.bookingConflicts.length
-                        ? "Approved events need attention before publication"
-                        : preview.restrictionConflicts.length
-                          ? "Active room restrictions conflict with this timetable"
-                          : "Academic room allocations overlap",
+                    "Timetable conflicts changed. Review the latest publication preview.",
                     {
                         code: "TIMETABLE_PUBLICATION_CONFLICT",
                         details: {
-                            internalConflicts: preview.internalConflicts,
-                            bookingConflicts: preview.bookingConflicts,
-                            restrictionConflicts: preview.restrictionConflicts,
+                            conflicts: {
+                                internal: preview.internalConflicts,
+                                publishedTimetable: preview.publishedConflicts,
+                                approvedBookings: preview.bookingConflicts,
+                                roomRestrictions: preview.restrictionConflicts,
+                            },
                         },
                     }
                 )

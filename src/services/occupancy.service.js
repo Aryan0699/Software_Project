@@ -1,6 +1,7 @@
 import {
     addDays,
     dayOfWeek,
+    effectiveAcademicDay,
     formatDateOnly,
     institutionNow,
 } from "../utils/dateTime.js"
@@ -283,10 +284,10 @@ export async function findRoomDeactivationBlockers(db, roomIds) {
             academicRoomsFound.size < roomIds.length
         ) {
             const exception = exceptionFor(date)
-            const effectiveDay =
-                exception?.exceptionType === "NO_CLASSES"
-                    ? null
-                    : exception?.targetDayOfWeek || dayOfWeek(date)
+            const effectiveDay = effectiveAcademicDay(
+                date,
+                exception ? [exception] : []
+            )
             const matches = effectiveDay ? byDay.get(effectiveDay) || [] : []
 
             for (const occupancy of matches) {

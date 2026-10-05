@@ -16,6 +16,7 @@ export const uploadFieldsSchema = z
 export const listRowsQuerySchema = z
     .object({
         view: z.enum(["ALL", "READY", "ATTENTION", "SKIPPED"]).default("ALL"),
+        issue: z.enum(["ALL", "INTERNAL", "PUBLISHED"]).default("ALL"),
         page: z.coerce.number().int().min(1).default(1),
         pageSize: z.coerce.number().int().min(1).max(100).default(50),
     })

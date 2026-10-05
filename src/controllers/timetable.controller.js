@@ -5,6 +5,7 @@ import {
     createTemplate,
     getImport as getImportService,
     getImportOptions as getImportOptionsService,
+    getPublicationImpact as getPublicationImpactService,
     listImportRows as listImportRowsService,
     listImports as listImportsService,
     previewPublication as previewPublicationService,
@@ -75,24 +76,34 @@ export const listImportRows = asyncHandler(async (req, res) => {
     )
 })
 
+export const getPublicationImpact = asyncHandler(async (req, res) => {
+    res.json(
+        new ApiResponse(
+            200,
+            "Timetable publication impact",
+            await getPublicationImpactService(req.validatedParams.id)
+        )
+    )
+})
+
 export const resolveImportRow = asyncHandler(async (req, res) => {
-    const batch = await resolveImportRowService(
+    const result = await resolveImportRowService(
         req.validatedParams.id,
         req.validatedParams.rowId,
         req.validatedBody,
         req.user.id
     )
-    res.json(new ApiResponse(200, "Import row resolved", { batch }))
+    res.json(new ApiResponse(200, "Import row resolved", result))
 })
 
 export const actOnImportRow = asyncHandler(async (req, res) => {
-    const batch = await actOnImportRowService(
+    const result = await actOnImportRowService(
         req.validatedParams.id,
         req.validatedParams.rowId,
         req.validatedBody.action,
         req.user.id
     )
-    res.json(new ApiResponse(200, "Import row updated", { batch }))
+    res.json(new ApiResponse(200, "Import row updated", result))
 })
 
 export const cancelImport = asyncHandler(async (req, res) => {

@@ -28,6 +28,14 @@ export function dayOfWeek(value) {
     return dayNames[value.getUTCDay()]
 }
 
+export function effectiveAcademicDay(date, exceptions = []) {
+    const exception = exceptions.find(
+        (item) => item.startDate <= date && item.endDate >= date
+    )
+    if (exception?.exceptionType === "NO_CLASSES") return null
+    return exception?.targetDayOfWeek || dayOfWeek(date)
+}
+
 export function institutionNow(now = new Date()) {
     const parts = new Intl.DateTimeFormat("en-GB", {
         timeZone: INSTITUTION_TIME_ZONE,
@@ -49,4 +57,3 @@ export function institutionNow(now = new Date()) {
         minute: Number(values.hour) * 60 + Number(values.minute),
     }
 }
-

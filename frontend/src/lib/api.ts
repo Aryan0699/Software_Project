@@ -130,6 +130,47 @@ export type TimetableBatch = {
     createdBy: Pick<BasicUser, "id" | "name" | "email"> | null
 }
 
+export type TimetableConflictOccurrence = {
+    dayOfWeek: DayOfWeek
+    startMinute: number
+    endMinute: number
+}
+
+export type TimetableConflictRow = {
+    id: string
+    rowIndex: number
+    courseCode: string | null
+    courseName: string | null
+    slotCode: string
+    roomCode: string
+}
+
+export type InternalTimetableConflict = {
+    firstRow: TimetableConflictRow
+    secondRow: TimetableConflictRow
+    occurrences: TimetableConflictOccurrence[]
+}
+
+export type PublishedTimetableConflict = {
+    candidateRow: TimetableConflictRow
+    publishedTimetable: {
+        batchId: string
+        slotSystemName: string
+        revisionNumber: number | null
+    }
+    publishedCourse: { code: string | null; name: string | null }
+    roomCode: string
+    occurrences: TimetableConflictOccurrence[]
+}
+
+export type TimetableConflictReview = {
+    internalConflicts: InternalTimetableConflict[]
+    publishedConflicts: PublishedTimetableConflict[]
+    bookingConflicts: PublicationPreview["bookingConflicts"]
+    restrictionConflicts: PublicationPreview["restrictionConflicts"]
+    hasConflicts: boolean
+}
+
 export type TimetableImportRow = {
     id: string
     rowIndex: number
@@ -155,20 +196,10 @@ export type TimetableImportRow = {
     resolvedBy: Pick<BasicUser, "id" | "name" | "email"> | null
     resolvedAt: string | null
     allocationConflicts: Array<{
-        otherRow: {
-            id: string
-            rowIndex: number
-            courseCode: string | null
-            courseName: string | null
-            slotCode: string
-            roomCode: string
-        }
-        occurrences: Array<{
-            dayOfWeek: DayOfWeek
-            startMinute: number
-            endMinute: number
-        }>
+        otherRow: TimetableConflictRow
+        occurrences: TimetableConflictOccurrence[]
     }>
+    publishedConflicts: PublishedTimetableConflict[]
 }
 
 export type TimetableReviewSummary = {
@@ -176,6 +207,7 @@ export type TimetableReviewSummary = {
     attention: number
     skipped: number
     allocationConflicts: number
+    publishedConflicts: number
 }
 
 export type TimetableOptions = {
@@ -212,7 +244,8 @@ export type PublicationPreview = {
         publishedAt: string
         fileName: string
     } | null
-    internalConflicts: unknown[]
+    internalConflicts: InternalTimetableConflict[]
+    publishedConflicts: PublishedTimetableConflict[]
     bookingConflicts: Array<{
         id: string
         title: string
@@ -220,6 +253,7 @@ export type PublicationPreview = {
         roomCode: string
         startMinute: number
         endMinute: number
+        requester: { id: string; displayName: string }
         courses: string[]
     }>
     restrictionConflicts: Array<{
@@ -232,6 +266,13 @@ export type PublicationPreview = {
     }>
     canPublish: boolean
     allocationOccurrences: number
+}
+
+export type TimetablePublicationImpact = Pick<
+    PublicationPreview,
+    "publishedConflicts" | "bookingConflicts" | "restrictionConflicts"
+> & {
+    hasImpact: boolean
 }
 
 export type Department = {
@@ -1138,6 +1179,7 @@ export const timetableApi = {
         id: string,
         values: {
             view?: "ALL" | "READY" | "ATTENTION" | "SKIPPED"
+            issue?: "ALL" | "INTERNAL" | "PUBLISHED"
             page?: number
             pageSize?: number
         }
@@ -1177,20 +1219,26 @@ export const timetableApi = {
             resolutionNote?: string
         }
     ) {
-        return request<{ batch: TimetableBatch }>(
-            `/timetables/imports/${batchId}/rows/${rowId}`,
-            { method: "PATCH", body: JSON.stringify(data) }
-        )
+        return request<{
+            batch: TimetableBatch
+            review: TimetableConflictReview
+        }>(`/timetables/imports/${batchId}/rows/${rowId}`, {
+            method: "PATCH",
+            body: JSON.stringify(data),
+        })
     },
     rowAction(
         batchId: string,
         rowId: string,
         action: "SKIP" | "KEEP_DUPLICATE" | "KEEP_ALLOCATION"
     ) {
-        return request<{ batch: TimetableBatch }>(
-            `/timetables/imports/${batchId}/rows/${rowId}/action`,
-            { method: "POST", body: JSON.stringify({ action }) }
-        )
+        return request<{
+            batch: TimetableBatch
+            review: TimetableConflictReview
+        }>(`/timetables/imports/${batchId}/rows/${rowId}/action`, {
+            method: "POST",
+            body: JSON.stringify({ action }),
+        })
     },
     cancel(id: string) {
         return request<{ batch: TimetableBatch }>(
@@ -1203,6 +1251,11 @@ export const timetableApi = {
     publicationPreview(id: string) {
         return request<PublicationPreview>(
             `/timetables/imports/${id}/publication-preview`
+        )
+    },
+    publicationImpact(id: string) {
+        return request<TimetablePublicationImpact>(
+            `/timetables/imports/${id}/publication-impact`
         )
     },
     publish(id: string) {
