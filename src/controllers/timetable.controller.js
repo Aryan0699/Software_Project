@@ -3,6 +3,7 @@ import {
     cancelImport as cancelImportService,
     createImport as createImportService,
     createTemplate,
+    createPublishedWorkbook,
     getImport as getImportService,
     getImportOptions as getImportOptionsService,
     getPublicationImpact as getPublicationImpactService,
@@ -26,6 +27,19 @@ export const downloadTemplate = asyncHandler(async (_req, res) => {
         'attachment; filename="URAS_Timetable_Template.xlsx"'
     )
     res.send(buffer)
+})
+
+export const downloadPublishedWorkbook = asyncHandler(async (req, res) => {
+    const workbook = await createPublishedWorkbook(req.validatedParams.id)
+    res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${workbook.fileName}"`
+    )
+    res.send(Buffer.from(workbook.buffer))
 })
 
 export const getImportOptions = asyncHandler(async (_req, res) => {

@@ -100,15 +100,6 @@ enum BookingStatus {
   CANCELLED
 }
 
-enum BookingEventType {
-  ACADEMIC
-  CLUB
-  MEETING
-  WORKSHOP
-  SEMINAR
-  OTHER
-}
-
 enum BookingReviewerKind {
   FACULTY
   INSTITUTIONAL
@@ -212,10 +203,9 @@ model User {
 
   approvedUsersInvited ApprovedUser[] @relation("ApprovedUserInviter")
 
-  institutionalApprover            InstitutionalApprover?    @relation("InstitutionalApproverUser")
-  institutionalApproverAssignments InstitutionalApprover[]   @relation("InstitutionalApproverAssigner")
-  staffBuildings                   BuildingStaffAssignment[] @relation("AssignedStaff")
-  staffAssignmentsMade             BuildingStaffAssignment[] @relation("StaffAssignmentCreator")
+  bookingActivityApprovals BookingActivityApprover[]
+  staffBuildings           BuildingStaffAssignment[] @relation("AssignedStaff")
+  staffAssignmentsMade     BuildingStaffAssignment[] @relation("StaffAssignmentCreator")
 
   gridVersionsCreated       SlotGridVersion[]      @relation("SlotGridCreator")
   calendarCreated           CalendarException[]    @relation("CalendarExceptionCreator")
@@ -306,23 +296,6 @@ model StaffProfile {
   updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model InstitutionalApprover {
-  id               String    @id @default(cuid())
-  userId           String    @unique
-  title            String
-  isActive         Boolean   @default(true)
-  assignedByUserId String?
-  assignedAt       DateTime  @default(now()) @db.Timestamptz(3)
-  deactivatedAt    DateTime? @db.Timestamptz(3)
-  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
-
-  user       User  @relation("InstitutionalApproverUser", fields: [userId], references: [id], onDelete: Restrict)
-  assignedBy User? @relation("InstitutionalApproverAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-
-  @@index([isActive, assignedAt])
-  @@index([assignedByUserId])
 }
 
 model Department {
@@ -735,35 +708,37 @@ model RoomSlotOccupancy {
 }
 
 model BookingRequest {
-  id                    String           @id @default(cuid())
-  requesterUserId       String
-  clientRequestId       String?
-  requesterRoleSnapshot Role
-  roomId                String
-  bookingDate           DateTime         @db.Date
-  startMinute           Int
-  endMinute             Int
-  title                 String
-  purpose               String
-  eventType             BookingEventType @default(OTHER)
-  expectedParticipants  Int?
-  requiredFeatures      String[]         @default([])
-  specialRequirements   String?
-  status                BookingStatus
-  statusReason          String?
-  submittedAt           DateTime         @default(now()) @db.Timestamptz(3)
-  approvedAt            DateTime?        @db.Timestamptz(3)
-  rejectedAt            DateTime?        @db.Timestamptz(3)
-  cancelledAt           DateTime?        @db.Timestamptz(3)
-  cancelledByUserId     String?
-  cancellationReason    String?
-  version               Int              @default(1)
-  createdAt             DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime         @updatedAt @db.Timestamptz(3)
+  id                       String        @id @default(cuid())
+  requesterUserId          String
+  clientRequestId          String?
+  requesterRoleSnapshot    Role
+  roomId                   String
+  bookingDate              DateTime      @db.Date
+  startMinute              Int
+  endMinute                Int
+  title                    String
+  purpose                  String
+  activityTypeId           String
+  activityTypeNameSnapshot String
+  expectedParticipants     Int?
+  requiredFeatures         String[]      @default([])
+  specialRequirements      String?
+  status                   BookingStatus
+  statusReason             String?
+  submittedAt              DateTime      @default(now()) @db.Timestamptz(3)
+  approvedAt               DateTime?     @db.Timestamptz(3)
+  rejectedAt               DateTime?     @db.Timestamptz(3)
+  cancelledAt              DateTime?     @db.Timestamptz(3)
+  cancelledByUserId        String?
+  cancellationReason       String?
+  version                  Int           @default(1)
+  createdAt                DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime      @updatedAt @db.Timestamptz(3)
 
-  requester   User  @relation("BookingRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
-  room        Room  @relation(fields: [roomId], references: [id], onDelete: Restrict)
-  cancelledBy User? @relation("BookingCanceller", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  requester    User                @relation("BookingRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
+  room         Room                @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  cancelledBy  User?               @relation("BookingCanceller", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  activityType BookingActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Restrict)
 
   approvals BookingApproval[]
   actions   BookingActionHistory[]
@@ -772,8 +747,41 @@ model BookingRequest {
   @@index([roomId, bookingDate, status, startMinute, endMinute])
   @@index([status, bookingDate])
   @@index([requesterUserId, createdAt])
+  @@index([activityTypeId, createdAt])
   @@index([status, submittedAt])
   @@index([cancelledByUserId])
+}
+
+model BookingActivityType {
+  id             String   @id @default(cuid())
+  name           String
+  normalizedName String   @unique
+  isActive       Boolean  @default(false)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+
+  approvers BookingActivityApprover[]
+  requests  BookingRequest[]
+
+  @@index([isActive, name])
+}
+
+model BookingActivityApprover {
+  id             String    @id @default(cuid())
+  activityTypeId String
+  userId         String
+  reviewerLabel  String
+  isActive       Boolean   @default(true)
+  assignedAt     DateTime  @default(now()) @db.Timestamptz(3)
+  deactivatedAt  DateTime? @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+
+  activityType BookingActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Restrict)
+  user         User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([activityTypeId, userId])
+  @@index([activityTypeId, isActive, assignedAt])
+  @@index([userId, isActive])
 }
 
 model BookingApproval {

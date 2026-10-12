@@ -10,7 +10,7 @@ import {
     bookingRecordInclude,
     bookingSummarySelect,
     findPendingCompetitors,
-    getActiveInstitutionalApprovers,
+    getActivityApprovers,
     serializeBookingRequest,
     serializeBookingSummary,
 } from "./bookingRequests.service.js"
@@ -88,8 +88,8 @@ function isInstitutionalKind(kind) {
 
 function wouldFinalize(task) {
     if (!isInstitutionalKind(task.reviewerKind)) return false
-    const institutionalTasks = task.bookingRequest.approvals.filter((approval) =>
-        isInstitutionalKind(approval.reviewerKind)
+    const institutionalTasks = task.bookingRequest.approvals.filter(
+        (approval) => isInstitutionalKind(approval.reviewerKind)
     )
     return (
         institutionalTasks.length > 0 &&
@@ -105,6 +105,20 @@ async function loadTask(db, approvalId) {
         where: { id: approvalId },
         include: approvalTaskInclude,
     })
+}
+
+async function loadTaskForDecision(tx, approvalId) {
+    const identity = await tx.bookingApproval.findUnique({
+        where: { id: approvalId },
+        select: { bookingRequestId: true },
+    })
+    if (!identity) return null
+
+    await tx.$queryRawUnsafe(
+        'SELECT "id" FROM "BookingRequest" WHERE "id" = $1 FOR UPDATE',
+        identity.bookingRequestId
+    )
+    return loadTask(tx, approvalId)
 }
 
 function assertCurrentVersion(request, expectedVersion) {
@@ -288,7 +302,10 @@ async function rejectByReviewer(tx, task, input, viewer) {
 }
 
 async function approveFaculty(tx, task, input, viewer) {
-    const approvers = await getActiveInstitutionalApprovers(tx)
+    const { approvers } = await getActivityApprovers(
+        tx,
+        task.bookingRequest.activityTypeId
+    )
     const now = new Date()
     await tx.bookingApproval.update({
         where: { id: task.id },
@@ -302,7 +319,7 @@ async function approveFaculty(tx, task, input, viewer) {
         data: approvers.map((assignment) => ({
             bookingRequestId: task.bookingRequestId,
             reviewerKind: "INSTITUTIONAL",
-            reviewerLabel: assignment.title,
+            reviewerLabel: assignment.reviewerLabel,
             reviewerUserId: assignment.userId,
         })),
     })
@@ -668,7 +685,7 @@ export async function decideApproval(approvalId, input, viewer) {
     await expireStartedBookingRequests()
     await prisma.$transaction(
         async (tx) => {
-            const task = await loadTask(tx, approvalId)
+            const task = await loadTaskForDecision(tx, approvalId)
             requireAssignedTask(task, viewer)
 
             if (task.status !== "PENDING") {

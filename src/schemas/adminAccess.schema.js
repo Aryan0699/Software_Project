@@ -21,6 +21,13 @@ export const recordIdParamsSchema = z
     })
     .strict()
 
+export const activityApproverParamsSchema = z
+    .object({
+        id: recordId,
+        assignmentId: recordId,
+    })
+    .strict()
+
 export const listApprovedUsersQuerySchema = z
     .object({
         ...paginationFields,
@@ -66,16 +73,32 @@ export const updateUserAccessSchema = z
         message: "At least one field must be provided",
     })
 
-export const createInstitutionalApproverSchema = z
+export const createBookingActivityTypeSchema = z
     .object({
-        userId: recordId,
-        title: z.string().trim().min(2).max(100),
+        name: z.string().trim().min(2).max(160),
     })
     .strict()
 
-export const updateInstitutionalApproverSchema = z
+export const updateBookingActivityTypeSchema = z
     .object({
-        title: z.string().trim().min(2).max(100).optional(),
+        name: z.string().trim().min(2).max(160).optional(),
+        isActive: z.boolean().optional(),
+    })
+    .strict()
+    .refine((value) => Object.keys(value).length > 0, {
+        message: "At least one field must be provided",
+    })
+
+export const createBookingActivityApproverSchema = z
+    .object({
+        userId: recordId,
+        reviewerLabel: z.string().trim().min(2).max(100),
+    })
+    .strict()
+
+export const updateBookingActivityApproverSchema = z
+    .object({
+        reviewerLabel: z.string().trim().min(2).max(100).optional(),
         isActive: z.boolean().optional(),
     })
     .strict()

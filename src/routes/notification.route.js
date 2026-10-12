@@ -7,7 +7,10 @@ import {
 } from "../controllers/notification.controller.js"
 import { requireAuth } from "../middlewares/auth.middleware.js"
 import { requireTrustedOrigin } from "../middlewares/security.middleware.js"
-import { validateParams, validateQuery } from "../middlewares/validate.middleware.js"
+import {
+    validateParams,
+    validateQuery,
+} from "../middlewares/validate.middleware.js"
 import {
     listNotificationsQuerySchema,
     notificationParamsSchema,
@@ -15,7 +18,11 @@ import {
 
 const notificationRouter = Router()
 notificationRouter.use(requireAuth, requireTrustedOrigin)
-notificationRouter.get("/", validateQuery(listNotificationsQuerySchema), listNotifications)
+notificationRouter.get(
+    "/",
+    validateQuery(listNotificationsQuerySchema),
+    listNotifications
+)
 notificationRouter.get("/unread-count", unreadNotificationCount)
 notificationRouter.patch(
     "/:id/read",

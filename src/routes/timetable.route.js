@@ -6,6 +6,7 @@ import {
     cancelImport,
     createImport,
     downloadTemplate,
+    downloadPublishedWorkbook,
     getImport,
     getImportOptions,
     getPublicationImpact,
@@ -51,6 +52,11 @@ timetableRouter.get(
     "/imports/:id",
     validateParams(importParamsSchema),
     getImport
+)
+timetableRouter.get(
+    "/imports/:id/workbook",
+    validateParams(importParamsSchema),
+    downloadPublishedWorkbook
 )
 timetableRouter.get(
     "/imports/:id/rows",

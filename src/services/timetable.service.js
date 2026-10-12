@@ -136,10 +136,11 @@ async function refreshCounts(db, batchId) {
     })
 }
 
-export async function createTemplate() {
+async function canonicalWorkbook(rows = []) {
     const workbook = new ExcelJS.Workbook()
     const sheet = workbook.addWorksheet("Timetable")
     sheet.addRow(TEMPLATE_HEADERS)
+    rows.forEach((values) => sheet.addRow(values))
     sheet.views = [{ state: "frozen", ySplit: 1 }]
     sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } }
     sheet.getRow(1).fill = {
@@ -154,10 +155,62 @@ export async function createTemplate() {
     return workbook.xlsx.writeBuffer()
 }
 
+export async function createTemplate() {
+    return canonicalWorkbook()
+}
+
+export async function createPublishedWorkbook(id) {
+    const batch = await batchOrThrow(prisma, id)
+    if (batch.status !== "PUBLISHED" || !batch.revisionNumber) {
+        throw new ApiError(
+            409,
+            "Only the currently published timetable can be downloaded",
+            { code: "TIMETABLE_NOT_CURRENTLY_PUBLISHED" }
+        )
+    }
+    const rows = await prisma.timetableImportRow.findMany({
+        where: { batchId: id, publishedAssignmentId: { not: null } },
+        orderBy: [{ rowIndex: "asc" }, { id: "asc" }],
+        select: {
+            rawRow: true,
+            rawCourseCode: true,
+            resolvedCourse: { select: { code: true, name: true } },
+            resolvedSlot: { select: { code: true } },
+            resolvedRoom: { select: { fullCode: true } },
+        },
+    })
+    const values = rows.map((row) => {
+        const raw =
+            row.rawRow && typeof row.rawRow === "object" ? row.rawRow : {}
+        return [
+            row.rawCourseCode || row.resolvedCourse?.code || "",
+            raw["Course Name"] || row.resolvedCourse?.name || "",
+            row.resolvedSlot?.code || "",
+            row.resolvedRoom?.fullCode || "",
+            raw.Instructor || "",
+            raw.Department || "",
+            raw["Student Count"] || "",
+            raw.Batch || "",
+            raw.Remarks || "",
+        ]
+    })
+    const safe = (value) =>
+        value.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^_+|_+$/g, "")
+    return {
+        buffer: await canonicalWorkbook(values),
+        fileName: `${safe(batch.academicTerm.termCode || batch.academicTerm.name)}_${safe(batch.slotSystem.code || batch.slotSystem.name)}_revision_${batch.revisionNumber}.xlsx`,
+    }
+}
+
 export async function getImportOptions() {
     const [terms, systems, rooms] = await Promise.all([
         prisma.academicTerm.findMany({
-            where: { status: { in: ["PLANNED", "CURRENT"] } },
+            where: {
+                OR: [
+                    { status: { in: ["PLANNED", "CURRENT"] } },
+                    { imports: { some: { status: "PUBLISHED" } } },
+                ],
+            },
             orderBy: [{ status: "asc" }, { startDate: "desc" }],
             select: { id: true, termCode: true, name: true, status: true },
         }),

@@ -7,6 +7,7 @@ import {
     getBookingFilterOptions,
     getBookingRequest,
     listBookingRequests,
+    listBookingActivityTypes,
     listFacultyVerifiers,
 } from "../controllers/booking.controller.js"
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js"
@@ -27,6 +28,11 @@ import {
 const bookingRouter = Router()
 
 bookingRouter.use(requireAuth, requireTrustedOrigin)
+bookingRouter.get(
+    "/activity-types",
+    requireRole("STUDENT", "FACULTY"),
+    listBookingActivityTypes
+)
 bookingRouter.get(
     "/faculty-verifiers",
     requireRole("STUDENT", "FACULTY"),

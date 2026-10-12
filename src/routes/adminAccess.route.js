@@ -1,17 +1,20 @@
 import { Router } from "express"
 import {
-    createInstitutionalApprover,
+    createBookingActivityApprover,
+    createBookingActivityType,
     createApprovedUser,
     createStaffAssignment,
+    deleteBookingActivityType,
     deleteStaffAssignment,
-    getInstitutionalApproverOptions,
-    listInstitutionalApprovers,
+    getBookingApproverOptions,
+    listBookingActivityTypes,
     getStaffAssignmentOptions,
     listApprovedUsers,
     listStaffAssignments,
     listUsers,
     updateApprovedUser,
-    updateInstitutionalApprover,
+    updateBookingActivityApprover,
+    updateBookingActivityType,
     updateUserAccess,
     updateUserProfile,
 } from "../controllers/adminAccess.controller.js"
@@ -23,7 +26,9 @@ import {
     validateQuery,
 } from "../middlewares/validate.middleware.js"
 import {
-    createInstitutionalApproverSchema,
+    activityApproverParamsSchema,
+    createBookingActivityApproverSchema,
+    createBookingActivityTypeSchema,
     createApprovedUserSchema,
     createStaffAssignmentSchema,
     listApprovedUsersQuerySchema,
@@ -31,7 +36,8 @@ import {
     listUsersQuerySchema,
     recordIdParamsSchema,
     updateApprovedUserSchema,
-    updateInstitutionalApproverSchema,
+    updateBookingActivityApproverSchema,
+    updateBookingActivityTypeSchema,
     updateUserAccessSchema,
 } from "../schemas/adminAccess.schema.js"
 import { updateProfileSchema } from "../schemas/profile.schema.js"
@@ -71,21 +77,35 @@ adminAccessRouter.patch(
     updateUserProfile
 )
 
-adminAccessRouter.get("/institutional-approvers", listInstitutionalApprovers)
-adminAccessRouter.get(
-    "/institutional-approver-options",
-    getInstitutionalApproverOptions
-)
+adminAccessRouter.get("/booking-activity-types", listBookingActivityTypes)
+adminAccessRouter.get("/booking-approver-options", getBookingApproverOptions)
 adminAccessRouter.post(
-    "/institutional-approvers",
-    validateBody(createInstitutionalApproverSchema),
-    createInstitutionalApprover
+    "/booking-activity-types",
+    validateBody(createBookingActivityTypeSchema),
+    createBookingActivityType
 )
 adminAccessRouter.patch(
-    "/institutional-approvers/:id",
+    "/booking-activity-types/:id",
     validateParams(recordIdParamsSchema),
-    validateBody(updateInstitutionalApproverSchema),
-    updateInstitutionalApprover
+    validateBody(updateBookingActivityTypeSchema),
+    updateBookingActivityType
+)
+adminAccessRouter.delete(
+    "/booking-activity-types/:id",
+    validateParams(recordIdParamsSchema),
+    deleteBookingActivityType
+)
+adminAccessRouter.post(
+    "/booking-activity-types/:id/approvers",
+    validateParams(recordIdParamsSchema),
+    validateBody(createBookingActivityApproverSchema),
+    createBookingActivityApprover
+)
+adminAccessRouter.patch(
+    "/booking-activity-types/:id/approvers/:assignmentId",
+    validateParams(activityApproverParamsSchema),
+    validateBody(updateBookingActivityApproverSchema),
+    updateBookingActivityApprover
 )
 
 adminAccessRouter.get(

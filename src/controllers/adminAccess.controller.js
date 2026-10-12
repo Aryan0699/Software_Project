@@ -1,16 +1,19 @@
 import {
-    createInstitutionalApprover as createInstitutionalApproverService,
+    createBookingActivityApprover as createBookingActivityApproverService,
+    createBookingActivityType as createBookingActivityTypeService,
     createApprovedUser as createApprovedUserService,
     createStaffAssignment as createStaffAssignmentService,
+    deleteBookingActivityType as deleteBookingActivityTypeService,
     deleteStaffAssignment as deleteStaffAssignmentService,
-    getInstitutionalApproverOptions as getInstitutionalApproverOptionsService,
-    listInstitutionalApprovers as listInstitutionalApproversService,
+    getBookingApproverOptions as getBookingApproverOptionsService,
+    listBookingActivityTypes as listBookingActivityTypesService,
     getStaffAssignmentOptions as getStaffAssignmentOptionsService,
     listApprovedUsers as listApprovedUsersService,
     listStaffAssignments as listStaffAssignmentsService,
     listUsers as listUsersService,
     updateApprovedUser as updateApprovedUserService,
-    updateInstitutionalApprover as updateInstitutionalApproverService,
+    updateBookingActivityApprover as updateBookingActivityApproverService,
+    updateBookingActivityType as updateBookingActivityTypeService,
     updateUserAccess as updateUserAccessService,
 } from "../services/adminAccess.service.js"
 import ApiResponse from "../utils/ApiResponse.js"
@@ -63,35 +66,57 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     res.json(new ApiResponse(200, "User profile updated", { user }))
 })
 
-export const listInstitutionalApprovers = asyncHandler(async (_req, res) => {
-    const approvers = await listInstitutionalApproversService()
-    res.json(new ApiResponse(200, "Institutional approvers", { approvers }))
+export const listBookingActivityTypes = asyncHandler(async (_req, res) => {
+    const activityTypes = await listBookingActivityTypesService()
+    res.json(new ApiResponse(200, "Booking activity types", { activityTypes }))
 })
 
-export const getInstitutionalApproverOptions = asyncHandler(async (_req, res) => {
-    const faculty = await getInstitutionalApproverOptionsService()
-    res.json(new ApiResponse(200, "Institutional approver options", { faculty }))
+export const getBookingApproverOptions = asyncHandler(async (_req, res) => {
+    const users = await getBookingApproverOptionsService()
+    res.json(new ApiResponse(200, "Booking approver options", { users }))
 })
 
-export const createInstitutionalApprover = asyncHandler(async (req, res) => {
-    const approver = await createInstitutionalApproverService({
-        ...req.validatedBody,
-        actorUserId: req.user.id,
-    })
+export const createBookingActivityType = asyncHandler(async (req, res) => {
+    const activityType = await createBookingActivityTypeService(
+        req.validatedBody
+    )
     res.status(201).json(
-        new ApiResponse(201, "Institutional approver added", {
-            approver,
+        new ApiResponse(201, "Activity type created", {
+            activityType,
         })
     )
 })
 
-export const updateInstitutionalApprover = asyncHandler(async (req, res) => {
-    const approver = await updateInstitutionalApproverService({
+export const updateBookingActivityType = asyncHandler(async (req, res) => {
+    const activityType = await updateBookingActivityTypeService({
         id: req.validatedParams.id,
         changes: req.validatedBody,
-        actorUserId: req.user.id,
     })
-    res.json(new ApiResponse(200, "Institutional approver updated", { approver }))
+    res.json(new ApiResponse(200, "Activity type updated", { activityType }))
+})
+
+export const deleteBookingActivityType = asyncHandler(async (req, res) => {
+    await deleteBookingActivityTypeService(req.validatedParams.id)
+    res.json(new ApiResponse(200, "Activity type deleted"))
+})
+
+export const createBookingActivityApprover = asyncHandler(async (req, res) => {
+    const approver = await createBookingActivityApproverService({
+        activityTypeId: req.validatedParams.id,
+        ...req.validatedBody,
+    })
+    res.status(201).json(
+        new ApiResponse(201, "Activity approver assigned", { approver })
+    )
+})
+
+export const updateBookingActivityApprover = asyncHandler(async (req, res) => {
+    const approver = await updateBookingActivityApproverService({
+        activityTypeId: req.validatedParams.id,
+        id: req.validatedParams.assignmentId,
+        changes: req.validatedBody,
+    })
+    res.json(new ApiResponse(200, "Activity approver updated", { approver }))
 })
 
 export const listStaffAssignments = asyncHandler(async (req, res) => {

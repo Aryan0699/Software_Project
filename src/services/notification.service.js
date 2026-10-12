@@ -31,7 +31,11 @@ export async function listNotifications({ page, pageSize, view }, viewer) {
             where: { recipientId: viewer.id, isRead: false },
         }),
     ])
-    return { records, unreadCount, pagination: pagination(page, pageSize, total) }
+    return {
+        records,
+        unreadCount,
+        pagination: pagination(page, pageSize, total),
+    }
 }
 
 export async function getUnreadNotificationCount(viewer) {

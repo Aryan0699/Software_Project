@@ -6,6 +6,7 @@ import {
     getBookingFilterOptions as getBookingFilterOptionsService,
     getBookingRequest as getBookingRequestService,
     listBookingRequests as listBookingRequestsService,
+    listBookingActivityTypes as listBookingActivityTypesService,
     listFacultyVerifiers as listFacultyVerifiersService,
 } from "../services/bookingRequests.service.js"
 import {
@@ -19,6 +20,11 @@ import asyncHandler from "../utils/asyncHandler.js"
 export const listFacultyVerifiers = asyncHandler(async (req, res) => {
     const result = await listFacultyVerifiersService(req.validatedQuery)
     res.json(new ApiResponse(200, "Faculty verifiers", result))
+})
+
+export const listBookingActivityTypes = asyncHandler(async (_req, res) => {
+    const activityTypes = await listBookingActivityTypesService()
+    res.json(new ApiResponse(200, "Booking activity types", { activityTypes }))
 })
 
 export const createBookingRequest = asyncHandler(async (req, res) => {

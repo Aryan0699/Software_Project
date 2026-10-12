@@ -27,8 +27,14 @@ const userAccessSelect = {
     studentProfile: true,
     facultyProfile: true,
     staffProfile: true,
-    institutionalApprover: {
-        select: { id: true, title: true, isActive: true, assignedAt: true },
+    bookingActivityApprovals: {
+        where: { isActive: true },
+        select: {
+            id: true,
+            reviewerLabel: true,
+            activityType: { select: { id: true, name: true, isActive: true } },
+        },
+        orderBy: { assignedAt: "asc" },
     },
     staffBuildings: {
         select: {
@@ -42,9 +48,9 @@ const userAccessSelect = {
     },
 }
 
-const institutionalApproverSelect = {
+const activityApproverSelect = {
     id: true,
-    title: true,
+    reviewerLabel: true,
     isActive: true,
     assignedAt: true,
     deactivatedAt: true,
@@ -58,9 +64,40 @@ const institutionalApproverSelect = {
             isActive: true,
         },
     },
-    assignedBy: {
-        select: { id: true, name: true, email: true },
+}
+
+const activityTypeSelect = {
+    id: true,
+    name: true,
+    normalizedName: true,
+    isActive: true,
+    createdAt: true,
+    updatedAt: true,
+    approvers: {
+        select: activityApproverSelect,
+        orderBy: [{ isActive: "desc" }, { assignedAt: "asc" }, { id: "asc" }],
     },
+    _count: { select: { requests: true } },
+}
+
+function normalizeActivityName(name) {
+    return name.trim().replace(/\s+/g, " ").toLocaleLowerCase()
+}
+
+function effectiveApproverWhere(activityTypeId, excludeId) {
+    return {
+        activityTypeId,
+        isActive: true,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+        user: { isActive: true, role: { in: ["FACULTY", "STAFF"] } },
+    }
+}
+
+async function lockActivityType(tx, activityTypeId) {
+    await tx.$queryRawUnsafe(
+        'SELECT "id" FROM "BookingActivityType" WHERE "id" = $1 FOR UPDATE',
+        activityTypeId
+    )
 }
 
 const staffAssignmentSelect = {
@@ -255,13 +292,14 @@ export async function updateUserAccess({ id, changes, actorUserId }) {
                 id: true,
                 role: true,
                 isActive: true,
-                institutionalApprover: {
-                    select: { id: true, title: true, isActive: true },
+                bookingActivityApprovals: {
+                    where: { isActive: true },
+                    select: { id: true },
+                    take: 1,
                 },
                 bookingApprovals: {
                     where: { status: "PENDING" },
-                    select: { id: true },
-                    take: 1,
+                    select: { id: true, reviewerKind: true },
                 },
                 _count: { select: { staffBuildings: true } },
             },
@@ -287,23 +325,29 @@ export async function updateUserAccess({ id, changes, actorUserId }) {
         }
 
         if (
-            user.institutionalApprover?.isActive &&
-            (!nextIsActive || nextRole !== "FACULTY")
+            user.bookingActivityApprovals.length > 0 &&
+            (!nextIsActive || !["FACULTY", "STAFF"].includes(nextRole))
         ) {
             throw new ApiError(
                 409,
-                "Deactivate this institutional approver membership before changing the account",
-                { code: "USER_IS_INSTITUTIONAL_APPROVER" }
+                "Deactivate this user's activity approval assignments before changing the account",
+                { code: "USER_IS_ACTIVITY_APPROVER" }
             )
         }
 
+        const hasPendingFacultyTask = user.bookingApprovals.some(
+            (approval) => approval.reviewerKind === "FACULTY"
+        )
+        const pendingRoleInvalid = hasPendingFacultyTask
+            ? nextRole !== "FACULTY"
+            : !["FACULTY", "STAFF"].includes(nextRole)
         if (
             user.bookingApprovals.length > 0 &&
-            (!nextIsActive || nextRole !== "FACULTY")
+            (!nextIsActive || pendingRoleInvalid)
         ) {
             throw new ApiError(
                 409,
-                "This faculty member still has pending booking decisions",
+                "This user still has pending booking decisions",
                 { code: "USER_HAS_PENDING_APPROVALS" }
             )
         }
@@ -343,91 +387,228 @@ export async function updateUserAccess({ id, changes, actorUserId }) {
     })
 }
 
-export function listInstitutionalApprovers() {
-    return prisma.institutionalApprover.findMany({
-        select: institutionalApproverSelect,
-        orderBy: [{ isActive: "desc" }, { assignedAt: "asc" }, { id: "asc" }],
+export function listBookingActivityTypes() {
+    return prisma.bookingActivityType.findMany({
+        select: activityTypeSelect,
+        orderBy: [{ isActive: "desc" }, { name: "asc" }, { id: "asc" }],
     })
 }
 
-export async function getInstitutionalApproverOptions() {
+export async function getBookingApproverOptions() {
     return prisma.user.findMany({
         where: {
-            role: "FACULTY",
+            role: { in: ["FACULTY", "STAFF"] },
             isActive: true,
-            facultyProfile: { isNot: null },
         },
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, role: true },
         orderBy: [{ name: "asc" }, { id: "asc" }],
     })
 }
 
-export async function createInstitutionalApprover({
-    userId,
-    title,
-    actorUserId,
-}) {
-    return prisma.$transaction(async (tx) => {
-        const user = await tx.user.findFirst({
-            where: {
-                id: userId,
-                role: "FACULTY",
-                isActive: true,
-                facultyProfile: { isNot: null },
-            },
-            select: { id: true },
-        })
-        if (!user) {
-            throw new ApiError(
-                409,
-                "Only an active faculty member can be an institutional approver",
-                { code: "INVALID_INSTITUTIONAL_APPROVER" }
-            )
-        }
-        const existing = await tx.institutionalApprover.findUnique({
-            where: { userId },
-            select: { id: true },
-        })
-        if (existing) {
-            throw new ApiError(409, "This faculty member is already in the approver list", {
-                code: "INSTITUTIONAL_APPROVER_EXISTS",
-            })
-        }
-        const approver = await tx.institutionalApprover.create({
-            data: { userId, title, assignedByUserId: actorUserId },
-            select: institutionalApproverSelect,
-        })
-        await tx.administrativeAuditEvent.create({
-            data: {
-                actorUserId,
-                action: "ASSIGN",
-                entityType: "INSTITUTIONAL_APPROVER",
-                entityId: approver.id,
-                afterState: { userId, title, isActive: true },
-                changedFields: ["userId", "title", "isActive"],
-            },
-        })
-        return approver
+export async function createBookingActivityType({ name }) {
+    const normalizedName = normalizeActivityName(name)
+    const existing = await prisma.bookingActivityType.findUnique({
+        where: { normalizedName },
+        select: { id: true },
+    })
+    if (existing) {
+        throw new ApiError(
+            409,
+            "An activity type with this name already exists",
+            {
+                code: "ACTIVITY_TYPE_EXISTS",
+            }
+        )
+    }
+    return prisma.bookingActivityType.create({
+        data: { name: name.trim().replace(/\s+/g, " "), normalizedName },
+        select: activityTypeSelect,
     })
 }
 
-export async function updateInstitutionalApprover({ id, changes, actorUserId }) {
+export async function updateBookingActivityType({ id, changes }) {
     return prisma.$transaction(async (tx) => {
-        const existing = await tx.institutionalApprover.findUnique({
+        await lockActivityType(tx, id)
+        const existing = await tx.bookingActivityType.findUnique({
             where: { id },
-            select: { id: true, userId: true, title: true, isActive: true, user: { select: { isActive: true, role: true } } },
+            select: { id: true, isActive: true },
         })
         if (!existing) {
-            throw new ApiError(404, "Institutional approver was not found", {
-                code: "INSTITUTIONAL_APPROVER_NOT_FOUND",
+            throw new ApiError(404, "Activity type was not found", {
+                code: "ACTIVITY_TYPE_NOT_FOUND",
             })
         }
-        if (changes.isActive === true && (!existing.user.isActive || existing.user.role !== "FACULTY")) {
-            throw new ApiError(409, "The faculty account must be active before this membership can be activated", {
-                code: "INVALID_INSTITUTIONAL_APPROVER",
+        if (changes.isActive === true && !existing.isActive) {
+            const activeApprovers = await tx.bookingActivityApprover.count({
+                where: effectiveApproverWhere(id),
+            })
+            if (!activeApprovers) {
+                throw new ApiError(
+                    409,
+                    "Add at least one active faculty or staff approver before activating this activity type",
+                    { code: "ACTIVITY_TYPE_HAS_NO_APPROVERS" }
+                )
+            }
+        }
+        const normalizedName = changes.name
+            ? normalizeActivityName(changes.name)
+            : undefined
+        return tx.bookingActivityType.update({
+            where: { id },
+            data: {
+                ...changes,
+                ...(changes.name
+                    ? {
+                          name: changes.name.trim().replace(/\s+/g, " "),
+                          normalizedName,
+                      }
+                    : {}),
+            },
+            select: activityTypeSelect,
+        })
+    })
+}
+
+export async function deleteBookingActivityType(id) {
+    return prisma.$transaction(async (tx) => {
+        await lockActivityType(tx, id)
+        const activityType = await tx.bookingActivityType.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                isActive: true,
+                _count: { select: { requests: true } },
+            },
+        })
+        if (!activityType) {
+            throw new ApiError(404, "Activity type was not found", {
+                code: "ACTIVITY_TYPE_NOT_FOUND",
             })
         }
-        const approver = await tx.institutionalApprover.update({
+        if (activityType.isActive) {
+            throw new ApiError(
+                409,
+                "Deactivate this activity type before deleting it",
+                {
+                    code: "ACTIVITY_TYPE_ACTIVE",
+                }
+            )
+        }
+        if (activityType._count.requests > 0) {
+            throw new ApiError(
+                409,
+                "This activity type has booking history and cannot be deleted",
+                { code: "ACTIVITY_TYPE_IN_USE" }
+            )
+        }
+
+        await tx.bookingActivityApprover.deleteMany({
+            where: { activityTypeId: id },
+        })
+        await tx.bookingActivityType.delete({ where: { id } })
+    })
+}
+
+export async function createBookingActivityApprover({
+    activityTypeId,
+    userId,
+    reviewerLabel,
+}) {
+    return prisma.$transaction(async (tx) => {
+        await lockActivityType(tx, activityTypeId)
+        const [activityType, user] = await Promise.all([
+            tx.bookingActivityType.findUnique({
+                where: { id: activityTypeId },
+                select: { id: true },
+            }),
+            tx.user.findFirst({
+                where: {
+                    id: userId,
+                    isActive: true,
+                    role: { in: ["FACULTY", "STAFF"] },
+                },
+                select: { id: true },
+            }),
+        ])
+        if (!activityType) {
+            throw new ApiError(404, "Activity type was not found", {
+                code: "ACTIVITY_TYPE_NOT_FOUND",
+            })
+        }
+        if (!user) {
+            throw new ApiError(409, "Choose an active faculty or staff user", {
+                code: "INVALID_ACTIVITY_APPROVER",
+            })
+        }
+        return tx.bookingActivityApprover.upsert({
+            where: { activityTypeId_userId: { activityTypeId, userId } },
+            create: { activityTypeId, userId, reviewerLabel },
+            update: {
+                reviewerLabel,
+                isActive: true,
+                deactivatedAt: null,
+            },
+            select: activityApproverSelect,
+        })
+    })
+}
+
+export async function updateBookingActivityApprover({
+    activityTypeId,
+    id,
+    changes,
+}) {
+    return prisma.$transaction(async (tx) => {
+        await lockActivityType(tx, activityTypeId)
+        const existing = await tx.bookingActivityApprover.findFirst({
+            where: { id, activityTypeId },
+            select: {
+                id: true,
+                activityTypeId: true,
+                isActive: true,
+                user: { select: { isActive: true, role: true } },
+                activityType: { select: { isActive: true } },
+            },
+        })
+        if (!existing) {
+            throw new ApiError(
+                404,
+                "Activity approver assignment was not found",
+                {
+                    code: "ACTIVITY_APPROVER_NOT_FOUND",
+                }
+            )
+        }
+        if (
+            changes.isActive === true &&
+            (!existing.user.isActive ||
+                !["FACULTY", "STAFF"].includes(existing.user.role))
+        ) {
+            throw new ApiError(
+                409,
+                "The faculty or staff account must be active",
+                {
+                    code: "INVALID_ACTIVITY_APPROVER",
+                }
+            )
+        }
+        if (
+            changes.isActive === false &&
+            existing.isActive &&
+            existing.activityType.isActive
+        ) {
+            const remaining = await tx.bookingActivityApprover.count({
+                where: effectiveApproverWhere(activityTypeId, id),
+            })
+            if (!remaining) {
+                throw new ApiError(
+                    409,
+                    "An active activity type must keep at least one active approver",
+                    { code: "ACTIVITY_TYPE_REQUIRES_APPROVER" }
+                )
+            }
+        }
+        return tx.bookingActivityApprover.update({
             where: { id },
             data: {
                 ...changes,
@@ -435,33 +616,8 @@ export async function updateInstitutionalApprover({ id, changes, actorUserId }) 
                     ? {}
                     : { deactivatedAt: changes.isActive ? null : new Date() }),
             },
-            select: institutionalApproverSelect,
+            select: activityApproverSelect,
         })
-        await tx.administrativeAuditEvent.create({
-            data: {
-                actorUserId,
-                action:
-                    changes.isActive === true
-                        ? "ACTIVATE"
-                        : changes.isActive === false
-                          ? "DEACTIVATE"
-                          : "UPDATE",
-                entityType: "INSTITUTIONAL_APPROVER",
-                entityId: id,
-                beforeState: {
-                    userId: existing.userId,
-                    title: existing.title,
-                    isActive: existing.isActive,
-                },
-                afterState: {
-                    userId: approver.user.id,
-                    title: approver.title,
-                    isActive: approver.isActive,
-                },
-                changedFields: Object.keys(changes),
-            },
-        })
-        return approver
     })
 }
 

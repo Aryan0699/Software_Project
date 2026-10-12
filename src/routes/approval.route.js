@@ -19,7 +19,11 @@ import {
 
 const approvalRouter = Router()
 
-approvalRouter.use(requireAuth, requireRole("FACULTY"), requireTrustedOrigin)
+approvalRouter.use(
+    requireAuth,
+    requireRole("FACULTY", "STAFF"),
+    requireTrustedOrigin
+)
 approvalRouter.get(
     "/me",
     validateQuery(listApprovalsQuerySchema),

@@ -25,9 +25,6 @@ const currentUserSelect = {
     studentProfile: { include: { department: true } },
     facultyProfile: { include: { department: true } },
     staffProfile: true,
-    institutionalApprover: {
-        select: { id: true, title: true, isActive: true, assignedAt: true },
-    },
     staffBuildings: {
         select: {
             assignedAt: true,

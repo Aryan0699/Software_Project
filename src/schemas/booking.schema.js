@@ -44,11 +44,13 @@ export const listBookingRequestsQuerySchema = z
         dateTo: isoDate.optional(),
         buildingId: recordId.optional(),
         roomId: recordId.optional(),
+        activityTypeId: recordId.optional(),
         requester: z.string().trim().max(100).optional(),
     })
     .strict()
     .refine(
-        (value) => !value.dateFrom || !value.dateTo || value.dateFrom <= value.dateTo,
+        (value) =>
+            !value.dateFrom || !value.dateTo || value.dateFrom <= value.dateTo,
         { path: ["dateTo"], message: "End date must be on or after start date" }
     )
 
@@ -65,14 +67,7 @@ export const createBookingRequestSchema = z
         endMinute: z.number().int().min(1).max(1440),
         title: z.string().trim().min(3).max(160),
         purpose: z.string().trim().min(10).max(3000),
-        eventType: z.enum([
-            "ACADEMIC",
-            "CLUB",
-            "MEETING",
-            "WORKSHOP",
-            "SEMINAR",
-            "OTHER",
-        ]),
+        activityTypeId: recordId,
         expectedParticipants: z.number().int().min(1).max(100000).optional(),
         requiredFeatures: z
             .array(z.string().trim().min(1).max(80))

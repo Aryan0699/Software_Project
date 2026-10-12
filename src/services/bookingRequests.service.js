@@ -49,6 +49,27 @@ export const bookingRecordInclude = {
         include: { performedBy: { select: userSummarySelect } },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     },
+    activityType: {
+        select: {
+            id: true,
+            name: true,
+            isActive: true,
+            approvers: {
+                where: {
+                    isActive: true,
+                    user: {
+                        isActive: true,
+                        role: { in: ["FACULTY", "STAFF"] },
+                    },
+                },
+                select: {
+                    reviewerLabel: true,
+                    user: { select: userSummarySelect },
+                },
+                orderBy: [{ assignedAt: "asc" }, { id: "asc" }],
+            },
+        },
+    },
 }
 
 export const bookingSummarySelect = {
@@ -60,6 +81,8 @@ export const bookingSummarySelect = {
     startMinute: true,
     endMinute: true,
     title: true,
+    activityTypeId: true,
+    activityTypeNameSnapshot: true,
     status: true,
     statusReason: true,
     submittedAt: true,
@@ -83,7 +106,7 @@ function plannedProgress(request) {
             label: approval?.reviewerLabel || fallback.label,
             status: approval?.status || "NOT_STARTED",
             approvalId: approval?.id || null,
-            reviewer: approval?.reviewer || null,
+            reviewer: approval?.reviewer || fallback.reviewer || null,
             decisionNote: approval?.decisionNote || null,
             assignedAt: approval?.assignedAt || null,
             decidedAt: approval?.decidedAt || null,
@@ -107,12 +130,21 @@ function plannedProgress(request) {
             ],
         })
     }
+    const institutionalApprovals = request.approvals.filter(
+        (approval) => approval.reviewerKind === "INSTITUTIONAL"
+    )
     stages.push({
         key: "INSTITUTIONAL_REVIEW",
         label: "Institutional approval",
-        tasks: request.approvals
-            .filter((approval) => approval.reviewerKind === "INSTITUTIONAL")
-            .map((approval) => task(approval)),
+        tasks: institutionalApprovals.length
+            ? institutionalApprovals.map((approval) => task(approval))
+            : (request.activityType?.approvers || []).map((assignment) =>
+                  task(null, {
+                      kind: "INSTITUTIONAL",
+                      label: assignment.reviewerLabel,
+                      reviewer: assignment.user,
+                  })
+              ),
     })
     return stages
 }
@@ -165,15 +197,36 @@ export async function findPendingCompetitors(
     })
 }
 
-export async function getActiveInstitutionalApprovers(db) {
-    const approvers = await db.institutionalApprover.findMany({
+export async function getActivityApprovers(
+    db,
+    activityTypeId,
+    { requireActiveType = false } = {}
+) {
+    const activityType = await db.bookingActivityType.findFirst({
         where: {
+            id: activityTypeId,
+            ...(requireActiveType ? { isActive: true } : {}),
+        },
+        select: { id: true, name: true, isActive: true },
+    })
+    if (!activityType) {
+        throw new ApiError(
+            409,
+            requireActiveType
+                ? "This activity type is not available for new booking requests"
+                : "The booking activity type no longer exists",
+            { code: "ACTIVITY_TYPE_UNAVAILABLE" }
+        )
+    }
+    const approvers = await db.bookingActivityApprover.findMany({
+        where: {
+            activityTypeId,
             isActive: true,
-            user: { isActive: true, role: "FACULTY" },
+            user: { isActive: true, role: { in: ["FACULTY", "STAFF"] } },
         },
         select: {
             id: true,
-            title: true,
+            reviewerLabel: true,
             userId: true,
             user: { select: userSummarySelect },
         },
@@ -182,11 +235,11 @@ export async function getActiveInstitutionalApprovers(db) {
     if (!approvers.length) {
         throw new ApiError(
             409,
-            "Booking requests are unavailable until an institutional approver is configured",
-            { code: "MISSING_APPROVAL_AUTHORITY" }
+            "This activity type has no active approval authority",
+            { code: "MISSING_ACTIVITY_APPROVAL_AUTHORITY" }
         )
     }
-    return approvers
+    return { activityType, approvers }
 }
 
 function normalizedFeatures(items) {
@@ -311,7 +364,11 @@ async function validateCreation(db, input, requester) {
         }
     }
 
-    const institutionalApprovers = await getActiveInstitutionalApprovers(db)
+    const activityApproval = await getActivityApprovers(
+        db,
+        input.activityTypeId,
+        { requireActiveType: true }
+    )
     const conflicts = await findIntervalConflicts(db, {
         roomId: room.id,
         date,
@@ -357,7 +414,8 @@ async function validateCreation(db, input, requester) {
         date,
         room,
         facultyVerifier,
-        institutionalApprovers,
+        activityType: activityApproval.activityType,
+        activityApprovers: activityApproval.approvers,
         pendingCount: pending.length,
     }
 }
@@ -376,7 +434,7 @@ function sameIdempotentInput(existing, input) {
         existing.endMinute === input.endMinute &&
         existing.title === input.title &&
         existing.purpose === input.purpose &&
-        existing.eventType === input.eventType &&
+        existing.activityTypeId === input.activityTypeId &&
         existing.expectedParticipants ===
             (input.expectedParticipants ?? null) &&
         existing.specialRequirements === (input.specialRequirements || null) &&
@@ -447,6 +505,44 @@ export async function listFacultyVerifiers({ page, pageSize, search }) {
     return { records, pagination: pagination(page, pageSize, total) }
 }
 
+export async function listBookingActivityTypes() {
+    const records = await prisma.bookingActivityType.findMany({
+        where: {
+            isActive: true,
+            approvers: {
+                some: {
+                    isActive: true,
+                    user: {
+                        isActive: true,
+                        role: { in: ["FACULTY", "STAFF"] },
+                    },
+                },
+            },
+        },
+        select: {
+            id: true,
+            name: true,
+            approvers: {
+                where: {
+                    isActive: true,
+                    user: {
+                        isActive: true,
+                        role: { in: ["FACULTY", "STAFF"] },
+                    },
+                },
+                select: { reviewerLabel: true },
+                orderBy: [{ assignedAt: "asc" }, { id: "asc" }],
+            },
+        },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+    })
+    return records.map((record) => ({
+        id: record.id,
+        name: record.name,
+        reviewerLabels: record.approvers.map((item) => item.reviewerLabel),
+    }))
+}
+
 export async function createBookingRequest(input, requester) {
     const existing = await existingIdempotentRequest(
         prisma,
@@ -481,7 +577,8 @@ export async function createBookingRequest(input, requester) {
                         endMinute: input.endMinute,
                         title: input.title,
                         purpose: input.purpose,
-                        eventType: input.eventType,
+                        activityTypeId: validated.activityType.id,
+                        activityTypeNameSnapshot: validated.activityType.name,
                         expectedParticipants:
                             input.expectedParticipants ?? null,
                         requiredFeatures: normalizedFeatures(
@@ -502,10 +599,10 @@ export async function createBookingRequest(input, requester) {
                                   reviewerUserId: validated.facultyVerifier.id,
                               },
                           ]
-                        : validated.institutionalApprovers.map((assignment) => ({
+                        : validated.activityApprovers.map((assignment) => ({
                               bookingRequestId: request.id,
                               reviewerKind: "INSTITUTIONAL",
-                              reviewerLabel: assignment.title,
+                              reviewerLabel: assignment.reviewerLabel,
                               reviewerUserId: assignment.userId,
                           }))
                 await tx.bookingApproval.createMany({ data: approvals })
@@ -522,7 +619,8 @@ export async function createBookingRequest(input, requester) {
                             ? [
                                   {
                                       bookingRequestId: request.id,
-                                      actionType: "SENT_TO_INSTITUTIONAL_REVIEW",
+                                      actionType:
+                                          "SENT_TO_INSTITUTIONAL_REVIEW",
                                       performedByUserId: requester.id,
                                       previousStatus: status,
                                       newStatus: status,
@@ -620,19 +718,21 @@ async function bookingVisibilityWhere(viewer) {
             select: { buildingId: true },
         })
         return {
-            room: {
-                buildingId: {
-                    in: assignments.map((assignment) => assignment.buildingId),
+            OR: [
+                {
+                    room: {
+                        buildingId: {
+                            in: assignments.map(
+                                (assignment) => assignment.buildingId
+                            ),
+                        },
+                    },
                 },
-            },
+                { approvals: { some: { reviewerUserId: viewer.id } } },
+            ],
         }
     }
     if (viewer.role === "FACULTY") {
-        const membership = await prisma.institutionalApprover.findFirst({
-            where: { userId: viewer.id, isActive: true },
-            select: { id: true },
-        })
-        if (membership) return {}
         return {
             OR: [
                 { requesterUserId: viewer.id },
@@ -662,6 +762,9 @@ function bookingFilterWhere(filters) {
             ? { room: { buildingId: filters.buildingId } }
             : {}),
         ...(filters.roomId ? { roomId: filters.roomId } : {}),
+        ...(filters.activityTypeId
+            ? { activityTypeId: filters.activityTypeId }
+            : {}),
         ...(filters.requester
             ? {
                   requester: {
@@ -715,11 +818,17 @@ function bookingFilterWhere(filters) {
 
 async function scopedBookingWhere(filters, viewer) {
     return {
-        AND: [await bookingVisibilityWhere(viewer), bookingFilterWhere(filters)],
+        AND: [
+            await bookingVisibilityWhere(viewer),
+            bookingFilterWhere(filters),
+        ],
     }
 }
 
-export async function listBookingRequests({ page, pageSize, ...filters }, viewer) {
+export async function listBookingRequests(
+    { page, pageSize, ...filters },
+    viewer
+) {
     await expireStartedBookingRequests()
     const where = await scopedBookingWhere(filters, viewer)
     const [records, total] = await Promise.all([
@@ -754,20 +863,24 @@ export async function getBookingFilterOptions(viewer) {
                     building: { select: { id: true, code: true, name: true } },
                 },
             },
+            activityType: { select: { id: true, name: true } },
         },
     })
     const unique = (items) => [
         ...new Map(items.map((item) => [item.id, item])).values(),
     ]
     return {
-        buildings: unique(records.map((item) => item.room.building)).sort((a, b) =>
-            a.code.localeCompare(b.code)
+        buildings: unique(records.map((item) => item.room.building)).sort(
+            (a, b) => a.code.localeCompare(b.code)
         ),
         rooms: unique(records.map((item) => item.room)).sort((a, b) =>
             a.fullCode.localeCompare(b.fullCode)
         ),
         requesters: unique(records.map((item) => item.requester)).sort((a, b) =>
             a.name.localeCompare(b.name)
+        ),
+        activityTypes: unique(records.map((item) => item.activityType)).sort(
+            (a, b) => a.name.localeCompare(b.name)
         ),
     }
 }
@@ -792,7 +905,11 @@ export async function exportBookingRequests(filters, viewer) {
                 },
             },
         },
-        orderBy: [{ bookingDate: "desc" }, { startMinute: "desc" }, { id: "desc" }],
+        orderBy: [
+            { bookingDate: "desc" },
+            { startMinute: "desc" },
+            { id: "desc" },
+        ],
     })
     const header = [
         "Request ID",
@@ -805,7 +922,7 @@ export async function exportBookingRequests(filters, viewer) {
         "Booking date",
         "Start minute",
         "End minute",
-        "Event type",
+        "Activity type",
         "Participants",
         "Status",
         "Status reason",
@@ -825,7 +942,7 @@ export async function exportBookingRequests(filters, viewer) {
         formatDateOnly(record.bookingDate),
         record.startMinute,
         record.endMinute,
-        record.eventType,
+        record.activityTypeNameSnapshot,
         record.expectedParticipants,
         record.status,
         record.statusReason,
@@ -834,47 +951,62 @@ export async function exportBookingRequests(filters, viewer) {
         record.rejectedAt?.toISOString(),
         record.cancelledAt?.toISOString(),
     ])
-    return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")
+    return [header, ...rows]
+        .map((row) => row.map(csvCell).join(","))
+        .join("\r\n")
 }
 
 export async function getBookingDashboard(viewer) {
     await expireStartedBookingRequests()
     const visibility = await bookingVisibilityWhere(viewer)
     const now = institutionNow()
-    const [groups, upcoming, pendingReviewCount, unreadCount, activeApproverCount] =
-        await Promise.all([
-            prisma.bookingRequest.groupBy({
-                by: ["status"],
-                where: visibility,
-                _count: { _all: true },
-            }),
-            prisma.bookingRequest.findMany({
-                where: {
-                    AND: [
-                        visibility,
-                        { status: "APPROVED", bookingDate: { gte: now.dateValue } },
-                    ],
-                },
-                select: bookingSummarySelect,
-                orderBy: [{ bookingDate: "asc" }, { startMinute: "asc" }],
-                take: 5,
-            }),
-            prisma.bookingApproval.count({
-                where: { reviewerUserId: viewer.id, status: "PENDING" },
-            }),
-            prisma.notification.count({
-                where: { recipientId: viewer.id, isRead: false },
-            }),
-            prisma.institutionalApprover.count({
-                where: { isActive: true, user: { isActive: true } },
-            }),
-        ])
-    return {
-        counts: Object.fromEntries(groups.map((group) => [group.status, group._count._all])),
-        upcoming: upcoming.map((item) => serializeBookingSummary(item)),
+    const [
+        groups,
+        upcoming,
         pendingReviewCount,
         unreadCount,
         activeApproverCount,
+    ] = await Promise.all([
+        prisma.bookingRequest.groupBy({
+            by: ["status"],
+            where: visibility,
+            _count: { _all: true },
+        }),
+        prisma.bookingRequest.findMany({
+            where: {
+                AND: [
+                    visibility,
+                    { status: "APPROVED", bookingDate: { gte: now.dateValue } },
+                ],
+            },
+            select: bookingSummarySelect,
+            orderBy: [{ bookingDate: "asc" }, { startMinute: "asc" }],
+            take: 5,
+        }),
+        prisma.bookingApproval.count({
+            where: { reviewerUserId: viewer.id, status: "PENDING" },
+        }),
+        prisma.notification.count({
+            where: { recipientId: viewer.id, isRead: false },
+        }),
+        prisma.bookingActivityApprover.findMany({
+            where: {
+                isActive: true,
+                activityType: { isActive: true },
+                user: { isActive: true, role: { in: ["FACULTY", "STAFF"] } },
+            },
+            select: { userId: true },
+            distinct: ["userId"],
+        }),
+    ])
+    return {
+        counts: Object.fromEntries(
+            groups.map((group) => [group.status, group._count._all])
+        ),
+        upcoming: upcoming.map((item) => serializeBookingSummary(item)),
+        pendingReviewCount,
+        unreadCount,
+        activeApproverCount: activeApproverCount.length,
     }
 }
 
@@ -893,15 +1025,23 @@ export async function cancelBookingRequest(id, reason, viewer) {
             code: "BOOKING_CANCELLATION_FORBIDDEN",
         })
     }
-    if (!["PENDING_FACULTY", "PENDING_INSTITUTIONAL", "APPROVED"].includes(existing.status)) {
+    if (
+        !["PENDING_FACULTY", "PENDING_INSTITUTIONAL", "APPROVED"].includes(
+            existing.status
+        )
+    ) {
         throw new ApiError(409, "This request can no longer be cancelled", {
             code: "BOOKING_NOT_CANCELLABLE",
         })
     }
     if (bookingHasStarted(existing)) {
-        throw new ApiError(409, "A booking cannot be cancelled after it starts", {
-            code: "BOOKING_ALREADY_STARTED",
-        })
+        throw new ApiError(
+            409,
+            "A booking cannot be cancelled after it starts",
+            {
+                code: "BOOKING_ALREADY_STARTED",
+            }
+        )
     }
 
     await prisma.$transaction(async (tx) => {
@@ -918,9 +1058,13 @@ export async function cancelBookingRequest(id, reason, viewer) {
             },
         })
         if (!updated.count) {
-            throw new ApiError(409, "This request changed before it could be cancelled", {
-                code: "REQUEST_STATE_CHANGED",
-            })
+            throw new ApiError(
+                409,
+                "This request changed before it could be cancelled",
+                {
+                    code: "REQUEST_STATE_CHANGED",
+                }
+            )
         }
         await tx.bookingApproval.updateMany({
             where: { bookingRequestId: id, status: "PENDING" },
@@ -974,13 +1118,6 @@ async function canViewRequest(record, viewer) {
         )
     )
         return true
-    if (viewer.role === "FACULTY") {
-        const membership = await prisma.institutionalApprover.findFirst({
-            where: { userId: viewer.id, isActive: true },
-            select: { id: true },
-        })
-        if (membership) return true
-    }
     if (viewer.role === "STAFF") {
         const assignment = await prisma.buildingStaffAssignment.findFirst({
             where: {

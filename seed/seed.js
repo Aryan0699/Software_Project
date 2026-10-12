@@ -25,12 +25,41 @@ const defaultRoomTypes = [
     { code: "SEMINAR_ROOM", name: "Seminar Room" },
 ]
 
+const defaultBookingActivityTypes = [
+    ["activity_institute", "Institute Activities"],
+    ["activity_academic", "Academic Activities"],
+    ["activity_student", "Student Activities"],
+    ["activity_research_development", "Research and Development Activities"],
+    ["activity_staff_administrative", "Staff / Administrative Activities"],
+    ["activity_international_relations", "International Relations Activities"],
+    ["activity_digital_infrastructure", "Digital Infrastructure Activities"],
+    ["activity_resource_alumni", "Resource and Alumni Engagement"],
+    ["activity_faculty", "Faculty-related Activities"],
+    ["activity_infrastructure", "Infrastructure-related Activities"],
+    [
+        "activity_cultural_community",
+        "Cultural, Community, Social, Commercial and Government Activities",
+    ],
+]
+
 async function seedReferenceDefaults() {
     for (const roomType of defaultRoomTypes) {
         await prisma.roomType.upsert({
             where: { code: roomType.code },
             update: { name: roomType.name, isActive: true },
             create: roomType,
+        })
+    }
+    for (const [id, name] of defaultBookingActivityTypes) {
+        await prisma.bookingActivityType.upsert({
+            where: { normalizedName: name.toLocaleLowerCase() },
+            update: {},
+            create: {
+                id,
+                name,
+                normalizedName: name.toLocaleLowerCase(),
+                isActive: false,
+            },
         })
     }
 }
