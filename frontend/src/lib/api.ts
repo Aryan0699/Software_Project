@@ -324,12 +324,6 @@ export type CurrentUser = BasicUser & {
     studentProfile?: StudentProfile | null
     facultyProfile?: FacultyProfile | null
     staffProfile?: StaffProfile | null
-    institutionalApprover?: {
-        id: string
-        title: string
-        isActive: boolean
-        assignedAt: string
-    } | null
     staffBuildings?: Array<{
         assignedAt: string
         building: { id: string; code: string; name: string; isActive: boolean }
@@ -361,17 +355,32 @@ export type AdminUser = CurrentUser & {
         assignedAt: string
         building: { id: string; code: string; name: string; isActive: boolean }
     }>
+    bookingActivityApprovals: Array<{
+        id: string
+        reviewerLabel: string
+        activityType: { id: string; name: string; isActive: boolean }
+    }>
 }
 
-export type InstitutionalApprover = {
+export type BookingActivityApprover = {
     id: string
-    title: string
+    reviewerLabel: string
     isActive: boolean
     assignedAt: string
     deactivatedAt: string | null
     updatedAt: string
     user: BasicUser
-    assignedBy: Pick<BasicUser, "id" | "name" | "email"> | null
+}
+
+export type BookingActivityType = {
+    id: string
+    name: string
+    normalizedName: string
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+    approvers: BookingActivityApprover[]
+    _count: { requests: number }
 }
 
 export type StaffAssignment = {
@@ -730,28 +739,56 @@ export const adminAccessApi = {
             body: JSON.stringify(changes),
         })
     },
-    listInstitutionalApprovers() {
-        return request<{ approvers: InstitutionalApprover[] }>(
-            "/admin/institutional-approvers"
+    listBookingActivityTypes() {
+        return request<{ activityTypes: BookingActivityType[] }>(
+            "/admin/booking-activity-types"
         )
     },
-    getInstitutionalApproverOptions() {
+    getBookingApproverOptions() {
         return request<{
-            faculty: Array<Pick<BasicUser, "id" | "name" | "email">>
-        }>("/admin/institutional-approver-options")
+            users: Array<Pick<BasicUser, "id" | "name" | "email" | "role">>
+        }>("/admin/booking-approver-options")
     },
-    createInstitutionalApprover(userId: string, title: string) {
-        return request<{ approver: InstitutionalApprover }>(
-            "/admin/institutional-approvers",
-            { method: "POST", body: JSON.stringify({ userId, title }) }
+    createBookingActivityType(name: string) {
+        return request<{ activityType: BookingActivityType }>(
+            "/admin/booking-activity-types",
+            { method: "POST", body: JSON.stringify({ name }) }
         )
     },
-    updateInstitutionalApprover(
+    updateBookingActivityType(
         id: string,
-        changes: { title?: string; isActive?: boolean }
+        changes: { name?: string; isActive?: boolean }
     ) {
-        return request<{ approver: InstitutionalApprover }>(
-            `/admin/institutional-approvers/${id}`,
+        return request<{ activityType: BookingActivityType }>(
+            `/admin/booking-activity-types/${id}`,
+            { method: "PATCH", body: JSON.stringify(changes) }
+        )
+    },
+    deleteBookingActivityType(id: string) {
+        return request<null>(`/admin/booking-activity-types/${id}`, {
+            method: "DELETE",
+        })
+    },
+    createBookingActivityApprover(
+        activityTypeId: string,
+        userId: string,
+        reviewerLabel: string
+    ) {
+        return request<{ approver: BookingActivityApprover }>(
+            `/admin/booking-activity-types/${activityTypeId}/approvers`,
+            {
+                method: "POST",
+                body: JSON.stringify({ userId, reviewerLabel }),
+            }
+        )
+    },
+    updateBookingActivityApprover(
+        activityTypeId: string,
+        assignmentId: string,
+        changes: { reviewerLabel?: string; isActive?: boolean }
+    ) {
+        return request<{ approver: BookingActivityApprover }>(
+            `/admin/booking-activity-types/${activityTypeId}/approvers/${assignmentId}`,
             { method: "PATCH", body: JSON.stringify(changes) }
         )
     },
@@ -1174,6 +1211,13 @@ export const timetableApi = {
     },
     getImport(id: string) {
         return request<{ batch: TimetableBatch }>(`/timetables/imports/${id}`)
+    },
+    downloadPublishedWorkbook(batch: TimetableBatch) {
+        const safe = (value: string) => value.replace(/[^A-Za-z0-9._-]+/g, "_")
+        return download(
+            `/timetables/imports/${batch.id}/workbook`,
+            `${safe(batch.academicTerm.termCode)}_${safe(batch.slotSystem.code)}_revision_${batch.revisionNumber}.xlsx`
+        )
     },
     rows(
         id: string,

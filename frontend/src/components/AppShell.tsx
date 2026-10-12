@@ -59,7 +59,7 @@ function Navigation({ close }: { close?: () => void }) {
                   },
               ]
             : []),
-        ...(user?.role === "FACULTY"
+        ...(user?.role === "FACULTY" || user?.role === "STAFF"
             ? [
                   {
                       to: "/approvals",
@@ -176,9 +176,7 @@ function Sidebar({ mobile, close }: { mobile?: boolean; close?: () => void }) {
                         {user?.name}
                     </p>
                     <p className="truncate text-xs text-slate-500">
-                        {user
-                            ? `${roleNames[user.role]}${user.institutionalApprover ? ` · ${user.institutionalApprover.title}` : ""}`
-                            : ""}
+                        {user ? roleNames[user.role] : ""}
                     </p>
                 </div>
                 <button
@@ -258,9 +256,7 @@ export function AppShell() {
                                     {user?.name}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                    {user
-                                        ? `${roleNames[user.role]}${user.institutionalApprover ? ` · ${user.institutionalApprover.title}` : ""}`
-                                        : ""}
+                                    {user ? roleNames[user.role] : ""}
                                 </p>
                             </div>
                             <ChevronDown className="hidden size-4 text-slate-400 sm:block" />

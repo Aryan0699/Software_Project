@@ -65,6 +65,7 @@ export function TimetableImportsPage() {
     const [resolution, setResolution] = useState({ slotId: "", roomId: "" })
     const [cancelOpen, setCancelOpen] = useState(false)
     const [publishOpen, setPublishOpen] = useState(false)
+    const [replacement, setReplacement] = useState<TimetableBatch | null>(null)
 
     const optionsQuery = useQuery({
         queryKey: ["timetable-options"],
@@ -148,6 +149,7 @@ export function TimetableImportsPage() {
             )
             setBatchId(nextBatch.id)
             setWorkbook(null)
+            setReplacement(null)
             await refresh(nextBatch)
         },
         onError: (error) => showToast("error", errorMessage(error)),
@@ -235,6 +237,18 @@ export function TimetableImportsPage() {
     const previews = (importsQuery.data?.imports || []).filter(
         (item) => item.status === "PREVIEWED"
     )
+    const beginReplacement = (item: TimetableBatch) => {
+        setReplacement(item)
+        setTermId(item.academicTermId)
+        setSystemId(item.slotSystemId)
+        setGridId(item.slotGridVersionId)
+        setWorkbook(null)
+        requestAnimationFrame(() =>
+            document
+                .getElementById("timetable-importer")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+        )
+    }
 
     if (batchId && batch) {
         const records = rowsQuery.data?.records || []
@@ -522,6 +536,33 @@ export function TimetableImportsPage() {
                                 <p className="mt-3 text-xs font-medium text-emerald-700">
                                     Published · Revision {item.revisionNumber}
                                 </p>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        className="button-secondary"
+                                        onClick={() =>
+                                            timetableApi
+                                                .downloadPublishedWorkbook(item)
+                                                .catch((error) =>
+                                                    showToast(
+                                                        "error",
+                                                        errorMessage(error)
+                                                    )
+                                                )
+                                        }
+                                    >
+                                        <Download className="size-4" /> Download
+                                        timetable
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="button-secondary"
+                                        onClick={() => beginReplacement(item)}
+                                    >
+                                        <Upload className="size-4" /> Upload
+                                        replacement
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -529,18 +570,36 @@ export function TimetableImportsPage() {
             ) : null}
 
             <form
+                id="timetable-importer"
                 className="rounded-md border bg-white p-5 shadow-sm"
                 onSubmit={(event: FormEvent) => {
                     event.preventDefault()
                     uploadMutation.mutate()
                 }}
             >
+                {replacement ? (
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
+                        <span>
+                            Replacing {replacement.slotSystem.name} ·{" "}
+                            {replacement.academicTerm.name} · Revision{" "}
+                            {replacement.revisionNumber}
+                        </span>
+                        <button
+                            type="button"
+                            className="button-quiet"
+                            onClick={() => setReplacement(null)}
+                        >
+                            Cancel replacement
+                        </button>
+                    </div>
+                ) : null}
                 <div className="grid gap-4 lg:grid-cols-3">
                     <label>
                         <span className="field-label">Academic term</span>
                         <select
                             className="field-select"
                             value={selectedTermId}
+                            disabled={Boolean(replacement)}
                             onChange={(event) => setTermId(event.target.value)}
                         >
                             {options?.terms.map((term) => (
@@ -555,6 +614,7 @@ export function TimetableImportsPage() {
                         <select
                             className="field-select"
                             value={selectedSystemId}
+                            disabled={Boolean(replacement)}
                             onChange={(event) => {
                                 setSystemId(event.target.value)
                                 setGridId("")

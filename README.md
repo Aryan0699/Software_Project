@@ -18,16 +18,16 @@ URAS is a room allocation and approval system for academic timetables, event req
 4. Copy `frontend/.env.example` to `frontend/.env`. Change `VITE_API_URL` only when the API is not at `http://localhost:3000/api/v1`.
 5. Run:
 
-   ```bash
-   npm run setup:dev
-   ```
+    ```bash
+    npm run setup:dev
+    ```
 
 The command performs these steps in order:
 
 1. Installs backend and frontend dependencies with `npm ci`.
 2. Applies committed Prisma migrations with `prisma migrate deploy`.
 3. Generates the Prisma client.
-4. Seeds default slot systems, room types, and the optional bootstrap administrator.
+4. Seeds room types, inactive booking activity types, and the optional bootstrap administrator.
 5. Applies the migration to a disposable PostgreSQL schema to verify it, then removes that schema.
 6. Starts the backend and frontend development servers.
 7. Calls the backend readiness endpoint to confirm the database connection, then checks the frontend.
@@ -75,6 +75,7 @@ Use `npm run prisma:migrate -- --name <migration_name>` only when creating a new
 npm run prisma:validate
 npm --prefix frontend run lint
 npm --prefix frontend run build
+npm run verify:timetable-roundtrip
 ```
 
 The current product and implementation sources of truth are:

@@ -71,9 +71,9 @@ Faculty-created requests bypass faculty verification and move directly to instit
 
 Why: Faculty can both request rooms and establish academic accountability for student requests.
 
-### 3.3 Institutional Approvers
+### 3.3 Activity Approvers
 
-Administrators maintain a list of required institutional approvers. Every active member is an active faculty user with a display title such as DOSA, ADOSA, or DOAA. Each receives an independent approval task when a request reaches the institutional stage.
+Administrators maintain activity types and a required approver list for each type. Every assigned reviewer is an active faculty or staff user with a workflow label such as Dean of Student Affairs, Head of Department, or Estate Office. Each receives an independent `INSTITUTIONAL` approval task when a request of that activity type reaches the institutional stage; the workflow kind describes the task and does not mirror the reviewer's account role.
 
 Every assigned approval is required. Reviewers may decide in any order and in parallel. Any one rejection immediately rejects the complete request. Membership changes affect stages created afterward; approval tasks already created remain the historical workflow for that request.
 
@@ -83,7 +83,7 @@ Why: The digital workflow preserves unanimous institutional authorization while 
 
 Staff can inspect operational room usage, manage assigned buildings and rooms as authorized, and create room restrictions for their assigned buildings.
 
-Staff are not part of the confirmed Phase 1 approval chain.
+Staff may also receive institutional-stage decisions when assigned to the selected activity type. This does not grant institution-wide booking visibility; they see assigned decisions plus the rooms in their building scope.
 
 Why: Staff own day-to-day room operations within their assigned building scope.
 
@@ -117,13 +117,13 @@ Administrators will be able to assign and update recognized institutional roles.
 
 Why: Historical records must remain understandable after a person leaves or changes responsibility.
 
-### ID-04 Institutional Approver Assignment
+### ID-04 Activity Approval Configuration
 
-Administrators can add active faculty members to the institutional approver list and assign each a clear title.
+Administrators can create, rename, activate, and deactivate booking activity types. Each type has its own list of active faculty or staff approvers and a clear label for each responsibility.
 
-The same person can appear only once in the active list. Existing entries are deactivated rather than deleted so historical context remains available.
+The same person can appear only once per activity type. Types and assignments are deactivated rather than deleted so historical context remains available. An activity type cannot be activated without at least one effective approver, and the last effective approver cannot be removed while the type remains active.
 
-The system will prevent a request from entering institutional approval when the list has no active approver and will clearly tell the administrator what is missing.
+Only active, fully configured activity types appear on the booking form. Existing approval tasks keep their reviewer and label if configuration changes later.
 
 Why: A request must not become permanently stuck in an incomplete approval workflow.
 
@@ -280,11 +280,13 @@ Why: Changing slot times changes every academic room occupancy associated with t
 
 ### IMPORT-01 Supported Upload
 
-An authorized administrator will be able to upload the semester timetable as an `.xlsx` workbook and download a blank Phase 1 template from the import screen.
+An authorized administrator will be able to upload the semester timetable as an `.xlsx` workbook, download a blank Phase 1 template, and download the current published timetable in that same canonical format.
 
 The administrator will select the academic term and slot system in the interface before upload; those values do not need to be repeated in every spreadsheet row. CSV support may be included if it preserves the same required information.
 
 Why: Semester allocation must be operable by administrative users without developer assistance.
+
+A current-publication card provides **Download timetable** and **Upload replacement** actions. Upload replacement opens the ordinary importer with the publication's term and slot system fixed while allowing the administrator to choose an appropriate locked slot-grid version. Downloading and uploading the workbook unchanged must resolve every published row without new mapping errors.
 
 ### IMPORT-02 Required Data Detection
 
@@ -611,7 +613,7 @@ Why: Both groups have confirmed institutional use cases.
 
 ### BOOK-03 Request Information
 
-A request will capture the room, date, start time, end time, title, purpose, event type, optional expected participants, and relevant special requirements.
+A request will capture the room, date, start time, end time, title, purpose, configured activity type, optional expected participants, and relevant special requirements.
 
 When expected participants are supplied and room capacity is known, the request must fit the room. A room with unconfigured capacity remains requestable with a clear warning that capacity suitability could not be verified.
 
@@ -625,7 +627,7 @@ Why: Student requests require faculty accountability before dean review.
 
 ### BOOK-05 Faculty Request Routing
 
-A faculty-created request will move directly to three-dean approval.
+A faculty-created request will move directly to the approvers configured for its activity type.
 
 Why: Faculty requesters do not need a separate faculty verification of their own request.
 
@@ -653,7 +655,7 @@ Why: Transparent decisions reduce confusion and support accountability.
 
 A requester will be able to cancel their own pending future request or future approved event without repeating the approval workflow. A cancellation reason will be required.
 
-Cancellation of an approved event will immediately release the room, preserve the event and its prior approvals in history, and notify the requester, assigned faculty where applicable, all three dean offices, and responsible building staff.
+Cancellation of an approved event will immediately release the room, preserve the event and its prior approvals in history, and notify the requester, assigned faculty where applicable, all assigned activity approvers, and responsible building staff.
 
 An event that has started or ended cannot be cancelled through the ordinary future-event cancellation flow.
 
@@ -673,13 +675,13 @@ Why: Approved details form part of the authorization decision.
 
 A student request will first be assigned to the selected faculty verifier.
 
-Faculty approval forwards the request to the active institutional approver list. Faculty rejection ends the request.
+Faculty approval forwards the request to the active approver list for the request's activity type. Faculty rejection ends the request.
 
 Why: This implements the confirmed student accountability chain.
 
 ### APPROVAL-02 Required Institutional Reviews
 
-Every request entering institutional review will create one independent pending task for every active list member, including the member’s title at assignment time.
+Every request entering institutional review will create one independent pending task for every active approver assigned to its activity type, including the workflow label at assignment time.
 
 Why: The system must know both completed decisions and reviewers who have not yet acted.
 
@@ -855,7 +857,7 @@ Why: Free-text notes alone are insufficient for reliable reporting and investiga
 
 ### AUDIT-03 Approval Accountability
 
-Each faculty and dean decision will preserve the assigned reviewer, decision, decision note, and decision time.
+Each faculty and activity-approver decision will preserve the assigned reviewer, workflow label, decision, decision note, and decision time.
 
 Why: Current approval progress and historical accountability are both required.
 
@@ -884,8 +886,8 @@ Why: An editable audit trail cannot provide accountability.
 Booking history visibility will follow role and operational scope:
 
 - Administrators can view all booking history.
-- Active institutional approvers can view all booking requests, decisions, cancellations, timetable conflicts, relocations, and reschedules, but not unrelated sensitive security or configuration records.
-- Staff can view full booking history for rooms in their assigned buildings.
+- Faculty and staff activity approvers can view requests assigned to them.
+- Staff can additionally view full booking history for rooms in their assigned buildings.
 - Faculty can view their own requests and student requests assigned to them.
 - Students can view only their own requests.
 
@@ -893,7 +895,7 @@ Why: Decision-makers and room operators need sufficient context without exposing
 
 ### AUDIT-08 History Filters and Download
 
-The booking history interface will provide quick date filters for the last 7 days and last 30 days, a custom date range, and filters for status, room, building, and requester where permitted.
+The booking history interface will provide quick date filters for the last 7 days and last 30 days, a custom date range, and filters for status, activity type, room, building, and requester where permitted.
 
 Authorized users will be able to download the filtered result as CSV. The download will enforce the same role and building scope as the on-screen results.
 
@@ -1041,9 +1043,9 @@ The following constraints are intentional Phase 1 decisions:
 - Student-level timetable clash checking is not performed.
 - Pending event requests do not hold rooms.
 - Every event request covers one date and one continuous time range.
-- Three dean approvals are mandatory and parallel.
-- Any one dean rejection rejects the request.
-- No administrator bypasses a required dean.
+- Every approver configured for the selected activity type is mandatory, and decisions are parallel.
+- Any one configured approver rejection rejects the request.
+- No administrator bypasses a required activity approver.
 - Timetable publication has priority, but every affected event must be relocated, rescheduled, or explicitly cancelled by the administrator before confirmation.
 - In-app notifications are required; guaranteed external delivery is deferred to Phase 3.
 - General raw before-and-after administrative audit logging and its audit view are deferred to Phase 2.

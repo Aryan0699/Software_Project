@@ -55,10 +55,14 @@ function bookingHasNotStarted(bookingDate: string, startMinute: number) {
         minute: "2-digit",
         hourCycle: "h23",
     }).formatToParts(new Date())
-    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+    const values = Object.fromEntries(
+        parts.map((part) => [part.type, part.value])
+    )
     const today = `${values.year}-${values.month}-${values.day}`
     const minute = Number(values.hour) * 60 + Number(values.minute)
-    return bookingDate > today || (bookingDate === today && startMinute > minute)
+    return (
+        bookingDate > today || (bookingDate === today && startMinute > minute)
+    )
 }
 
 function taskIcon(task: WorkflowTask) {
@@ -179,8 +183,12 @@ export function BookingDetailPage() {
             setCancelReason("")
             setCancelError("")
             await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ["booking-request", id] }),
-                queryClient.invalidateQueries({ queryKey: ["my-booking-requests"] }),
+                queryClient.invalidateQueries({
+                    queryKey: ["booking-request", id],
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: ["my-booking-requests"],
+                }),
                 queryClient.invalidateQueries({ queryKey: ["approval-queue"] }),
                 queryClient.invalidateQueries({ queryKey: ["notifications"] }),
             ])
@@ -237,7 +245,8 @@ export function BookingDetailPage() {
         request.requesterUserId === user?.id &&
         ["PENDING_FACULTY", "PENDING_INSTITUTIONAL", "APPROVED"].includes(
             request.status
-        ) && bookingHasNotStarted(request.bookingDate, request.startMinute)
+        ) &&
+        bookingHasNotStarted(request.bookingDate, request.startMinute)
 
     return (
         <div className="mx-auto max-w-4xl space-y-5">
@@ -340,10 +349,10 @@ export function BookingDetailPage() {
                     </div>
                     <div>
                         <p className="text-xs font-medium text-slate-500">
-                            Event type
+                            Activity type
                         </p>
                         <p className="mt-1 text-sm text-slate-800">
-                            {request.eventType.toLowerCase().replace("_", " ")}
+                            {request.activityTypeNameSnapshot}
                         </p>
                     </div>
                     {request.specialRequirements ? (
@@ -359,7 +368,11 @@ export function BookingDetailPage() {
                 </div>
                 {canCancel ? (
                     <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
-                        <button type="button" className="button-danger" onClick={() => setCancelOpen(true)}>
+                        <button
+                            type="button"
+                            className="button-danger"
+                            onClick={() => setCancelOpen(true)}
+                        >
                             Cancel request
                         </button>
                     </div>
@@ -384,7 +397,10 @@ export function BookingDetailPage() {
                                 ) : null}
                                 {stage.tasks.map((task) => (
                                     <div
-                                        key={task.approvalId || `${stage.key}-${task.kind}-${task.label}`}
+                                        key={
+                                            task.approvalId ||
+                                            `${stage.key}-${task.kind}-${task.label}`
+                                        }
                                         className={`flex items-start gap-2 rounded-md border p-3 ${task.approvalId && task.reviewer?.id === user?.id && task.status === "PENDING" ? "border-brand-300 bg-brand-50" : "border-slate-200"}`}
                                     >
                                         <span className="mt-0.5">
@@ -662,13 +678,19 @@ export function BookingDetailPage() {
 
             <FormDialog
                 open={cancelOpen}
-                title={request.status === "APPROVED" ? "Cancel approved booking" : "Withdraw request"}
+                title={
+                    request.status === "APPROVED"
+                        ? "Cancel approved booking"
+                        : "Withdraw request"
+                }
                 description={
                     request.status === "APPROVED"
                         ? "The room will become available immediately."
                         : "Pending approval tasks will be closed."
                 }
-                onClose={() => !cancelMutation.isPending && setCancelOpen(false)}
+                onClose={() =>
+                    !cancelMutation.isPending && setCancelOpen(false)
+                }
             >
                 <form
                     className="space-y-4"
@@ -683,13 +705,43 @@ export function BookingDetailPage() {
                 >
                     <label>
                         <span className="field-label">Cancellation reason</span>
-                        <textarea className="field-input min-h-24 resize-y" value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} minLength={3} maxLength={1000} required placeholder="Explain why this request is being cancelled" />
+                        <textarea
+                            className="field-input min-h-24 resize-y"
+                            value={cancelReason}
+                            onChange={(event) =>
+                                setCancelReason(event.target.value)
+                            }
+                            minLength={3}
+                            maxLength={1000}
+                            required
+                            placeholder="Explain why this request is being cancelled"
+                        />
                     </label>
-                    {cancelError ? <p className="text-sm text-red-700">{cancelError}</p> : null}
+                    {cancelError ? (
+                        <p className="text-sm text-red-700">{cancelError}</p>
+                    ) : null}
                     <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                        <button type="button" className="button-secondary" onClick={() => setCancelOpen(false)} disabled={cancelMutation.isPending}>Keep request</button>
-                        <button type="submit" className="button-danger" disabled={cancelMutation.isPending || cancelReason.trim().length < 3}>
-                            {cancelMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
+                        <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => setCancelOpen(false)}
+                            disabled={cancelMutation.isPending}
+                        >
+                            Keep request
+                        </button>
+                        <button
+                            type="submit"
+                            className="button-danger"
+                            disabled={
+                                cancelMutation.isPending ||
+                                cancelReason.trim().length < 3
+                            }
+                        >
+                            {cancelMutation.isPending ? (
+                                <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                                <XCircle className="size-4" />
+                            )}
                             Cancel request
                         </button>
                     </div>

@@ -14,19 +14,10 @@ import {
     availabilityApi,
     type AvailabilityInterval,
 } from "../lib/availabilityApi"
-import { bookingApi, type BookingEventType } from "../lib/bookingApi"
+import { bookingApi } from "../lib/bookingApi"
 import { ApiClientError } from "../lib/api"
 import { minuteToTime } from "../lib/time"
 import { readableBookingDate } from "./booking/shared"
-
-const eventTypes: Array<{ value: BookingEventType; label: string }> = [
-    { value: "ACADEMIC", label: "Academic" },
-    { value: "CLUB", label: "Club activity" },
-    { value: "MEETING", label: "Meeting" },
-    { value: "WORKSHOP", label: "Workshop" },
-    { value: "SEMINAR", label: "Seminar" },
-    { value: "OTHER", label: "Other" },
-]
 
 function overlaps(
     item: AvailabilityInterval,
@@ -52,7 +43,7 @@ export function BookingCreatePage() {
 
     const [clientRequestId] = useState(() => crypto.randomUUID())
     const [title, setTitle] = useState("")
-    const [eventType, setEventType] = useState<BookingEventType>("OTHER")
+    const [activityTypeId, setActivityTypeId] = useState("")
     const [purpose, setPurpose] = useState("")
     const [participants, setParticipants] = useState("")
     const [specialRequirements, setSpecialRequirements] = useState("")
@@ -81,6 +72,15 @@ export function BookingCreatePage() {
             }),
         enabled: user?.role === "STUDENT",
     })
+    const activityTypesQuery = useQuery({
+        queryKey: ["booking-activity-types"],
+        queryFn: bookingApi.activityTypes,
+    })
+    const selectedActivityTypeId =
+        activityTypeId || activityTypesQuery.data?.activityTypes[0]?.id || ""
+    const selectedActivityType = activityTypesQuery.data?.activityTypes.find(
+        (item) => item.id === selectedActivityTypeId
+    )
 
     const timeline = timelineQuery.data?.timeline
     const blockingConflict = timeline?.blockingConflicts.find((item) =>
@@ -131,6 +131,12 @@ export function BookingCreatePage() {
             setFormError("Select a faculty verifier")
             return
         }
+        if (!selectedActivityTypeId) {
+            setFormError(
+                "Booking requests are unavailable until an activity approval route is configured"
+            )
+            return
+        }
         if (pendingWarnings.length && !acknowledged) {
             setFormError(
                 "Confirm the competing request warning before submitting"
@@ -144,7 +150,7 @@ export function BookingCreatePage() {
             startMinute,
             endMinute,
             title,
-            eventType,
+            activityTypeId: selectedActivityTypeId,
             purpose,
             ...(participants
                 ? { expectedParticipants: Number(participants) }
@@ -290,21 +296,27 @@ export function BookingCreatePage() {
                         />
                     </label>
                     <label>
-                        <span className="field-label">Event type</span>
+                        <span className="field-label">Activity type</span>
                         <select
                             className="field-select"
-                            value={eventType}
+                            required
+                            value={selectedActivityTypeId}
                             onChange={(event) =>
-                                setEventType(
-                                    event.target.value as BookingEventType
-                                )
+                                setActivityTypeId(event.target.value)
                             }
                         >
-                            {eventTypes.map((item) => (
-                                <option key={item.value} value={item.value}>
-                                    {item.label}
+                            {!activityTypesQuery.data?.activityTypes.length ? (
+                                <option value="">
+                                    No configured activity types
                                 </option>
-                            ))}
+                            ) : null}
+                            {activityTypesQuery.data?.activityTypes.map(
+                                (item) => (
+                                    <option key={item.id} value={item.id}>
+                                        {item.name}
+                                    </option>
+                                )
+                            )}
                         </select>
                     </label>
                     <label>
@@ -425,10 +437,11 @@ export function BookingCreatePage() {
                     </p>
                     <p className="mt-2 text-sm text-slate-700">
                         {user?.role === "STUDENT" ? "Faculty verifier → " : ""}
-                        DOSA, ADOSA and DOAA
+                        {selectedActivityType?.reviewerLabels.join(", ") ||
+                            "Choose an activity type"}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                        All institutional reviewers must approve.
+                        All listed reviewers must approve, in any order.
                     </p>
                 </div>
 
@@ -470,7 +483,11 @@ export function BookingCreatePage() {
                     <button
                         type="submit"
                         className="button-primary"
-                        disabled={cannotSubmit || createMutation.isPending}
+                        disabled={
+                            cannotSubmit ||
+                            !selectedActivityTypeId ||
+                            createMutation.isPending
+                        }
                     >
                         {createMutation.isPending ? (
                             <Loader2 className="size-4 animate-spin" />

@@ -209,10 +209,11 @@ export function UsersPanel() {
                 <td><RoleBadge role={user.role} /></td>
                 <td>
                   <p className="text-xs text-slate-600">
-                    {user.institutionalApprover?.title ||
-                      (user.staffBuildings.length
+                    {user.bookingActivityApprovals.length
+                      ? `${user.bookingActivityApprovals.length} activity approval route${user.bookingActivityApprovals.length === 1 ? "" : "s"}`
+                      : user.staffBuildings.length
                         ? `${user.staffBuildings.length} building${user.staffBuildings.length === 1 ? "" : "s"}`
-                        : "None")}
+                        : "None"}
                   </p>
                 </td>
                 <td className="text-xs text-slate-500">

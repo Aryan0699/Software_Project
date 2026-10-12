@@ -14,9 +14,11 @@
         "prisma:generate": "prisma generate",
         "prisma:validate": "prisma validate",
         "seed": "prisma db seed",
+        "seed:registration-access": "node seed/seedApprovedUsers.js",
         "prisma:studio": "prisma studio",
         "prisma:push": "prisma db push",
         "verify:migration": "node scripts/verify-migration.js",
+        "verify:timetable-roundtrip": "node scripts/verify-timetable-roundtrip.js",
         "setup:dev": "node scripts/setup-dev.js",
         "format": "prettier --write src prisma seed"
     },

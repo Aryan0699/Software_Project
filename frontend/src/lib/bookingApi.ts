@@ -1,4 +1,10 @@
-import { download, queryString, request, type Pagination, type Role } from "./api"
+import {
+    download,
+    queryString,
+    request,
+    type Pagination,
+    type Role,
+} from "./api"
 
 export type BookingStatus =
     | "PENDING_FACULTY"
@@ -7,13 +13,11 @@ export type BookingStatus =
     | "REJECTED"
     | "CANCELLED"
 
-export type BookingEventType =
-    | "ACADEMIC"
-    | "CLUB"
-    | "MEETING"
-    | "WORKSHOP"
-    | "SEMINAR"
-    | "OTHER"
+export type BookingActivityType = {
+    id: string
+    name: string
+    reviewerLabels: string[]
+}
 
 export type ReviewerKind = "FACULTY" | "INSTITUTIONAL"
 export type ApprovalStatus =
@@ -89,7 +93,9 @@ export type BookingRequest = {
     endMinute: number
     title: string
     purpose: string
-    eventType: BookingEventType
+    activityTypeId: string
+    activityTypeNameSnapshot: string
+    activityType: { id: string; name: string; isActive: boolean }
     expectedParticipants: number | null
     requiredFeatures: string[]
     specialRequirements: string | null
@@ -121,6 +127,8 @@ export type BookingRequestSummary = Pick<
     | "startMinute"
     | "endMinute"
     | "title"
+    | "activityTypeId"
+    | "activityTypeNameSnapshot"
     | "status"
     | "statusReason"
     | "submittedAt"
@@ -181,7 +189,7 @@ export type CreateBookingInput = {
     endMinute: number
     title: string
     purpose: string
-    eventType: BookingEventType
+    activityTypeId: string
     expectedParticipants?: number
     requiredFeatures: string[]
     specialRequirements?: string
@@ -196,6 +204,7 @@ export type BookingListFilters = {
     dateTo?: string
     buildingId?: string
     roomId?: string
+    activityTypeId?: string
     requester?: string
 }
 
@@ -207,6 +216,7 @@ export type BookingFilterOptions = {
         building: { id: string; code: string; name: string }
     }>
     requesters: BookingPerson[]
+    activityTypes: Array<{ id: string; name: string }>
 }
 
 export type BookingDashboard = {
@@ -218,6 +228,11 @@ export type BookingDashboard = {
 }
 
 export const bookingApi = {
+    activityTypes() {
+        return request<{ activityTypes: BookingActivityType[] }>(
+            "/booking-requests/activity-types"
+        )
+    },
     facultyVerifiers(
         values: { search?: string; page?: number; pageSize?: number } = {}
     ) {
@@ -231,7 +246,9 @@ export const bookingApi = {
             body: JSON.stringify(input),
         })
     },
-    list(values: BookingListFilters & { page?: number; pageSize?: number } = {}) {
+    list(
+        values: BookingListFilters & { page?: number; pageSize?: number } = {}
+    ) {
         return request<{
             records: BookingRequestSummary[]
             pagination: Pagination

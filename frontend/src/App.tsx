@@ -56,9 +56,13 @@ function RequesterOnly({ children }: { children: ReactNode }) {
     )
 }
 
-function FacultyOnly({ children }: { children: ReactNode }) {
+function ReviewerOnly({ children }: { children: ReactNode }) {
     const { user } = useAuth()
-    return user?.role === "FACULTY" ? children : <Navigate to="/" replace />
+    return user?.role === "FACULTY" || user?.role === "STAFF" ? (
+        children
+    ) : (
+        <Navigate to="/" replace />
+    )
 }
 
 function App() {
@@ -92,9 +96,9 @@ function App() {
                     <Route
                         path="approvals"
                         element={
-                            <FacultyOnly>
+                            <ReviewerOnly>
                                 <ApprovalsPage />
-                            </FacultyOnly>
+                            </ReviewerOnly>
                         }
                     />
                     <Route path="account" element={<AccountPage />} />
