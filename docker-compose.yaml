@@ -1,0 +1,101 @@
+name: uras
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    
+    volumes:
+      - uras_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    restart: unless-stopped
+    init: true
+
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    command: ["sh","-c","npm run prisma:deploy && npm run start"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/v1/health/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api/v1
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    restart: unless-stopped
+
+    environment:
+      URAS_DOMAIN: ${URAS_DOMAIN}
+
+    depends_on:
+      backend:
+        condition: service_healthy
+    
+    ports:
+      - "${HTTP_PORT}:80"
+      - "443:443"
+      - "443:443/udp"
+    
+    volumes:
+      - uras_caddy_data:/data
+      - uras_caddy_config:/config
+  
+volumes:
+  uras_postgres_data:
+  uras_caddy_data:
+  uras_caddy_config:
+
+
+# name: uras
+
+# services:
+#   postgres:
+#     image: postgres:16
+#     container_name: uras-postgres
+#     restart: unless-stopped
+
+#     environment:
+#       POSTGRES_DB: uras
+#       POSTGRES_USER: uras
+#       POSTGRES_PASSWORD: uras26
+
+#     ports:
+#       - "5432:5432"
+
+#     volumes:
+#       - uras_postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   uras_postgres_data:
+
