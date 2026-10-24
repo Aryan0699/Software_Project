@@ -21,12 +21,17 @@ ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 # To get the /dist static files to serve
 RUN npm run build
 
+# Stage 2 - Serve by Nginx
+FROM nginx:1.25-alpine
 
-FROM caddy:2-alpine
+COPY --from=builder /app/dist /etc/nginx/sites-available/dist/
 
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY --from=builder /app/dist /srv
+#  Copy to a place which itself goes into main config file under the html tag
+COPY nginx.conf /etc/nginx/conf.d/default.conf 
 
 EXPOSE 80
 EXPOSE 443
-EXPOSE 443/udp
+
+CMD ["nginx", "-g","daemon off;"]
+
+

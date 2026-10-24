@@ -65,16 +65,12 @@ services:
     ports:
       - "${HTTP_PORT}:80"
       - "443:443"
-      - "443:443/udp"
-    
+    #read only
     volumes:
-      - uras_caddy_data:/data
-      - uras_caddy_config:/config
+      - /etc/letsencrypt:/etc/letsencrypt:ro 
   
 volumes:
   uras_postgres_data:
-  uras_caddy_data:
-  uras_caddy_config:
 
 
 # name: uras
