@@ -1,9 +1,12 @@
 FROM node:20-bookworm-slim AS builder
 
+# there are certain config in the code that are based on whether the code is running locally or like in production
 ENV NODE_ENV=production
 
 WORKDIR /app
 
+# open ssl is required for the prisma client
+# in a single line because otherwise what was deleted in last line woudl stay in the prev layers
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates openssl \
     && rm -rf /var/lib/apt/lists/*

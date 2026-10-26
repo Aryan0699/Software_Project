@@ -2,8 +2,10 @@ name: uras
 
 services:
   postgres:
+    # prebuilt containers which are present on docker hub
     image: postgres:16-alpine
     restart: unless-stopped
+    # When we dont pass env file in the config we require the env variables to be set in the host machine. This is a security measure to avoid storing sensitive information in the docker-compose.yaml file.
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -30,7 +32,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    
+    # migration hum yaha karte hai kyuki usme schema create hota hai aur agar hum start karte hai bina migration ke to schema create nahi hoga aur app crash ho jayega. Isliye hum migration ko start se pehle run karte hai.
     command: ["sh","-c","npm run prisma:deploy && npm run start"]
     healthcheck:
       test:
@@ -38,7 +40,9 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://localhost:3000/api/v1/health/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "fetch('http://localhost:3000/api/v1/health/ready')
+          .then(r => process.exit(r.ok ? 0 : 1))
+          .catch(() => process.exit(1))",
         ]
       interval: 10s
       timeout: 5s
